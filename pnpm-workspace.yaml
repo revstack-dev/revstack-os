@@ -1,3 +1,7 @@
 packages:
   - "apps/*"
-  - "packages/*"
+  - "packages/**"
+  - "packages/providers/core"
+  - "packages/providers/registry"
+  - "packages/providers/official/*"
+  - "packages/providers/community/*"

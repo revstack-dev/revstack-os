@@ -1,6 +1,6 @@
 {
   "name": "revstack-os",
-  "private": true,
+  "private": false,
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -9,6 +9,7 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "@types/node": "^20.11.30",
     "prettier": "^3.7.4",
     "turbo": "^2.8.1",
     "typescript": "5.9.2"

@@ -1,0 +1,31 @@
+{
+  "name": "@revstackhq/providers-core",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "check-types": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\""
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "5.9.2",
+    "tsup": "^8.1.0",
+    "eslint": "^9.39.1",
+    "@eslint/js": "^9.39.1",
+    "typescript-eslint": "^8.50.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-turbo": "^2.7.1",
+    "@revstackhq/eslint-config": "workspace:*",
+    "@types/node": "^20.11.30"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
