@@ -1,4 +1,5 @@
 import { ProviderLoader } from "@/types/loader";
+import { ProviderManifest } from "@revstackhq/providers-core";
 
 const loaders: Record<string, ProviderLoader> = {};
 
@@ -29,4 +30,29 @@ export function registerBuiltInProviders() {
       () => import(pkg) as unknown as ReturnType<ProviderLoader>,
     );
   }
+}
+
+export async function getProviderManifest(
+  slug: string,
+): Promise<ProviderManifest | null> {
+  const loader = getProviderLoader(slug);
+  if (!loader) return null;
+
+  try {
+    const module = await loader();
+    return module.manifest;
+  } catch (e) {
+    console.error(`Error loading manifest for ${slug}`, e);
+    return null;
+  }
+}
+
+export async function getCatalog(): Promise<ProviderManifest[]> {
+  const slugs = listRegisteredProviders();
+  const manifests = await Promise.all(
+    slugs.map((slug) => getProviderManifest(slug)),
+  );
+
+  // Filtramos los nulls por si alguno falló
+  return manifests.filter((m): m is ProviderManifest => m !== null);
 }

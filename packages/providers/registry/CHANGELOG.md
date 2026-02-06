@@ -1,5 +1,11 @@
 # @revstackhq/providers-registry
 
+## 0.2.1
+
+### Patch Changes
+
+- Implement ProviderFactory and Registry logic to support dynamic provider instantiation and validation.
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,4 +1,4 @@
-import { IProvider } from "@revstackhq/providers-core";
+import { IProvider, ProviderManifest } from "@revstackhq/providers-core";
 
 /**
  * Defines the shape of the module exported by a Provider Package.
@@ -10,6 +10,7 @@ export interface ProviderModule {
    * Must implement the IProvider interface and have a constructor.
    */
   DefaultProvider: new () => IProvider;
+  manifest: ProviderManifest;
 }
 
 /**
