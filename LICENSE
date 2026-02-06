@@ -1,0 +1,38 @@
+BUSINESS SOURCE LICENSE 1.1
+
+The Licensor hereby grants you the right to copy, modify, create derivative works, redistribute, and make use of the Licensed Work for any purpose, except as limited by the Additional Use Grant below.
+
+Redistribution is allowed only if this License is included with the Licensed Work and any derivative works.
+
+ADDITIONAL USE GRANT:
+
+You may make use of the Licensed Work, provided that you do not use the Licensed Work to provide a "Managed Payment Orchestration Service".
+
+A "Managed Payment Orchestration Service" is defined as a commercial service, product, or offering where the Licensed Work is used to provide payment routing, checkout orchestration, or connection management to third parties as a service (SaaS, PaaS, or IaaS), whether for a fee or free of charge.
+
+For clarity:
+1. You MAY use the Licensed Work internally to process payments for your own business or merchandise.
+2. You MAY NOT use the Licensed Work to build a competitor service to Revstack that allows your customers to orchestrate their own payments.
+
+CHANGE DATE:
+
+January 1, 2031
+
+CHANGE LICENSE:
+
+Apache License, Version 2.0
+
+ERROR CORRECTIONS AND SECURITY UPDATES:
+
+The Licensor may, at its option, provide error corrections and security updates to the Licensed Work. If the Licensor provides such error corrections and security updates, they are considered part of the Licensed Work and are subject to this License.
+
+MANAGED SERVICE EXCEPTION:
+
+If you have a separate written agreement with the Licensor (e.g., an Enterprise License) that specifically grants you the right to provide a Managed Payment Orchestration Service, that agreement supersedes the limitations of the Additional Use Grant.
+
+*****************************************************************************
+
+LICENSOR:           Revstack Inc.
+LICENSED WORK:      The Revstack OS software and associated documentation.
+
+*****************************************************************************
