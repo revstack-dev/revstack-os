@@ -1,5 +1,11 @@
 # @revstackhq/provider-stripe
 
+## 0.2.1
+
+### Patch Changes
+
+- Fix build configuration to include static assets (publicDir) and update manifest with the official logo URL.
+
 ## 0.2.0
 
 ### Minor Changes

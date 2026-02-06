@@ -4,7 +4,8 @@ export const manifest: ProviderManifest = {
   name: "Stripe",
   slug: "stripe",
   version: "1.0.0",
-  logoUrl: "",
+  logoUrl:
+    "https://cdn.jsdelivr.net/npm/@revstackhq/provider-stripe/assets/logo.svg",
   category: ProviderCategory.Card,
   capabilities: {
     checkout: {
