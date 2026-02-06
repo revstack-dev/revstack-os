@@ -126,6 +126,9 @@ importers:
 
   packages/providers/registry:
     dependencies:
+      '@revstackhq/provider-stripe':
+        specifier: ^0.2.1
+        version: 0.2.1
       '@revstackhq/providers-core':
         specifier: workspace:*
         version: link:../core
@@ -473,6 +476,12 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@revstackhq/provider-stripe@0.2.1':
+    resolution: {integrity: sha512-Snmn1u2V4vYJyA1OXpnIVTTJwY9L5KDLpDcbvO/fL2LKoKPYpWUcTtYLK7SsfH1AnjLExGesMuKUeo3+1+1vTQ==}
+
+  '@revstackhq/providers-core@0.2.0':
+    resolution: {integrity: sha512-8UY4/oATkrmkHN7BJ0JOByUwbDwsaxTv4LQu6W2RRVihacc+CFnH6pSfFjg2EBL+RKCrmfaqIiSUZ94n5/X21A==}
 
   '@rollup/rollup-android-arm-eabi@4.57.1':
     resolution: {integrity: sha512-A6ehUVSiSaaliTxai040ZpZ2zTevHYbvu/lDoeAteHI8QnaosIzm4qwtezfRg1jOYaUmnzLX1AOD6Z+UJjtifg==}
@@ -2243,6 +2252,12 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
+
+  '@revstackhq/provider-stripe@0.2.1':
+    dependencies:
+      '@revstackhq/providers-core': 0.2.0
+
+  '@revstackhq/providers-core@0.2.0': {}
 
   '@rollup/rollup-android-arm-eabi@4.57.1':
     optional: true

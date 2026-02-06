@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/provider-stripe",
-  "version": "0.2.1",
+  "version": "0.0.0-dev-20260206234750",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",

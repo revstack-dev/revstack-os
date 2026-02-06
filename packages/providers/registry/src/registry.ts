@@ -3,8 +3,9 @@ import { ProviderManifest } from "@revstackhq/providers-core";
 
 const loaders: Record<string, ProviderLoader> = {};
 
-const builtInProviders: Record<string, string> = {
-  stripe: "@revstackhq/provider-stripe",
+const builtInProviders: Record<string, ProviderLoader> = {
+  stripe: () =>
+    import("@revstackhq/provider-stripe") as unknown as ReturnType<ProviderLoader>,
 };
 
 export function registerProvider(slug: string, loader: ProviderLoader) {
@@ -24,11 +25,8 @@ export function listAvailableProviders(): string[] {
 }
 
 export function registerBuiltInProviders() {
-  for (const [slug, pkg] of Object.entries(builtInProviders)) {
-    registerProvider(
-      slug,
-      () => import(pkg) as unknown as ReturnType<ProviderLoader>,
-    );
+  for (const [slug, loader] of Object.entries(builtInProviders)) {
+    registerProvider(slug, loader);
   }
 }
 
@@ -42,7 +40,8 @@ export async function getProviderManifest(
     const module = await loader();
     return module.manifest;
   } catch (e) {
-    console.error(`Error loading manifest for ${slug}`, e);
+    console.error(`❌ Error loading manifest for provider: ${slug}`);
+    console.error(e);
     return null;
   }
 }
@@ -53,6 +52,5 @@ export async function getCatalog(): Promise<ProviderManifest[]> {
     slugs.map((slug) => getProviderManifest(slug)),
   );
 
-  // Filtramos los nulls por si alguno falló
   return manifests.filter((m): m is ProviderManifest => m !== null);
 }

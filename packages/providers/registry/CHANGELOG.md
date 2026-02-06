@@ -1,5 +1,24 @@
 # @revstackhq/providers-registry
 
+## 0.0.0-dev-20260206234750
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/provider-stripe@0.0.0-dev-20260206234750
+
+## 0.0.0-dev-20260206233446
+
+### Patch Changes
+
+- Refactor built-in provider registration to use explicit dynamic imports, resolving bundler analysis issues in Next.js/Webpack.
+
+## 0.2.2
+
+### Patch Changes
+
+- Export registry utility functions and catalog retrieval methods to public API.
+
 ## 0.2.1
 
 ### Patch Changes
