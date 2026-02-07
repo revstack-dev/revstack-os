@@ -1,11 +1,9 @@
 export { ProviderFactory } from "@/factory";
 export type { ProviderLoader, ProviderModule } from "@/types/loader";
 export {
-  registerProvider,
-  listAvailableProviders,
   listRegisteredProviders,
-  getCatalog,
+  registerProvider,
   getProviderLoader,
-  getProviderManifest,
-  registerBuiltInProviders,
+  buildCatalog,
+  loadManifest,
 } from "@/registry";

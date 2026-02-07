@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/providers-registry",
-  "version": "0.0.0-revert-to-index-20260207011336",
+  "version": "0.0.0-fix-registry-20260207024553",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
@@ -14,7 +14,6 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
-    "@revstackhq/provider-stripe": "workspace:*",
     "@revstackhq/providers-core": "workspace:*"
   },
   "devDependencies": {
@@ -26,7 +25,8 @@
     "eslint-plugin-turbo": "^2.7.1",
     "tsup": "^8.1.0",
     "typescript": "5.9.2",
-    "typescript-eslint": "^8.50.0"
+    "typescript-eslint": "^8.50.0",
+    "@revstackhq/provider-stripe": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

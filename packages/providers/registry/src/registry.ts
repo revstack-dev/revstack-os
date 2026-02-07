@@ -3,11 +3,6 @@ import { ProviderManifest } from "@revstackhq/providers-core";
 
 const loaders: Record<string, ProviderLoader> = {};
 
-const builtInProviders: Record<string, ProviderLoader> = {
-  stripe: () =>
-    import("@revstackhq/provider-stripe") as unknown as ReturnType<ProviderLoader>,
-};
-
 export function registerProvider(slug: string, loader: ProviderLoader) {
   loaders[slug] = loader;
 }
@@ -20,48 +15,34 @@ export function listRegisteredProviders(): string[] {
   return Object.keys(loaders).sort();
 }
 
-export function listAvailableProviders(): string[] {
-  return Object.keys(builtInProviders).sort();
-}
-
-export function registerBuiltInProviders() {
-  for (const [slug, loader] of Object.entries(builtInProviders)) {
-    registerProvider(slug, loader);
-  }
-}
-
-export async function getProviderManifest(
+export async function loadManifest(
   slug: string,
+  loader: ProviderLoader,
 ): Promise<ProviderManifest | null> {
-  const loader = getProviderLoader(slug);
-  if (!loader) return null;
-
   try {
     const module = await loader();
+    const raw = module as any;
 
-    if (module.manifest) {
-      return module.manifest;
+    if (raw.manifest) {
+      return raw.manifest;
     }
 
-    const rawModule = module as any;
-
-    if (rawModule.default && rawModule.default.manifest) {
-      return rawModule.default.manifest;
-    }
-
-    console.warn(`⚠️ Manifest not found for ${slug}`);
+    console.error(
+      `❌ Provider ${slug} violates the SDK standard: missing 'export const manifest'`,
+    );
     return null;
-  } catch (e) {
-    console.error(`❌ Error loading manifest for ${slug}:`, e);
+  } catch (error) {
+    console.error(`❌ Failed to load provider ${slug}:`, error);
     return null;
   }
 }
 
-export async function getCatalog(): Promise<ProviderManifest[]> {
-  const slugs = listRegisteredProviders();
-  const manifests = await Promise.all(
-    slugs.map((slug) => getProviderManifest(slug)),
+export async function buildCatalog(config: Record<string, ProviderLoader>) {
+  const results = await Promise.all(
+    Object.entries(config).map(async ([slug, loader]) => {
+      registerProvider(slug, loader);
+      return await loadManifest(slug, loader);
+    }),
   );
-
-  return manifests.filter((m): m is ProviderManifest => !!m);
+  return results.filter((m): m is ProviderManifest => m !== null);
 }
