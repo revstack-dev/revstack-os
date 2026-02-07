@@ -1,5 +1,42 @@
 # @revstackhq/providers-registry
 
+## 0.0.0-revert-to-index-20260207011336
+
+### Patch Changes
+
+- Enable 'sideEffects: true' in package.json to prevent Webpack tree-shaking from removing the 'manifest' export during dynamic imports.
+- Updated dependencies
+  - @revstackhq/provider-stripe@0.0.0-revert-to-index-20260207011336
+
+## 0.0.0-fix-exports-20260207010326
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/provider-stripe@0.0.0-fix-exports-20260207010326
+
+## 0.0.0-20260207005540
+
+### Patch Changes
+
+- Add static 'manifest' property to Provider class to prevent tree-shaking issues in dynamic imports.
+- Updated dependencies
+  - @revstackhq/provider-stripe@0.0.0-20260207005540
+
+## 0.0.0-fix-root-imports-20260207004846
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/provider-stripe@0.0.0-fix-root-imports-20260207004846
+
+## 0.0.0-fix-cache-20260207003251
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/provider-stripe@0.0.0-fix-cache-20260207003251
+
 ## 0.0.0-dev-20260207002607
 
 ### Patch Changes

@@ -39,12 +39,20 @@ export async function getProviderManifest(
   try {
     const module = await loader();
 
-    console.log(`📦 Debug ${slug} module keys:`, Object.keys(module));
+    if (module.manifest) {
+      return module.manifest;
+    }
 
-    return module.manifest;
+    const rawModule = module as any;
+
+    if (rawModule.default && rawModule.default.manifest) {
+      return rawModule.default.manifest;
+    }
+
+    console.warn(`⚠️ Manifest not found for ${slug}`);
+    return null;
   } catch (e) {
-    console.error(`❌ Error loading manifest for provider: ${slug}`);
-    console.error(e);
+    console.error(`❌ Error loading manifest for ${slug}:`, e);
     return null;
   }
 }

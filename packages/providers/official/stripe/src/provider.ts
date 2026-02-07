@@ -16,6 +16,8 @@ import {
 } from "@revstackhq/providers-core";
 
 export class StripeProvider extends BaseProvider {
+  static manifest = manifest;
+
   manifest: ProviderManifest = manifest;
 
   onInstall(ctx: ProviderContext, input: InstallInput): Promise<InstallResult> {

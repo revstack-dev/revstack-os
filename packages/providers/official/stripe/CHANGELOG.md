@@ -1,5 +1,35 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-revert-to-index-20260207011336
+
+### Patch Changes
+
+- Enable 'sideEffects: true' in package.json to prevent Webpack tree-shaking from removing the 'manifest' export during dynamic imports.
+
+## 0.0.0-fix-exports-20260207010326
+
+### Patch Changes
+
+- Explicitly assign static manifest to Provider class in entry point and consolidate package.json exports to ensure availability in Next.js runtime.
+
+## 0.0.0-20260207005540
+
+### Patch Changes
+
+- Add static 'manifest' property to Provider class to prevent tree-shaking issues in dynamic imports.
+
+## 0.0.0-fix-root-imports-20260207004846
+
+### Patch Changes
+
+- Refactor package entry point to replace path aliases with relative imports and use explicit exports, fixing module resolution issues in Next.js.
+
+## 0.0.0-fix-cache-20260207003251
+
+### Patch Changes
+
+- Migrate build script to tsup.config.ts and rename output artifact to 'provider.js' to resolve caching collisions in Next.js.
+
 ## 0.0.0-dev-20260207002607
 
 ### Patch Changes

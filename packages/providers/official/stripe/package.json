@@ -1,10 +1,20 @@
 {
   "name": "@revstackhq/provider-stripe",
-  "version": "0.0.0-dev-20260207002607",
+  "version": "0.0.0-revert-to-index-20260207011336",
   "private": false,
   "type": "module",
+  "sideEffects": true,
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
     "assets"
@@ -13,13 +23,6 @@
     "build": "tsup src/index.ts --format esm --dts --clean --publicDir assets",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\""
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
   },
   "dependencies": {
     "@revstackhq/providers-core": "workspace:*"
