@@ -38,6 +38,9 @@ export async function getProviderManifest(
 
   try {
     const module = await loader();
+
+    console.log(`📦 Debug ${slug} module keys:`, Object.keys(module));
+
     return module.manifest;
   } catch (e) {
     console.error(`❌ Error loading manifest for provider: ${slug}`);
@@ -52,5 +55,5 @@ export async function getCatalog(): Promise<ProviderManifest[]> {
     slugs.map((slug) => getProviderManifest(slug)),
   );
 
-  return manifests.filter((m): m is ProviderManifest => m !== null);
+  return manifests.filter((m): m is ProviderManifest => !!m);
 }

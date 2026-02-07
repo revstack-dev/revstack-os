@@ -1,5 +1,18 @@
 # @revstackhq/providers-registry
 
+## 0.0.0-dev-20260207002607
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/provider-stripe@0.0.0-dev-20260207002607
+
+## 0.0.0-dev-20260206235227
+
+### Patch Changes
+
+- Fix catalog filtering logic to properly exclude undefined manifests and prevent runtime errors during provider loading.
+
 ## 0.0.0-dev-20260206234750
 
 ### Patch Changes

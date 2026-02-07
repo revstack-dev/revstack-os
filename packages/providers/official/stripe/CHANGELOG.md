@@ -1,5 +1,11 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260207002607
+
+### Patch Changes
+
+- Add 'exports' field to package.json to correctly expose ESM entry points and types for Next.js 13+ App Router compatibility.
+
 ## 0.0.0-dev-20260206234750
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/providers-registry",
-  "version": "0.0.0-dev-20260206234750",
+  "version": "0.0.0-dev-20260207002607",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
