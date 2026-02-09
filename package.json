@@ -10,7 +10,9 @@
     "smoke": "node scripts/smoke-cli.js",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "publish-packages": "turbo run build && changeset publish"
+    "publish-packages": "turbo run build && changeset publish",
+    "version-packages:dev": "changeset version --snapshot dev",
+    "publish-packages:dev": "turbo run build && changeset publish --tag dev"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",

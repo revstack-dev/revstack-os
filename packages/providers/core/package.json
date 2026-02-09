@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/providers-core",
-  "version": "0.2.0",
+  "version": "0.0.0-dev-20260209034148",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",

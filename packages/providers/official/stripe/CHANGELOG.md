@@ -1,5 +1,22 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260209034954
+
+### Patch Changes
+
+- fix: exclude smoke test files from production build artifacts to prevent runtime errors
+
+## 0.0.0-dev-20260209034148
+
+### Minor Changes
+
+- feat: implement provider uninstall cleanup, shared testing tools, and robust Stripe webhook handling.
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260209034148
+
 ## 0.0.0-split-stripe-provider-files-20260207030110
 
 ### Patch Changes

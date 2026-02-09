@@ -1,5 +1,12 @@
 # @revstackhq/providers-registry
 
+## 0.0.0-dev-20260209034148
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260209034148
+
 ## 0.0.0-fix-registry-20260207024553
 
 ### Patch Changes
