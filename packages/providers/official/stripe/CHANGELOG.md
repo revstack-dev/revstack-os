@@ -1,5 +1,11 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-split-stripe-provider-files-20260207030110
+
+### Patch Changes
+
+- Refactor internal file structure to separate manifest definition from provider logic using barrel exports, improving code maintainability.
+
 ## 0.0.0-fix-registry-20260207024553
 
 ### Patch Changes

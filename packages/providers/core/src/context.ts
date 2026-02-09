@@ -18,4 +18,9 @@ export interface ProviderContext {
    * Indicates if the operation is running in Sandbox/Test mode.
    */
   isTestMode: boolean;
+
+  /**
+   * Optional: Idempotency key for duplicate request prevention.
+   */
+  idempotencyKey?: string;
 }

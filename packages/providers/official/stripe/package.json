@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/provider-stripe",
-  "version": "0.0.0-fix-registry-20260207024553",
+  "version": "0.0.0-split-stripe-provider-files-20260207030110",
   "private": false,
   "type": "module",
   "sideEffects": true,
@@ -21,21 +21,24 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean --publicDir assets --no-splitting",
     "check-types": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint \"src/**/*.{ts,tsx}\""
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "dev:smoke": "tsup src/smoke.ts --format esm --clean && node --input-type=module -e \"import('./dist/smoke.js').then(async (m)=>{ await m.run({ method: process.env.METHOD || 'onInstall' }); }).catch((e)=>{ console.error(e); process.exit(1); })\""
   },
   "dependencies": {
-    "@revstackhq/providers-core": "workspace:*"
+    "@revstackhq/providers-core": "workspace:*",
+    "dotenv": "^17.2.4",
+    "stripe": "^20.3.1"
   },
   "devDependencies": {
-    "typescript": "5.9.2",
-    "tsup": "^8.1.0",
-    "eslint": "^9.39.1",
     "@eslint/js": "^9.39.1",
-    "typescript-eslint": "^8.50.0",
+    "@revstackhq/eslint-config": "workspace:*",
+    "@types/node": "^20.11.30",
+    "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-turbo": "^2.7.1",
-    "@revstackhq/eslint-config": "workspace:*",
-    "@types/node": "^20.11.30"
+    "tsup": "^8.1.0",
+    "typescript": "5.9.2",
+    "typescript-eslint": "^8.50.0"
   },
   "publishConfig": {
     "access": "public"

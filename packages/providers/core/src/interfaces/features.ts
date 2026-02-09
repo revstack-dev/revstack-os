@@ -1,9 +1,3 @@
-/**
- * src/interfaces/features.ts
- * * Defines the specific capabilities a provider can implement.
- * This adheres to the Interface Segregation Principle.
- */
-
 import { ProviderContext } from "@/context";
 import {
   CreatePaymentInput,
@@ -12,52 +6,55 @@ import {
   SubscriptionResult,
   CheckoutSessionInput,
   CheckoutSessionResult,
+  Subscription,
+  CreateCustomerInput,
+  Customer,
+  UpdateCustomerInput,
+  PaymentMethod,
+  RefundPaymentInput,
+  Payment,
+  PaginationOptions,
+  PaginatedResult,
 } from "@/types/models";
 
-/**
- * Contract for providers that support one-time payments.
- */
 export interface IPaymentFeature {
   createPayment(
     ctx: ProviderContext,
     input: CreatePaymentInput,
   ): Promise<PaymentResult>;
-  getPayment(ctx: ProviderContext, id: string): Promise<PaymentResult>;
-  // refundPayment(...): Promise<...>; // Future extension
+  getPayment(ctx: ProviderContext, id: string): Promise<Payment>;
+  refundPayment(
+    ctx: ProviderContext,
+    input: RefundPaymentInput,
+  ): Promise<Payment>;
+  // Optional: List payments
+  listPayments?(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<PaginatedResult<Payment>>;
 }
 
-/**
- * Contract for providers that support native recurring billing.
- * (e.g., Stripe, Paddle, but NOT simple bank transfers).
- */
 export interface ISubscriptionFeature {
   createSubscription(
     ctx: ProviderContext,
     input: CreateSubscriptionInput,
   ): Promise<SubscriptionResult>;
-
   cancelSubscription(
     ctx: ProviderContext,
     id: string,
     reason?: string,
   ): Promise<SubscriptionResult>;
-
   pauseSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string,
   ): Promise<SubscriptionResult>;
-
   resumeSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string,
   ): Promise<SubscriptionResult>;
+  getSubscription(ctx: ProviderContext, id: string): Promise<Subscription>;
 }
 
-/**
- * Contract for providers that offer a hosted checkout page.
- */
 export interface ICheckoutFeature {
   createCheckoutSession(
     ctx: ProviderContext,
@@ -65,13 +62,36 @@ export interface ICheckoutFeature {
   ): Promise<CheckoutSessionResult>;
 }
 
+export interface ICustomerFeature {
+  createCustomer(
+    ctx: ProviderContext,
+    input: CreateCustomerInput,
+  ): Promise<Customer>;
+  updateCustomer(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateCustomerInput,
+  ): Promise<Customer>;
+  deleteCustomer(ctx: ProviderContext, id: string): Promise<boolean>;
+  getCustomer(ctx: ProviderContext, id: string): Promise<Customer>;
+}
+
+export interface IPaymentMethodFeature {
+  listPaymentMethods(
+    ctx: ProviderContext,
+    customerId: string,
+  ): Promise<PaymentMethod[]>;
+  deletePaymentMethod(ctx: ProviderContext, id: string): Promise<boolean>;
+}
+
 /**
- * The unified contract that all Revstack Providers must technically satisfy.
- * * Even if a provider doesn't support a feature, it must implement the interface
- * (usually by throwing a 'Not Implemented' error via the BaseProvider).
+ * Unified interface that all providers must satisfy.
+ * (Even if they just throw 'Not Implemented' errors for unsupported features).
  */
 export interface IProvider
-  extends IPaymentFeature, ISubscriptionFeature, ICheckoutFeature {
-  // Common lifecycle methods or utility methods can be defined here if needed,
-  // but usually those are handled by the Abstract Base Class.
-}
+  extends
+    IPaymentFeature,
+    ISubscriptionFeature,
+    ICheckoutFeature,
+    ICustomerFeature,
+    IPaymentMethodFeature {}

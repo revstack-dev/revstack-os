@@ -5,7 +5,7 @@
 
 import { ProviderManifest } from "@/manifest";
 import { ProviderContext } from "@/context";
-import { InstallInput, InstallResult } from "@/types/lifecycle";
+import { InstallInput, InstallResult, UninstallInput } from "@/types/lifecycle";
 import { RevstackEvent, WebhookResponse } from "@/types/events";
 import { IProvider } from "@/interfaces/features";
 import {
@@ -15,6 +15,15 @@ import {
   SubscriptionResult,
   CheckoutSessionInput,
   CheckoutSessionResult,
+  CreateCustomerInput,
+  Customer,
+  PaginatedResult,
+  PaginationOptions,
+  Payment,
+  PaymentMethod,
+  RefundPaymentInput,
+  Subscription,
+  UpdateCustomerInput,
 } from "@/types/models";
 
 /**
@@ -23,6 +32,52 @@ import {
  * Specific providers (e.g., Stripe) will override only the methods they actually support.
  */
 export abstract class BaseProvider implements IProvider {
+  getPayment(ctx: ProviderContext, id: string): Promise<Payment> {
+    throw new Error("Method not implemented.");
+  }
+  refundPayment(
+    ctx: ProviderContext,
+    input: RefundPaymentInput,
+  ): Promise<Payment> {
+    throw new Error("Method not implemented.");
+  }
+  listPayments?(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<PaginatedResult<Payment>> {
+    throw new Error("Method not implemented.");
+  }
+  getSubscription(ctx: ProviderContext, id: string): Promise<Subscription> {
+    throw new Error("Method not implemented.");
+  }
+  createCustomer(
+    ctx: ProviderContext,
+    input: CreateCustomerInput,
+  ): Promise<Customer> {
+    throw new Error("Method not implemented.");
+  }
+  updateCustomer(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateCustomerInput,
+  ): Promise<Customer> {
+    throw new Error("Method not implemented.");
+  }
+  deleteCustomer(ctx: ProviderContext, id: string): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  getCustomer(ctx: ProviderContext, id: string): Promise<Customer> {
+    throw new Error("Method not implemented.");
+  }
+  listPaymentMethods(
+    ctx: ProviderContext,
+    customerId: string,
+  ): Promise<PaymentMethod[]> {
+    throw new Error("Method not implemented.");
+  }
+  deletePaymentMethod(ctx: ProviderContext, id: string): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
   /**
    * The static manifest definition.
    * Defines capabilities, metadata, and config schema (UI).
@@ -48,6 +103,21 @@ export abstract class BaseProvider implements IProvider {
     input: InstallInput,
   ): Promise<InstallResult>;
 
+  /**
+   * Called when a merchant uninstalls this provider.
+   * * RESPONSIBILITY:
+   * 1. Instantiate the provider SDK with the input config.
+   * 2. Validate credentials (e.g., make a 'ping' or 'get balance' request).
+   * 3. Return the success status.
+   * * @param ctx - The execution context (includes environment info).
+   * @param input - The input data provided by the user in the UI.
+   * @returns The success status.
+   */
+  abstract onUninstall(
+    ctx: ProviderContext,
+    input: UninstallInput,
+  ): Promise<boolean>;
+
   // ===========================================================================
   // WEBHOOK METHODS
   // ===========================================================================
@@ -62,6 +132,7 @@ export abstract class BaseProvider implements IProvider {
    * @param secret - The webhook signing secret stored in the DB.
    */
   abstract verifyWebhookSignature(
+    ctx: ProviderContext,
     payload: string | Buffer,
     headers: Record<string, string | string[] | undefined>,
     secret: string,
@@ -100,15 +171,6 @@ export abstract class BaseProvider implements IProvider {
   ): Promise<PaymentResult> {
     throw new Error(
       `Provider '${this.manifest.slug}' does not support createPayment.`,
-    );
-  }
-
-  /**
-   * Retrieve details of a payment by its ID.
-   */
-  async getPayment(ctx: ProviderContext, id: string): Promise<PaymentResult> {
-    throw new Error(
-      `Provider '${this.manifest.slug}' does not support getPayment.`,
     );
   }
 

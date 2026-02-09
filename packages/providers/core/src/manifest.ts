@@ -31,6 +31,18 @@ export interface ConfigFieldDefinition {
   options?: { label: string; value: string }[];
 }
 
+export interface DataFieldDefinition {
+  /**
+   * If true, the value of this field will be encrypted in the DB.
+   */
+  secure: boolean;
+
+  /**
+   * Description for internal documentation (optional)
+   */
+  description?: string;
+}
+
 /**
  * The Provider Manifest.
  * Acts as the source of truth for the provider's metadata and capabilities.
@@ -86,6 +98,12 @@ export interface ProviderManifest {
    * Key is the internal config key (e.g., 'apiKey').
    */
   configSchema: Record<string, ConfigFieldDefinition>;
+
+  /**
+   * Defines the fields that the provider generates and stores internally (Outputs).
+   * The Core uses this to know which fields to encrypt in the 'data' column.
+   */
+  dataSchema?: Record<string, DataFieldDefinition>;
 
   /**
    * What this provider can do. Used for feature flagging in the core.
