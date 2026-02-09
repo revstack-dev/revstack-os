@@ -1,123 +1,83 @@
 import { StripeProvider } from "@/provider";
-import {
-  InstallInput,
-  ProviderContext,
-  UninstallInput,
-} from "@revstackhq/providers-core";
+import { ProviderContext, runSmoke } from "@revstackhq/providers-core";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config({ path: ".env.test" });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-export type SmokeContext = {
-  provider: any;
-};
+dotenv.config({ path: path.resolve(__dirname, "../.env.test") });
 
-export type SmokeScenario = (context: SmokeContext) => Promise<unknown>;
-
-export function getSmokeContext(): SmokeContext {
-  const provider = new StripeProvider();
-  return { provider };
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error("❌ Missing STRIPE_SECRET_KEY in .env.test");
+  process.exit(1);
 }
 
-export const scenarios: Record<string, SmokeScenario> = {
-  onInstall: async ({ provider }) =>
-    provider.onInstall(onInstallParams.ctx, onInstallParams.input),
-  onUninstall: async ({ provider }) =>
-    provider.onUninstall(onUninstallParams.ctx, onUninstallParams.input),
-  createPayment: async ({ provider }) =>
-    provider.createPayment({ amount: 1000, currency: "USD" } as any),
-  getPayment: async ({ provider }) => provider.getPayment("pay_test_id"),
-  createSubscription: async ({ provider }) =>
-    provider.createSubscription({
-      mode: "native",
-      customerId: "cus_123",
-    } as any),
-  cancelSubscription: async ({ provider }) =>
-    provider.cancelSubscription("sub_test_id", "user_request"),
-  pauseSubscription: async ({ provider }) =>
-    provider.pauseSubscription("sub_test_id", "trial_pause"),
-  resumeSubscription: async ({ provider }) =>
-    provider.resumeSubscription("sub_test_id", "user_request"),
-  createCheckoutSession: async ({ provider }) =>
-    provider.createCheckoutSession({
-      amount: 1000,
-      currency: "USD",
-    } as any),
-  verifyWebhookSignature: async ({ provider }) =>
-    provider.verifyWebhookSignature(
-      {},
-      "{}",
-      { "stripe-signature": process.env.STRIPE_WEBHOOK_SIGNATURE! },
-      process.env.STRIPE_WEBHOOK_SECRET!,
-    ),
-  parseWebhookEvent: async ({ provider }) => provider.parseWebhookEvent({}),
-  getWebhookResponse: async ({ provider }) => provider.getWebhookResponse(),
-};
+const provider = new StripeProvider();
 
-export type RunInput = {
-  method: string;
-  configOverrides?: Partial<ProviderContext["config"]>;
-};
-
-export async function run(input: RunInput) {
-  const context = getSmokeContext();
-
-  if (input.method === "list") {
-    const methods = Object.keys(scenarios).sort();
-    console.log(JSON.stringify({ ok: true, methods }, null, 2));
-    return;
-  }
-
-  const scenario = scenarios[input.method];
-  if (scenario) {
-    const result = await scenario(context);
-    console.log(
-      JSON.stringify({ ok: true, method: input.method, result }, null, 2),
-    );
-    return;
-  }
-
-  console.error(
-    JSON.stringify(
-      {
-        ok: false,
-        method: input.method,
-        error: `Scenario '${input.method}' not found`,
-      },
-      null,
-      2,
-    ),
-  );
-  throw new Error(`Scenario '${input.method}' not found`);
-}
-
-const DEFAULT_CONTEXT = {
-  traceId: "smoke-trace-id",
-  idempotencyKey: "smoke-idempotency-key",
+const ctx: ProviderContext = {
+  isTestMode: true,
+  traceId: `smoke-${Date.now()}`,
+  idempotencyKey: `idem-${Date.now()}`,
   config: {
     apiKey: process.env.STRIPE_SECRET_KEY,
   },
-  isTestMode: true,
-} as ProviderContext;
-
-export const onInstallParams = {
-  ctx: DEFAULT_CONTEXT,
-  input: {
-    webhookUrl: process.env.STRIPE_WEBHOOK_URL as string,
-    config: {
-      apiKey: process.env.STRIPE_SECRET_KEY,
-    },
-  } as InstallInput,
 };
 
-export const onUninstallParams = {
-  ctx: DEFAULT_CONTEXT,
-  input: {
-    config: {
-      apiKey: process.env.STRIPE_SECRET_KEY,
-    },
-    data: {
-      webhookEndpointId: process.env.STRIPE_WEBHOOK_ENDPOINT_ID!,
-    },
-  } as UninstallInput,
+const FIXTURES = {
+  webhookUrl: process.env.STRIPE_WEBHOOK_URL!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  webhookEndpointId: process.env.STRIPE_WEBHOOK_ENDPOINT_ID!,
+  customerId: "cus_Rlg...",
+  paymentMethodId: "pm_card_visa",
+  subscriptionId: "sub_1Q...",
+  paymentId: "pi_3Q...",
 };
+
+runSmoke({
+  provider,
+  ctx,
+  scenarios: {
+    onInstall: async (ctx) =>
+      provider.onInstall(ctx, {
+        webhookUrl: FIXTURES.webhookUrl,
+        config: ctx.config,
+      }),
+
+    onUninstall: async (ctx) =>
+      provider.onUninstall(ctx, {
+        config: ctx.config,
+        data: { webhookEndpointId: FIXTURES.webhookEndpointId },
+      }),
+
+    createPayment: async (ctx) =>
+      provider.createPayment(ctx, {
+        amount: 2000,
+        currency: "USD",
+        customerId: FIXTURES.customerId,
+        description: "Smoke Test from CLI",
+        capture: true,
+      }),
+
+    getPayment: async (ctx) => provider.getPayment(ctx, FIXTURES.paymentId),
+
+    createSubscription: async (ctx) =>
+      provider.createSubscription(ctx, {
+        customerId: FIXTURES.customerId,
+        priceId: "price_1Q...",
+      }),
+
+    cancelSubscription: async (ctx) =>
+      provider.cancelSubscription(ctx, FIXTURES.subscriptionId),
+
+    verifyWebhookSignature: async (ctx) =>
+      provider.verifyWebhookSignature(
+        ctx,
+        JSON.stringify({ id: "evt_test", type: "payment_intent.succeeded" }),
+        { "stripe-signature": "t=123,v1=bad_signature" },
+        FIXTURES.webhookSecret,
+      ),
+  },
+  manifest: StripeProvider.manifest,
+});

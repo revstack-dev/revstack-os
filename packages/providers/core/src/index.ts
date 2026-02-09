@@ -10,3 +10,4 @@ export * from "@/base";
 export * from "@/context";
 export * from "@/lib/config-validator";
 export * from "@/utils/crypto";
+export * from "@/smoke-runner";

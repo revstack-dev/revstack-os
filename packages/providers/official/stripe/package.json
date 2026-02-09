@@ -22,7 +22,7 @@
     "build": "tsup src/index.ts --format esm --dts --clean --publicDir assets --no-splitting",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "dev:smoke": "tsup src/smoke.ts --format esm --clean && node --input-type=module -e \"import('./dist/smoke.js').then(async (m)=>{ await m.run({ method: process.env.METHOD || 'onInstall' }); }).catch((e)=>{ console.error(e); process.exit(1); })\""
+    "dev:smoke": "tsx src/smoke.ts"
   },
   "dependencies": {
     "@revstackhq/providers-core": "workspace:*",
