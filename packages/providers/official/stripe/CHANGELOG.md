@@ -1,5 +1,11 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260209035324
+
+### Patch Changes
+
+- fix: rebuild package to include missing distribution files from previous release
+
 ## 0.0.0-dev-20260209034954
 
 ### Patch Changes
