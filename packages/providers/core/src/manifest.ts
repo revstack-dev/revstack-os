@@ -131,9 +131,6 @@ export interface ProviderManifest {
   /** Short description displayed in the marketplace card. */
   description?: string;
 
-  /** URL to the provider's logo */
-  logoUrl?: string;
-
   /** The organization or developer maintaining this provider. */
   author?: string;
 

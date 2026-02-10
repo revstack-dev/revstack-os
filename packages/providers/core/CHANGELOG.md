@@ -1,5 +1,11 @@
 # @revstackhq/providers-core
 
+## 0.0.0-dev-20260210021739
+
+### Minor Changes
+
+- feat: implement robust provider manifest schema with engine requirements and input validation
+
 ## 0.0.0-dev-20260210020419
 
 ### Minor Changes

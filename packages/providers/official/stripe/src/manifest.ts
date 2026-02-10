@@ -4,8 +4,6 @@ export const manifest: ProviderManifest = {
   name: "Stripe",
   slug: "stripe",
   version: "1.0.0",
-  logoUrl:
-    "https://cdn.jsdelivr.net/npm/@revstackhq/provider-stripe/assets/logo.svg",
   category: ProviderCategory.Card,
   engine: {
     revstack: "^1.0.0",
@@ -16,7 +14,7 @@ export const manifest: ProviderManifest = {
     logo: "https://cdn.jsdelivr.net/npm/@revstackhq/provider-stripe/assets/logo.svg",
   },
   status: "beta",
-  dependencies: ["stripe"],
+  dependencies: [],
   hidden: false,
   pricing: {
     model: "transactional",
@@ -74,6 +72,11 @@ export const manifest: ProviderManifest = {
       type: "password",
       secure: true,
       required: true,
+      description:
+        "The secret key used to authenticate requests to the Stripe API. This is required to perform any operations on behalf of the connected account.",
+      pattern: "^sk_(test|live)_[a-zA-Z0-9]+$",
+      errorMessage:
+        "Invalid Secret Key. It must start with 'sk_test_' or 'sk_live_' followed by the alphanumeric key.",
     },
   },
   dataSchema: {
