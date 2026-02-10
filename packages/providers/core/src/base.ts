@@ -1,8 +1,3 @@
-/**
- * src/base.ts
- * * The Foundation of the Provider Development Kit (PDK).
- */
-
 import { ProviderManifest } from "@/manifest";
 import { ProviderContext } from "@/context";
 import { InstallInput, InstallResult, UninstallInput } from "@/types/lifecycle";

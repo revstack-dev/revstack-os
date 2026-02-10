@@ -1,6 +1,63 @@
 import { ProviderCapabilities } from "@/types/capabilities";
 import { ProviderCategory } from "@/types/categories";
 
+export interface ProviderEngine {
+  /**
+   * Semver range of the Revstack Core required to run this plugin.
+   * Example: "^1.0.0" or ">=2.0.0"
+   */
+  revstack: string;
+
+  /**
+   * Optional Node.js version requirement.
+   * Example: ">=18.0.0"
+   */
+  node?: string;
+}
+
+export interface ProviderPricing {
+  /**
+   * The pricing model of the external provider.
+   * Used to inform the merchant before they connect.
+   */
+  model: "subscription" | "transactional" | "freemium" | "free";
+
+  /**
+   * Human-readable fee structure.
+   * Example: "2.9% + $0.30 per transaction"
+   */
+  fees?: string;
+
+  /**
+   * Link to the official pricing page of the provider.
+   */
+  url?: string;
+}
+
+export interface ProviderMedia {
+  /**
+   * Square icon for lists and grids (SVG/PNG).
+   */
+  icon: string;
+
+  /**
+   * Full horizontal logo for headers and banners (SVG/PNG).
+   */
+  logo: string;
+
+  /**
+   * Large hero image for the plugin detail page.
+   */
+  banner?: string;
+
+  /**
+   * Array of URLs showing the plugin in action (dashboard, settings).
+   */
+  screenshots?: string[];
+}
+
+export type ProviderStatus = "stable" | "beta" | "deprecated" | "experimental";
+
 /**
  * Defines the input field type for the installation UI.
  */
@@ -29,6 +86,15 @@ export interface ConfigFieldDefinition {
   description?: string;
   /** Options for 'select' type */
   options?: { label: string; value: string }[];
+
+  /**
+   * Regex pattern string for validation.
+   * Example: "^sk_(test|live)_[a-zA-Z0-9]+$"
+   */
+  pattern?: string;
+
+  /** Custom error message if regex validation fails. */
+  errorMessage?: string;
 }
 
 export interface DataFieldDefinition {
@@ -109,4 +175,22 @@ export interface ProviderManifest {
    * What this provider can do. Used for feature flagging in the core.
    */
   capabilities: ProviderCapabilities;
+
+  /** Lifecycle status */
+  status: ProviderStatus;
+
+  /** If true, hidden from the public marketplace (private plugins) */
+  hidden?: boolean;
+
+  /** Compatibility requirements */
+  engine: ProviderEngine;
+
+  /** List of other plugin slugs required by this one */
+  dependencies?: string[];
+
+  /** Visual assets for the marketplace UI */
+  media: ProviderMedia;
+
+  /** Pricing info for the merchant */
+  pricing?: ProviderPricing;
 }

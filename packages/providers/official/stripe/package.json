@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/provider-stripe",
-  "version": "0.0.0-dev-20260209035324",
+  "version": "0.0.0-dev-20260210020419",
   "private": false,
   "type": "module",
   "sideEffects": true,

@@ -1,5 +1,11 @@
 # @revstackhq/providers-core
 
+## 0.0.0-dev-20260210020419
+
+### Minor Changes
+
+- enhance ProviderManifest with engine compatibility, pricing metadata, and validation schema.
+
 ## 0.0.0-dev-20260209034148
 
 ### Minor Changes

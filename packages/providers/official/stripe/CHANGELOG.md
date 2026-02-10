@@ -1,5 +1,16 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260210020419
+
+### Minor Changes
+
+- enhance ProviderManifest with engine compatibility, pricing metadata, and validation schema.
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260210020419
+
 ## 0.0.0-dev-20260209035324
 
 ### Patch Changes

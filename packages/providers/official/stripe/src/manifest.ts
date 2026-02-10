@@ -7,6 +7,22 @@ export const manifest: ProviderManifest = {
   logoUrl:
     "https://cdn.jsdelivr.net/npm/@revstackhq/provider-stripe/assets/logo.svg",
   category: ProviderCategory.Card,
+  engine: {
+    revstack: "^1.0.0",
+    node: ">=18.0.0",
+  },
+  media: {
+    icon: "https://cdn.jsdelivr.net/npm/@revstackhq/provider-stripe/assets/logo.svg",
+    logo: "https://cdn.jsdelivr.net/npm/@revstackhq/provider-stripe/assets/logo.svg",
+  },
+  status: "beta",
+  dependencies: ["stripe"],
+  hidden: false,
+  pricing: {
+    model: "transactional",
+    fees: "2.9% + $0.30 per transaction",
+    url: "https://stripe.com/pricing",
+  },
   capabilities: {
     customers: {
       supported: false,
