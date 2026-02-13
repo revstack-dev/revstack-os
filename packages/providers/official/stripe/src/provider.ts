@@ -87,6 +87,7 @@ export class StripeProvider extends BaseProvider {
         },
       };
     } catch (error: any) {
+      console.error(error);
       throw createError(
         RevstackErrorCode.UnknownError,
         "Failed to install provider",
@@ -108,6 +109,7 @@ export class StripeProvider extends BaseProvider {
       await stripe.webhookEndpoints.del(input.data.webhookEndpointId);
       return true;
     } catch (error: any) {
+      console.error(error);
       throw createError(
         RevstackErrorCode.UnknownError,
         "Failed to uninstall provider",

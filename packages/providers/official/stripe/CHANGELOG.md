@@ -1,5 +1,18 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260213012447
+
+### Patch Changes
+
+- log: add error logs to install, uninstall methods
+
+## 0.0.0-dev-20260213010809
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260213010809
+
 ## 0.0.0-dev-20260213005143
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @revstackhq/providers-core
 
+## 0.0.0-dev-20260213010809
+
+### Patch Changes
+
+- rebuild package
+
 ## 0.0.0-dev-20260213005143
 
 ### Patch Changes
