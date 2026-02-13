@@ -1,5 +1,17 @@
 # @revstackhq/providers-core
 
+## 0.0.0-dev-20260213005143
+
+### Patch Changes
+
+- fix: lifecycle types
+
+## 0.0.0-dev-20260213004903
+
+### Minor Changes
+
+- feat(core): define unified IProvider interface with lifecycle and webhook contracts
+
 ## 0.0.0-dev-20260210021739
 
 ### Minor Changes

@@ -1,4 +1,7 @@
 import { ProviderContext } from "@/context";
+import { ProviderManifest } from "@/manifest";
+import { RevstackEvent, WebhookResponse } from "@/types/events";
+import { InstallInput, InstallResult, UninstallInput } from "@/types/lifecycle";
 import {
   CreatePaymentInput,
   PaymentResult,
@@ -94,4 +97,38 @@ export interface IProvider
     ISubscriptionFeature,
     ICheckoutFeature,
     ICustomerFeature,
-    IPaymentMethodFeature {}
+    IPaymentMethodFeature {
+  // ==========================================================
+  // METADATA (Required by Core at runtime)
+  // ==========================================================
+  readonly manifest: ProviderManifest;
+
+  // ==========================================================
+  // LIFECYCLE (Installation/Uninstallation)
+  // ==========================================================
+  onInstall(ctx: ProviderContext, input: InstallInput): Promise<InstallResult>;
+  onUninstall(ctx: ProviderContext, input: UninstallInput): Promise<boolean>;
+
+  // ==========================================================
+  // WEBHOOKS (Required for endpoint processing)
+  // ==========================================================
+  /**
+   * Validates the authenticity of the incoming webhook request.
+   */
+  verifyWebhookSignature(
+    ctx: ProviderContext,
+    payload: string | Buffer,
+    headers: Record<string, string | string[] | undefined>,
+    secret: string,
+  ): Promise<boolean>;
+
+  /**
+   * Maps provider-specific payloads into standardized Revstack events.
+   */
+  parseWebhookEvent(payload: any): Promise<RevstackEvent | null>;
+
+  /**
+   * Returns the expected HTTP response for the provider's webhook acknowledgment.
+   */
+  getWebhookResponse(): Promise<WebhookResponse>;
+}
