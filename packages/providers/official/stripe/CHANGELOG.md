@@ -1,5 +1,11 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260214224022
+
+### Patch Changes
+
+- add dashboard url
+
 ## 0.0.0-dev-20260214223244
 
 ### Minor Changes

@@ -15,6 +15,7 @@ export const manifest: ProviderManifest = {
   },
   status: "beta",
   dependencies: [],
+  dashboardUrl: "https://dashboard.stripe.com",
   hidden: false,
   pricing: {
     model: "transactional",
