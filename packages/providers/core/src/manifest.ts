@@ -110,6 +110,58 @@ export interface DataFieldDefinition {
 }
 
 /**
+ * Defines the visual severity of the update in the Dashboard.
+ */
+export type UpdatePriority = "low" | "recommended" | "critical" | "security";
+
+/**
+ * Release and Migration Strategy.
+ * Controls how the system handles the transition from an old version to this new one.
+ */
+export interface ProviderRelease {
+  /**
+   * Semantic version of the provider package (e.g., '1.0.0').
+   * Vital for managing updates in the marketplace.
+   */
+  version: string;
+
+  /**
+   * Indicates if this update breaks compatibility with previous configurations.
+   * - `true`: "Hard Break". The integration stops (Status: Error) until the user updates the config.
+   * - `false`: "Soft Update". The integration continues working (Status: Healthy) using the old logic.
+   */
+  breaking: boolean;
+
+  /**
+   * The visual urgency level to display in the UI.
+   * - `low`: Grey/Blue badge. (Minor bug fixes)
+   * - `recommended`: Yellow badge. (New features)
+   * - `critical`: Red badge. (Mandatory API changes)
+   * - `security`: Flashing Red/Alert. (Vulnerabilities)
+   */
+  priority: UpdatePriority;
+
+  /**
+   * Short message (1-2 sentences) explaining the value of the update.
+   * Example: "Adds support for partial refunds and fixes a webhook timeout issue."
+   */
+  message: string;
+
+  /**
+   * Optional link to a detailed migration guide.
+   * Useful when the user needs to make manual changes in their Stripe/PayPal dashboard.
+   */
+  docsUrl?: string;
+
+  /**
+   * ISO 8601 Date when the previous version will stop working permanently.
+   * Useful for "Soft Updates" that eventually become mandatory.
+   * Example: "2026-12-31T23:59:59Z"
+   */
+  sunsetDate?: string;
+}
+
+/**
  * The Provider Manifest.
  * Acts as the source of truth for the provider's metadata and capabilities.
  */
@@ -139,6 +191,9 @@ export interface ProviderManifest {
 
   /** Link to the support page or repository issue tracker. */
   supportUrl?: string;
+
+  /** Link to the provider's dashboard for easy access to settings and metrics. */
+  dashboardUrl?: string;
 
   /** * List of supported ISO 3166-1 alpha-2 country codes (e.g., ['US', 'GB', 'BR']).
    * Use ['global'] if the provider works worldwide.
@@ -190,4 +245,6 @@ export interface ProviderManifest {
 
   /** Pricing info for the merchant */
   pricing?: ProviderPricing;
+
+  releases?: ProviderRelease[];
 }

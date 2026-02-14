@@ -1,120 +1,104 @@
+import { getClient } from "@/clients/factory";
 import { manifest } from "@/manifest";
 import {
   BaseProvider,
-  EventType,
+  CheckoutSessionInput,
+  CheckoutSessionResult,
+  CreateCustomerInput,
+  createError,
+  CreatePaymentInput,
+  CreateSubscriptionInput,
+  Customer,
   InstallInput,
   InstallResult,
+  PaginatedResult,
+  PaginationOptions,
+  Payment,
+  PaymentMethod,
+  PaymentResult,
   ProviderContext,
-  RevstackEvent,
+  RefundPaymentInput,
   RevstackErrorCode,
-  createError,
+  RevstackEvent,
+  Subscription,
+  SubscriptionResult,
   UninstallInput,
+  UpdateCustomerInput,
+  WebhookResponse,
 } from "@revstackhq/providers-core";
-import Stripe from "stripe";
-
-const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2026-01-28.clover";
 
 export class StripeProvider extends BaseProvider {
   static manifest = manifest;
   manifest = manifest;
 
-  private getStripeClient(apiKey: string) {
-    return new Stripe(apiKey, {
-      apiVersion: STRIPE_API_VERSION,
-      typescript: true,
-    });
-  }
-
   async onInstall(
-    _ctx: ProviderContext,
+    ctx: ProviderContext,
     input: InstallInput,
   ): Promise<InstallResult> {
-    if (!input.config.apiKey) {
-      throw createError(RevstackErrorCode.InvalidInput, "API Key is required");
-    }
+    const client = getClient(input.config);
+    const installVersion = manifest.version;
 
-    const stripe = this.getStripeClient(input.config.apiKey);
+    const isValid = await client.validateCredentials({
+      ...ctx,
+      config: input.config,
+    });
 
-    if (!input.webhookUrl) {
+    if (!isValid) {
       throw createError(
-        RevstackErrorCode.InvalidInput,
-        "Webhook URL is required",
+        RevstackErrorCode.InvalidCredentials,
+        "Failed to connect to provider. Please check your API Key / Secrets.",
       );
     }
 
-    try {
-      const webhooks = await stripe.webhookEndpoints.list({ limit: 100 });
+    let webhookData: Record<string, any> = {};
 
-      const existingWebhook = webhooks.data.find(
-        (wh) => wh.url === input.webhookUrl,
-      );
-
-      let webhookEndpoint;
-
-      const enabled_events: Stripe.WebhookEndpointCreateParams.EnabledEvent[] =
-        [
-          "payment_intent.succeeded",
-          "payment_intent.payment_failed",
-          "checkout.session.completed",
-          "charge.refunded",
-          "customer.subscription.created",
-          "customer.subscription.updated",
-          "customer.subscription.deleted",
-          "charge.dispute.created",
-          "charge.dispute.closed",
-        ];
-
-      if (existingWebhook) {
-        webhookEndpoint = await stripe.webhookEndpoints.update(
-          existingWebhook.id,
-          {
-            enabled_events,
-          },
+    if (client.setupWebhooks && input.webhookUrl) {
+      try {
+        const wh = await client.setupWebhooks(
+          { ...ctx, config: input.config },
+          input.webhookUrl,
         );
-      } else {
-        webhookEndpoint = await stripe.webhookEndpoints.create({
-          enabled_events,
-          url: input.webhookUrl,
-        });
-      }
 
-      return {
-        success: true,
-        data: {
-          webhookEndpointId: webhookEndpoint.id,
-          webhookSecret: webhookEndpoint.secret,
-          apiKey: input.config.apiKey,
-        },
-      };
-    } catch (error: any) {
-      console.error(error);
-      throw createError(
-        RevstackErrorCode.UnknownError,
-        "Failed to install provider",
-      );
+        if (!wh.success || !wh.data) {
+          throw createError(
+            RevstackErrorCode.UnknownError,
+            "Failed to setup webhooks in Stripe",
+          );
+        }
+
+        webhookData = {
+          webhookEndpointId: wh.data.webhookEndpointId,
+          webhookSecret: wh.data.webhookSecret,
+        };
+      } catch (error: any) {
+        console.warn("Webhook setup failed (non-fatal):", error.message);
+      }
     }
+
+    return {
+      success: true,
+      data: {
+        ...input.config,
+        ...webhookData,
+        _providerVersion: installVersion,
+      },
+    };
   }
 
   async onUninstall(
     ctx: ProviderContext,
     input: UninstallInput,
   ): Promise<boolean> {
-    if (!input.config.apiKey) {
-      throw createError(RevstackErrorCode.InvalidInput, "API Key is required");
-    }
+    const client = getClient(input.config);
 
-    const stripe = this.getStripeClient(input.config.apiKey);
-
-    try {
-      await stripe.webhookEndpoints.del(input.data.webhookEndpointId);
-      return true;
-    } catch (error: any) {
-      console.error(error);
-      throw createError(
-        RevstackErrorCode.UnknownError,
-        "Failed to uninstall provider",
-      );
+    if (client.removeWebhooks && input.data.webhookEndpointId) {
+      try {
+        await client.removeWebhooks(ctx, input.data.webhookEndpointId);
+      } catch (e) {
+        console.warn("Failed to remove webhook on uninstall:", e);
+      }
     }
+    return true;
   }
 
   async verifyWebhookSignature(
@@ -123,80 +107,255 @@ export class StripeProvider extends BaseProvider {
     headers: Record<string, string | string[] | undefined>,
     secret: string,
   ): Promise<boolean> {
-    const signatureHeader = headers["stripe-signature"];
+    const client = getClient(ctx.config);
 
-    if (!signatureHeader || !secret) return false;
-
-    const signature = Array.isArray(signatureHeader)
-      ? signatureHeader[0]
-      : signatureHeader;
-
-    if (!signature) return false;
-
-    const stripe = new Stripe(ctx.config.apiKey, {
-      apiVersion: STRIPE_API_VERSION,
-    });
-
-    try {
-      stripe.webhooks.constructEvent(payload, signature, secret);
-      return true;
-    } catch (err) {
-      console.error("Stripe signature verification failed:", err);
-      return false;
-    }
+    return client.verifyWebhookSignature(ctx, payload, headers, secret);
   }
 
   async parseWebhookEvent(payload: any): Promise<RevstackEvent | null> {
-    const event = payload as Stripe.Event;
-
-    if (!event || !event.type) return null;
-
-    const mappedType = EVENT_MAP[event.type as keyof typeof EVENT_MAP];
-
-    if (!mappedType) return null;
-
-    const resourceId = this.extractResourceId(event);
-
-    return {
-      type: mappedType,
-      providerEventId: event.id,
-      createdAt: new Date(event.created * 1000),
-      resourceId: resourceId || event.id,
-      originalPayload: payload,
-      metadata: {
-        stripeType: event.type,
-      },
-    };
+    const client = getClient({});
+    return client.parseWebhookEvent(payload);
   }
 
-  private extractResourceId(event: Stripe.Event): string | null {
-    const obj = event.data.object as any;
+  async getWebhookResponse(): Promise<WebhookResponse> {
+    return { statusCode: 200, body: { received: true } };
+  }
 
-    if (event.type.startsWith("customer.subscription")) return obj.id;
-    if (event.type.startsWith("payment_intent")) return obj.id;
-    if (event.type === "checkout.session.completed") return obj.id;
-    if (event.type.startsWith("charge.dispute"))
-      return obj.payment_intent || obj.charge;
+  async createPayment(
+    ctx: ProviderContext,
+    input: CreatePaymentInput,
+  ): Promise<PaymentResult> {
+    const client = getClient(ctx.config);
 
-    return obj.id || null;
+    if (!client.createPayment) {
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Create payment not supported",
+      );
+    }
+
+    return client.createPayment(ctx, input);
+  }
+
+  async getPayment(ctx: ProviderContext, id: string): Promise<Payment> {
+    const client = getClient(ctx.config);
+
+    if (!client.getPayment) {
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Get payment not supported",
+      );
+    }
+
+    return client.getPayment(ctx, id);
+  }
+
+  async refundPayment(
+    ctx: ProviderContext,
+    input: RefundPaymentInput,
+  ): Promise<Payment> {
+    const client = getClient(ctx.config);
+
+    if (!client.refundPayment) {
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Refunds not supported by this provider version",
+      );
+    }
+
+    return client.refundPayment(ctx, input);
+  }
+
+  async listPayments(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<PaginatedResult<Payment>> {
+    const client = getClient(ctx.config);
+
+    if (!client.listPayments)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "List payments not supported",
+      );
+
+    return client.listPayments(ctx, pagination);
+  }
+
+  async createSubscription(
+    ctx: ProviderContext,
+    input: CreateSubscriptionInput,
+  ): Promise<SubscriptionResult> {
+    const client = getClient(ctx.config);
+
+    if (!client.createSubscription)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Subscriptions not supported",
+      );
+
+    return client.createSubscription(ctx, input);
+  }
+
+  async getSubscription(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<Subscription> {
+    const client = getClient(ctx.config);
+
+    if (!client.getSubscription)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Get subscription not supported",
+      );
+
+    return client.getSubscription(ctx, id);
+  }
+
+  async cancelSubscription(
+    ctx: ProviderContext,
+    id: string,
+    reason?: string,
+  ): Promise<SubscriptionResult> {
+    const client = getClient(ctx.config);
+
+    if (!client.cancelSubscription)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Cancel subscription not supported",
+      );
+
+    return client.cancelSubscription(ctx, id, reason);
+  }
+
+  async pauseSubscription(
+    ctx: ProviderContext,
+    id: string,
+    reason?: string,
+  ): Promise<SubscriptionResult> {
+    const client = getClient(ctx.config);
+
+    if (!client.pauseSubscription)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Pause subscription not supported",
+      );
+
+    return client.pauseSubscription(ctx, id, reason);
+  }
+
+  async resumeSubscription(
+    ctx: ProviderContext,
+    id: string,
+    reason?: string,
+  ): Promise<SubscriptionResult> {
+    const client = getClient(ctx.config);
+
+    if (!client.resumeSubscription)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Resume subscription not supported",
+      );
+
+    return client.resumeSubscription(ctx, id, reason);
+  }
+
+  async createCheckoutSession(
+    ctx: ProviderContext,
+    input: CheckoutSessionInput,
+  ): Promise<CheckoutSessionResult> {
+    const client = getClient(ctx.config);
+
+    if (!client.createCheckoutSession)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Checkout not supported",
+      );
+
+    return client.createCheckoutSession(ctx, input);
+  }
+
+  async createCustomer(
+    ctx: ProviderContext,
+    input: CreateCustomerInput,
+  ): Promise<Customer> {
+    const client = getClient(ctx.config);
+
+    if (!client.createCustomer)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Customer management not supported",
+      );
+
+    return client.createCustomer(ctx, input);
+  }
+
+  async updateCustomer(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateCustomerInput,
+  ): Promise<Customer> {
+    const client = getClient(ctx.config);
+
+    if (!client.updateCustomer)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Customer update not supported",
+      );
+
+    return client.updateCustomer(ctx, id, input);
+  }
+
+  async deleteCustomer(ctx: ProviderContext, id: string): Promise<boolean> {
+    const client = getClient(ctx.config);
+
+    if (!client.deleteCustomer)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Customer deletion not supported",
+      );
+
+    return client.deleteCustomer(ctx, id);
+  }
+
+  async getCustomer(ctx: ProviderContext, id: string): Promise<Customer> {
+    const client = getClient(ctx.config);
+
+    if (!client.getCustomer)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Get customer not supported",
+      );
+
+    return client.getCustomer(ctx, id);
+  }
+
+  async listPaymentMethods(
+    ctx: ProviderContext,
+    customerId: string,
+  ): Promise<PaymentMethod[]> {
+    const client = getClient(ctx.config);
+
+    if (!client.listPaymentMethods)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "List payment methods not supported",
+      );
+
+    return client.listPaymentMethods(ctx, customerId);
+  }
+
+  async deletePaymentMethod(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<boolean> {
+    const client = getClient(ctx.config);
+
+    if (!client.deletePaymentMethod)
+      throw createError(
+        RevstackErrorCode.NotImplemented,
+        "Delete payment method not supported",
+      );
+
+    return client.deletePaymentMethod(ctx, id);
   }
 }
-
-export const EVENT_MAP: Record<string, EventType> = {
-  "checkout.session.completed": "PAYMENT_SUCCEEDED",
-
-  "payment_intent.succeeded": "PAYMENT_SUCCEEDED",
-  "payment_intent.payment_failed": "PAYMENT_FAILED",
-  "payment_intent.amount_capturable_updated": "PAYMENT_AUTHORIZED",
-
-  "charge.captured": "PAYMENT_CAPTURED",
-
-  "charge.refunded": "REFUND_PROCESSED",
-
-  "customer.subscription.created": "SUBSCRIPTION_CREATED",
-  "customer.subscription.updated": "SUBSCRIPTION_UPDATED",
-  "customer.subscription.deleted": "SUBSCRIPTION_CANCELED",
-
-  "charge.dispute.created": "DISPUTE_CREATED",
-  "charge.dispute.closed": "DISPUTE_RESOLVED",
-};

@@ -1,5 +1,11 @@
 # @revstackhq/providers-core
 
+## 0.0.0-dev-20260214223244
+
+### Minor Changes
+
+- arch: transition to hexagonal provider architecture with multi-release support
+
 ## 0.0.0-dev-20260213010809
 
 ### Patch Changes

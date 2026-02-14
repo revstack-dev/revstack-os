@@ -1,5 +1,16 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260214223244
+
+### Minor Changes
+
+- arch: transition to hexagonal provider architecture with multi-release support
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260214223244
+
 ## 0.0.0-dev-20260213012447
 
 ### Patch Changes
