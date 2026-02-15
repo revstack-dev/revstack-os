@@ -1,5 +1,11 @@
 # @revstackhq/providers-core
 
+## 0.0.0-dev-20260215075706
+
+### Minor Changes
+
+- feat: implement AsyncActionResult architecture, standardized error handling, expanded data models, and production-ready Stripe V1 provider
+
 ## 0.0.0-dev-20260214223244
 
 ### Minor Changes

@@ -1,69 +1,75 @@
 /**
- * Catálogo completo de errores estandarizados para Revstack.
- * Agrupados por dominio para facilitar su manejo en el Frontend/API.
+ * Comprehensive catalog of standardized errors for Revstack Core.
+ * Grouped by domain to facilitate handling in the Frontend and API layer.
  */
 export enum RevstackErrorCode {
   // --- 1. GENERIC & SYSTEM ---
   UnknownError = "unknown_error",
   InternalError = "internal_error",
-  NotImplemented = "not_implemented", // Para features opcionales no soportadas por un provider
+  NotImplemented = "not_implemented", // Optional feature not supported by a specific provider
   Timeout = "timeout",
+  ServiceUnavailable = "service_unavailable", // Core system is down or maintenance mode
   RateLimitExceeded = "rate_limit_exceeded",
 
   // --- 2. AUTHENTICATION & CONFIG ---
-  InvalidCredentials = "invalid_credentials", // API Key incorrecta
-  Unauthorized = "unauthorized", // No tiene permisos
-  MisconfiguredProvider = "misconfigured_provider", // Faltan campos en el dashboard
-  AccountSuspended = "account_suspended", // La cuenta del merchant en Stripe/etc está bloqueada
+  InvalidCredentials = "invalid_credentials", // Wrong API Key / Secret
+  Unauthorized = "unauthorized", // User/Merchant does not have permission
+  MisconfiguredProvider = "misconfigured_provider", // Missing required fields in dashboard
+  AccountSuspended = "account_suspended", // Merchant account at Stripe/PayPal is blocked or restricted
 
   // --- 3. INPUT VALIDATION ---
-  InvalidInput = "invalid_input",
+  InvalidInput = "invalid_input", // Generic validation failure
   MissingRequiredField = "missing_required_field",
   InvalidEmail = "invalid_email",
-  InvalidAmount = "invalid_amount", // Monto negativo o cero
-  InvalidCurrency = "invalid_currency", // Provider no soporta esa moneda
+  InvalidAmount = "invalid_amount", // Negative, zero, or incorrect precision
+  InvalidCurrency = "invalid_currency", // Provider does not support this ISO code
+  CurrencyMismatch = "currency_mismatch", // Trying to refund USD transaction with EUR
+  InvalidState = "invalid_state", // e.g. Trying to "Capture" a payment that is already "Succeeded"
 
   // --- 4. RESOURCES (CRUD) ---
   ResourceNotFound = "resource_not_found",
   ResourceAlreadyExists = "resource_already_exists",
-  IdempotencyKeyConflict = "idempotency_key_conflict",
+  IdempotencyKeyConflict = "idempotency_key_conflict", // Same key, different payload
 
   // --- 5. TRANSACTIONS (PAYMENTS) ---
-  PaymentFailed = "payment_failed", // Fallo genérico
-  CardDeclined = "card_declined", // El banco rechazó la tarjeta
-  InsufficientFunds = "insufficient_funds", // No hay saldo
+  PaymentFailed = "payment_failed", // Generic downstream failure
+  CardDeclined = "card_declined", // Bank rejected the card
+  InsufficientFunds = "insufficient_funds",
   ExpiredCard = "expired_card",
   IncorrectCvc = "incorrect_cvc",
-  AuthenticationRequired = "authentication_required", // Requiere 3D Secure / SCA
-  LimitExceeded = "limit_exceeded", // Límite de la tarjeta excedido
+  PaymentMethodMissing = "payment_method_missing", // Trying to charge without a source
+  PaymentMethodNotSupported = "payment_method_not_supported", // e.g. Amex not allowed
+  AuthenticationRequired = "authentication_required", // SCA / 3D Secure required
+  LimitExceeded = "limit_exceeded", // Velocity limit or card limit
   DuplicateTransaction = "duplicate_transaction",
 
   // --- 6. SUBSCRIPTIONS ---
   SubscriptionNotFound = "subscription_not_found",
   SubscriptionAlreadyActive = "subscription_already_active",
-  SubscriptionCancelled = "subscription_cancelled", // Intentar operar sobre una cancelada
+  SubscriptionPaused = "subscription_paused", // Cannot perform action because it is paused
+  SubscriptionCancelled = "subscription_cancelled", // Cannot perform action because it is canceled
   PlanNotFound = "plan_not_found",
 
   // --- 7. DISPUTES & REFUNDS ---
   RefundFailed = "refund_failed",
+  RefundAlreadyProcessed = "refund_already_processed",
   DisputeLost = "dispute_lost",
 
   // --- 8. PROVIDER SPECIFIC ---
-  ProviderUnavailable = "provider_unavailable", // Stripe está caído
-  ProviderRejected = "provider_rejected", // El provider rechazó la conexión (ej: riesgo alto)
+  ProviderUnavailable = "provider_unavailable", // Downstream API (Stripe) is down
+  ProviderRejected = "provider_rejected", // Provider refused connection (e.g. High Risk)
   WebhookSignatureVerificationFailed = "webhook_signature_verification_failed",
 }
 
 /**
- * Estructura del Error.
- * Extendemos la clase nativa 'Error' para mantener el stack trace
- * y permitir 'instanceof RevstackError'.
+ * Custom Error Structure.
+ * Extends native 'Error' to maintain stack traces and allow 'instanceof RevstackError'.
  */
 export class RevstackError extends Error {
   public readonly code: RevstackErrorCode;
-  public readonly provider?: string; // Slug del provider (ej: 'stripe')
-  public readonly cause?: any; // El error original del SDK (raw)
-  public readonly statusCode: number; // Sugerencia de HTTP Status Code
+  public readonly provider?: string; // Provider slug (e.g., 'stripe')
+  public readonly cause?: any; // Original raw error from the SDK
+  public readonly statusCode: number; // Suggested HTTP Status Code for API responses
   public readonly documentationUrl?: string;
 
   constructor(opts: {
@@ -75,7 +81,7 @@ export class RevstackError extends Error {
   }) {
     super(opts.message);
 
-    // Necesario para que 'instanceof' funcione en TS al transpilar a ES5
+    // Essential for 'instanceof' to work correctly in TypeScript when targeting ES5
     Object.setPrototypeOf(this, RevstackError.prototype);
     this.name = "RevstackError";
 
@@ -87,8 +93,8 @@ export class RevstackError extends Error {
   }
 
   /**
-   * Mapea el código de error interno a un HTTP Status Code estándar.
-   * Útil para que la API responda correctamente sin lógica extra en el controller.
+   * Maps internal error codes to standard HTTP Status Codes.
+   * This allows the API to respond correctly without extra logic in controllers.
    */
   private mapToStatusCode(code: RevstackErrorCode): number {
     switch (code) {
@@ -98,11 +104,16 @@ export class RevstackError extends Error {
       case RevstackErrorCode.InvalidEmail:
       case RevstackErrorCode.InvalidAmount:
       case RevstackErrorCode.InvalidCurrency:
-      case RevstackErrorCode.PaymentFailed: // Fallo de negocio, no del server
+      case RevstackErrorCode.CurrencyMismatch:
+      case RevstackErrorCode.PaymentFailed: // Business failure, not server error
       case RevstackErrorCode.CardDeclined:
       case RevstackErrorCode.InsufficientFunds:
       case RevstackErrorCode.ExpiredCard:
       case RevstackErrorCode.IncorrectCvc:
+      case RevstackErrorCode.PaymentMethodMissing:
+      case RevstackErrorCode.PaymentMethodNotSupported:
+      case RevstackErrorCode.RefundFailed:
+      case RevstackErrorCode.RefundAlreadyProcessed:
         return 400;
 
       // 401 Unauthorized
@@ -111,7 +122,7 @@ export class RevstackError extends Error {
       case RevstackErrorCode.WebhookSignatureVerificationFailed:
         return 401;
 
-      // 402 Payment Required (Especialmente útil para SCA/3DS)
+      // 402 Payment Required (Specific for SCA/3DS flows)
       case RevstackErrorCode.AuthenticationRequired:
         return 402;
 
@@ -126,11 +137,17 @@ export class RevstackError extends Error {
       case RevstackErrorCode.PlanNotFound:
         return 404;
 
-      // 409 Conflict
+      // 409 Conflict (State Machine Violations)
       case RevstackErrorCode.ResourceAlreadyExists:
       case RevstackErrorCode.IdempotencyKeyConflict:
       case RevstackErrorCode.SubscriptionAlreadyActive:
+      case RevstackErrorCode.InvalidState:
+      case RevstackErrorCode.SubscriptionCancelled:
         return 409;
+
+      // 422 Unprocessable Entity (Semantic errors)
+      case RevstackErrorCode.MisconfiguredProvider:
+        return 422;
 
       // 429 Too Many Requests
       case RevstackErrorCode.RateLimitExceeded:
@@ -140,20 +157,40 @@ export class RevstackError extends Error {
       case RevstackErrorCode.NotImplemented:
         return 501;
 
-      // 502 Bad Gateway (Culpa del provider)
+      // 502 Bad Gateway (Upstream error)
       case RevstackErrorCode.ProviderUnavailable:
       case RevstackErrorCode.Timeout:
         return 502;
 
-      // 500 Internal Server Error (Default)
+      // 503 Service Unavailable (System error)
+      case RevstackErrorCode.ServiceUnavailable:
+        return 503;
+
+      // 500 Internal Server Error (Default fallback)
       default:
         return 500;
     }
   }
+
+  /**
+   * Helper to ensure custom properties are serialized when sending via JSON/Network.
+   */
+  public toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+      code: this.code,
+      statusCode: this.statusCode,
+      provider: this.provider,
+      documentationUrl: this.documentationUrl,
+      // We often exclude 'cause' in production to avoid leaking sensitive stack traces
+      cause: process.env.NODE_ENV === "development" ? this.cause : undefined,
+    };
+  }
 }
 
 /**
- * Helper factory para compatibilidad con código funcional o uso rápido.
+ * Factory helper for functional compatibility or quick error generation.
  */
 export function createError(
   code: RevstackErrorCode,
@@ -165,8 +202,18 @@ export function createError(
 }
 
 /**
- * Type Guard para verificar si un error es de Revstack.
+ * Type Guard to check if an error is an instance of RevstackError.
  */
 export function isRevstackError(error: unknown): error is RevstackError {
   return error instanceof RevstackError;
+}
+
+export interface RevstackErrorResponse {
+  name: string;
+  message: string;
+  code: RevstackErrorCode;
+  statusCode: number;
+  provider?: string;
+  documentationUrl?: string;
+  cause?: any;
 }

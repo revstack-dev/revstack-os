@@ -1,13 +1,11 @@
 import {
   ProviderContext,
   CreatePaymentInput,
-  PaymentResult,
   RefundPaymentInput,
   Payment,
   PaginationOptions,
   PaginatedResult,
   CreateSubscriptionInput,
-  SubscriptionResult,
   Subscription,
   CheckoutSessionInput,
   CheckoutSessionResult,
@@ -17,93 +15,116 @@ import {
   PaymentMethod,
   RevstackEvent,
   InstallResult,
+  AsyncActionResult,
 } from "@revstackhq/providers-core";
 
 export interface ProviderClient {
-  validateCredentials(ctx: ProviderContext): Promise<boolean>;
+  validateCredentials(
+    ctx: ProviderContext,
+  ): Promise<AsyncActionResult<boolean>>;
 
   setupWebhooks?(
     ctx: ProviderContext,
     webhookUrl: string,
-  ): Promise<InstallResult>;
+  ): Promise<AsyncActionResult<InstallResult>>;
 
-  removeWebhooks?(ctx: ProviderContext, webhookId: string): Promise<boolean>;
+  removeWebhooks?(
+    ctx: ProviderContext,
+    webhookId: string,
+  ): Promise<AsyncActionResult<boolean>>;
 
   createPayment?(
     ctx: ProviderContext,
     input: CreatePaymentInput,
-  ): Promise<PaymentResult>;
+  ): Promise<AsyncActionResult<Payment>>;
 
-  getPayment?(ctx: ProviderContext, id: string): Promise<Payment>;
+  getPayment?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Payment>>;
 
   refundPayment?(
     ctx: ProviderContext,
     input: RefundPaymentInput,
-  ): Promise<Payment>;
+  ): Promise<AsyncActionResult<Payment>>;
 
   listPayments?(
     ctx: ProviderContext,
     pagination: PaginationOptions,
-  ): Promise<PaginatedResult<Payment>>;
+  ): Promise<AsyncActionResult<PaginatedResult<Payment>>>;
 
   createSubscription?(
     ctx: ProviderContext,
     input: CreateSubscriptionInput,
-  ): Promise<SubscriptionResult>;
+  ): Promise<AsyncActionResult<Subscription>>;
 
-  getSubscription?(ctx: ProviderContext, id: string): Promise<Subscription>;
+  getSubscription?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Subscription>>;
 
   cancelSubscription?(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<SubscriptionResult>;
+  ): Promise<AsyncActionResult<Subscription>>;
 
   pauseSubscription?(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<SubscriptionResult>;
+  ): Promise<AsyncActionResult<Subscription>>;
 
   resumeSubscription?(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<SubscriptionResult>;
+  ): Promise<AsyncActionResult<Subscription>>;
 
   createCheckoutSession?(
     ctx: ProviderContext,
     input: CheckoutSessionInput,
-  ): Promise<CheckoutSessionResult>;
+  ): Promise<AsyncActionResult<CheckoutSessionResult>>;
 
   createCustomer?(
     ctx: ProviderContext,
     input: CreateCustomerInput,
-  ): Promise<Customer>;
+  ): Promise<AsyncActionResult<Customer>>;
 
   updateCustomer?(
     ctx: ProviderContext,
     id: string,
     input: UpdateCustomerInput,
-  ): Promise<Customer>;
+  ): Promise<AsyncActionResult<Customer>>;
 
-  deleteCustomer?(ctx: ProviderContext, id: string): Promise<boolean>;
+  deleteCustomer?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<boolean>>;
 
-  getCustomer?(ctx: ProviderContext, id: string): Promise<Customer>;
+  getCustomer?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Customer>>;
 
   listPaymentMethods?(
     ctx: ProviderContext,
     customerId: string,
-  ): Promise<PaymentMethod[]>;
+  ): Promise<AsyncActionResult<PaymentMethod[]>>;
 
-  deletePaymentMethod?(ctx: ProviderContext, id: string): Promise<boolean>;
+  deletePaymentMethod?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<boolean>>;
 
   verifyWebhookSignature(
     ctx: ProviderContext,
     payload: string | Buffer,
     headers: Record<string, string | string[] | undefined>,
     secret: string,
-  ): Promise<boolean>;
+  ): Promise<AsyncActionResult<boolean>>;
 
-  parseWebhookEvent(payload: any): Promise<RevstackEvent | null>;
+  parseWebhookEvent(
+    payload: any,
+  ): Promise<AsyncActionResult<RevstackEvent | null>>;
 }

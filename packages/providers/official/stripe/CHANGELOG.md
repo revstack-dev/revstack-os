@@ -1,5 +1,16 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260215075706
+
+### Minor Changes
+
+- feat: implement AsyncActionResult architecture, standardized error handling, expanded data models, and production-ready Stripe V1 provider
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260215075706
+
 ## 0.0.0-dev-20260214224022
 
 ### Patch Changes

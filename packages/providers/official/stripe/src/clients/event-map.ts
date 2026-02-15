@@ -17,4 +17,17 @@ export const EVENT_MAP: Record<string, EventType> = {
 
   "charge.dispute.created": "DISPUTE_CREATED",
   "charge.dispute.closed": "DISPUTE_RESOLVED",
+
+  "payment_intent.processing": "PAYMENT_PROCESSING",
+  "payment_intent.canceled": "PAYMENT_CANCELED",
+
+  "customer.subscription.paused": "SUBSCRIPTION_PAUSED",
+  "customer.subscription.resumed": "SUBSCRIPTION_RESUMED",
+  "customer.subscription.trial_will_end": "SUBSCRIPTION_TRIAL_WILL_END",
+
+  "invoice.payment_succeeded": "INVOICE_PAYMENT_SUCCEEDED",
+  "invoice.payment_failed": "INVOICE_PAYMENT_FAILED",
+
+  "payment_method.attached": "PAYMENT_METHOD_ATTACHED",
+  "payment_method.detached": "PAYMENT_METHOD_DETACHED",
 };

@@ -5,9 +5,7 @@ import { RevstackEvent, WebhookResponse } from "@/types/events";
 import { IProvider } from "@/interfaces/features";
 import {
   CreatePaymentInput,
-  PaymentResult,
   CreateSubscriptionInput,
-  SubscriptionResult,
   CheckoutSessionInput,
   CheckoutSessionResult,
   CreateCustomerInput,
@@ -19,216 +17,179 @@ import {
   RefundPaymentInput,
   Subscription,
   UpdateCustomerInput,
+  AsyncActionResult,
 } from "@/types/models";
+import { RevstackErrorCode } from "@/types/errors";
 
-/**
- * The Abstract Base Class for all Revstack Providers.
- * * It implements the IProvider interface with default behaviors (throwing errors).
- * Specific providers (e.g., Stripe) will override only the methods they actually support.
- */
 export abstract class BaseProvider implements IProvider {
-  getPayment(ctx: ProviderContext, id: string): Promise<Payment> {
-    throw new Error("Method not implemented.");
+  private notImplemented(methodName: string): AsyncActionResult<any> {
+    return {
+      data: null,
+      status: "failed",
+      error: {
+        code: RevstackErrorCode.NotImplemented,
+        message: `Provider '${this.manifest.slug}' does not support ${methodName}.`,
+      },
+    };
   }
-  refundPayment(
+
+  // --- FEATURES ---
+
+  async getPayment(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Payment>> {
+    return this.notImplemented("getPayment");
+  }
+
+  async refundPayment(
     ctx: ProviderContext,
     input: RefundPaymentInput,
-  ): Promise<Payment> {
-    throw new Error("Method not implemented.");
+  ): Promise<AsyncActionResult<Payment>> {
+    return this.notImplemented("refundPayment");
   }
-  listPayments?(
+
+  async listPayments(
     ctx: ProviderContext,
     pagination: PaginationOptions,
-  ): Promise<PaginatedResult<Payment>> {
-    throw new Error("Method not implemented.");
+  ): Promise<AsyncActionResult<PaginatedResult<Payment>>> {
+    return this.notImplemented("listPayments");
   }
-  getSubscription(ctx: ProviderContext, id: string): Promise<Subscription> {
-    throw new Error("Method not implemented.");
+
+  async getSubscription(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Subscription>> {
+    return this.notImplemented("getSubscription");
   }
-  createCustomer(
+
+  async createCustomer(
     ctx: ProviderContext,
     input: CreateCustomerInput,
-  ): Promise<Customer> {
-    throw new Error("Method not implemented.");
+  ): Promise<AsyncActionResult<Customer>> {
+    return this.notImplemented("createCustomer");
   }
-  updateCustomer(
+
+  async updateCustomer(
     ctx: ProviderContext,
     id: string,
     input: UpdateCustomerInput,
-  ): Promise<Customer> {
-    throw new Error("Method not implemented.");
+  ): Promise<AsyncActionResult<Customer>> {
+    return this.notImplemented("updateCustomer");
   }
-  deleteCustomer(ctx: ProviderContext, id: string): Promise<boolean> {
-    throw new Error("Method not implemented.");
+
+  async deleteCustomer(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<boolean>> {
+    return this.notImplemented("deleteCustomer");
   }
-  getCustomer(ctx: ProviderContext, id: string): Promise<Customer> {
-    throw new Error("Method not implemented.");
+
+  async getCustomer(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Customer>> {
+    return this.notImplemented("getCustomer");
   }
-  listPaymentMethods(
+
+  async listPaymentMethods(
     ctx: ProviderContext,
     customerId: string,
-  ): Promise<PaymentMethod[]> {
-    throw new Error("Method not implemented.");
+  ): Promise<AsyncActionResult<PaymentMethod[]>> {
+    return this.notImplemented("listPaymentMethods");
   }
-  deletePaymentMethod(ctx: ProviderContext, id: string): Promise<boolean> {
-    throw new Error("Method not implemented.");
+
+  async deletePaymentMethod(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<boolean>> {
+    return this.notImplemented("deletePaymentMethod");
   }
-  /**
-   * The static manifest definition.
-   * Defines capabilities, metadata, and config schema (UI).
-   */
+
   abstract readonly manifest: ProviderManifest;
 
-  // ===========================================================================
-  // LIFECYCLE METHODS
-  // ===========================================================================
+  // --- LIFECYCLE ---
 
-  /**
-   * Called when a merchant installs or updates this provider.
-   * * RESPONSIBILITY:
-   * 1. Instantiate the provider SDK with the input config.
-   * 2. Validate credentials (e.g., make a 'ping' or 'get balance' request).
-   * 3. Return the payload to be saved in the database.
-   * * @param ctx - The execution context (includes environment info).
-   * @param input - The input data provided by the user in the UI.
-   * @returns The success status and the data to be stored (encrypted by Core).
-   */
   abstract onInstall(
     ctx: ProviderContext,
     input: InstallInput,
-  ): Promise<InstallResult>;
+  ): Promise<AsyncActionResult<InstallResult>>;
 
-  /**
-   * Called when a merchant uninstalls this provider.
-   * * RESPONSIBILITY:
-   * 1. Instantiate the provider SDK with the input config.
-   * 2. Validate credentials (e.g., make a 'ping' or 'get balance' request).
-   * 3. Return the success status.
-   * * @param ctx - The execution context (includes environment info).
-   * @param input - The input data provided by the user in the UI.
-   * @returns The success status.
-   */
   abstract onUninstall(
     ctx: ProviderContext,
     input: UninstallInput,
-  ): Promise<boolean>;
+  ): Promise<AsyncActionResult<boolean>>;
 
-  // ===========================================================================
-  // WEBHOOK METHODS
-  // ===========================================================================
+  // --- WEBHOOKS ---
 
-  /**
-   * Verifies the cryptographic signature of an incoming webhook.
-   * * SECURITY CRITICAL:
-   * This ensures that the request actually originated from the Payment Provider
-   * and hasn't been tampered with.
-   * * @param payload - The raw body of the request (string or buffer).
-   * @param headers - The request headers.
-   * @param secret - The webhook signing secret stored in the DB.
-   */
   abstract verifyWebhookSignature(
     ctx: ProviderContext,
     payload: string | Buffer,
     headers: Record<string, string | string[] | undefined>,
     secret: string,
-  ): Promise<boolean>;
+  ): Promise<AsyncActionResult<boolean>>;
 
-  /**
-   * Transforms a raw provider payload into a standardized Revstack Event.
-   * * This acts as the "Translation Layer" or "Adapter" for incoming events.
-   * * @param payload - The raw JSON body from the provider.
-   * @returns A normalized RevstackEvent or null if the event is irrelevant.
-   */
-  abstract parseWebhookEvent(payload: any): Promise<RevstackEvent | null>;
+  abstract parseWebhookEvent(
+    ctx: ProviderContext,
+    payload: any,
+  ): Promise<AsyncActionResult<RevstackEvent | null>>;
 
-  /**
-   * Returns the HTTP response that should be sent back to the Provider
-   * after receiving a webhook.
-   * * Default implementation returns 200 OK. Override if the provider expects
-   * a specific XML or JSON confirmation.
-   */
-  async getWebhookResponse(): Promise<WebhookResponse> {
-    return { statusCode: 200, body: { received: true } };
+  async getWebhookResponse(
+    ctx: ProviderContext,
+  ): Promise<AsyncActionResult<WebhookResponse>> {
+    return {
+      data: {
+        statusCode: 200,
+        body: { received: true },
+      },
+      status: "success",
+    };
   }
 
-  // ===========================================================================
-  // PAYMENT FEATURE IMPLEMENTATION (IProvider)
-  // ===========================================================================
+  // --- PAYMENT / SUBSCRIPTION / CHECKOUT (Optional Overrides) ---
 
-  /**
-   * Process a one-time payment.
-   * Override this if manifest.capabilities.payments.oneTime is true.
-   * * @throws Error if not implemented by the specific provider.
-   */
   async createPayment(
     ctx: ProviderContext,
     input: CreatePaymentInput,
-  ): Promise<PaymentResult> {
-    throw new Error(
-      `Provider '${this.manifest.slug}' does not support createPayment.`,
-    );
+  ): Promise<AsyncActionResult<Payment>> {
+    return this.notImplemented("createPayment");
   }
 
-  // ===========================================================================
-  // SUBSCRIPTION FEATURE IMPLEMENTATION (IProvider)
-  // ===========================================================================
-
-  /**
-   * Create a recurring subscription.
-   * Override this if manifest.capabilities.subscriptions.native is true.
-   */
   async createSubscription(
     ctx: ProviderContext,
     input: CreateSubscriptionInput,
-  ): Promise<SubscriptionResult> {
-    throw new Error(
-      `Provider '${this.manifest.slug}' does not support createSubscription.`,
-    );
+  ): Promise<AsyncActionResult<Subscription>> {
+    return this.notImplemented("createSubscription");
   }
 
-  /**
-   * Cancel an active subscription immediately or at period end.
-   */
   async cancelSubscription(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<SubscriptionResult> {
-    throw new Error(
-      `Provider '${this.manifest.slug}' does not support cancelSubscription.`,
-    );
+  ): Promise<AsyncActionResult<Subscription>> {
+    return this.notImplemented("cancelSubscription");
   }
 
-  pauseSubscription(
+  async pauseSubscription(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<SubscriptionResult> {
-    throw new Error("Method not implemented.");
+  ): Promise<AsyncActionResult<Subscription>> {
+    return this.notImplemented("pauseSubscription");
   }
 
-  resumeSubscription(
+  async resumeSubscription(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<SubscriptionResult> {
-    throw new Error("Method not implemented.");
+  ): Promise<AsyncActionResult<Subscription>> {
+    return this.notImplemented("resumeSubscription");
   }
 
-  // ===========================================================================
-  // CHECKOUT FEATURE IMPLEMENTATION (IProvider)
-  // ===========================================================================
-
-  /**
-   * Generate a hosted checkout session URL (e.g., Stripe Checkout).
-   * Override this if manifest.capabilities.checkout.supported is true.
-   */
   async createCheckoutSession(
     ctx: ProviderContext,
     input: CheckoutSessionInput,
-  ): Promise<CheckoutSessionResult> {
-    throw new Error(
-      `Provider '${this.manifest.slug}' does not support createCheckoutSession.`,
-    );
+  ): Promise<AsyncActionResult<CheckoutSessionResult>> {
+    return this.notImplemented("createCheckoutSession");
   }
 }
