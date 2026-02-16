@@ -1,5 +1,5 @@
 {
-  "name": "@revstackhq/providers-core",
+  "name": "@revstackhq/core",
   "version": "0.0.0-dev-20260215075706",
   "private": false,
   "license": "MIT",
@@ -9,22 +9,27 @@
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
+    "build": "tsc -p tsconfig.json",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {},
   "devDependencies": {
-    "typescript": "5.9.2",
-    "tsup": "^8.1.0",
-    "eslint": "^9.39.1",
     "@eslint/js": "^9.39.1",
-    "typescript-eslint": "^8.50.0",
+    "@revstackhq/eslint-config": "workspace:*",
+    "@types/node": "^20.11.30",
+    "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-turbo": "^2.7.1",
-    "@revstackhq/eslint-config": "workspace:*",
-    "@types/node": "^20.11.30"
+    "typescript": "5.9.2",
+    "typescript-eslint": "^8.50.0"
   },
   "publishConfig": {
     "access": "public"

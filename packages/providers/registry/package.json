@@ -2,6 +2,7 @@
   "name": "@revstackhq/providers-registry",
   "version": "0.0.0-dev-20260215075706",
   "private": false,
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
