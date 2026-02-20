@@ -52,7 +52,7 @@ export class StripeClientV1 implements ProviderClient {
       const stripe = this.getStripeClient(ctx.config.apiKey);
       await stripe.paymentIntents.list({ limit: 1 });
       return { data: true, status: "success" };
-    } catch (e) {
+    } catch {
       return { data: false, status: "failed" };
     }
   }
@@ -112,8 +112,8 @@ export class StripeClientV1 implements ProviderClient {
         },
         status: "success",
       };
-    } catch (error: any) {
-      console.error("Stripe Webhook Setup Failed:", error);
+    } catch (error: unknown) {
+      console.error("Stripe Webhook Setup Failed:", error as Error);
       throw createError(
         RevstackErrorCode.UnknownError,
         "Failed to setup webhooks in Stripe",
@@ -129,8 +129,11 @@ export class StripeClientV1 implements ProviderClient {
     try {
       await stripe.webhookEndpoints.del(webhookId);
       return { data: true, status: "success" };
-    } catch (error) {
-      console.warn("Webhook deletion failed (maybe already deleted):", error);
+    } catch (error: unknown) {
+      console.warn(
+        "Webhook deletion failed (maybe already deleted):",
+        error as Error,
+      );
       return { data: false, status: "failed" };
     }
   }
@@ -153,13 +156,14 @@ export class StripeClientV1 implements ProviderClient {
     try {
       stripe.webhooks.constructEvent(payload, signature, secret);
       return { data: true, status: "success" };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       return { data: false, status: "failed" };
     }
   }
 
   async parseWebhookEvent(
-    payload: any,
+    payload: unknown,
   ): Promise<AsyncActionResult<RevstackEvent | null>> {
     const event = payload as Stripe.Event;
     if (!event || !event.type) return { data: null, status: "failed" };
@@ -232,13 +236,13 @@ export class StripeClientV1 implements ProviderClient {
           url: session.url!,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.UnknownError,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -298,13 +302,13 @@ export class StripeClientV1 implements ProviderClient {
           url: session.url!,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.PaymentFailed,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -357,13 +361,13 @@ export class StripeClientV1 implements ProviderClient {
           url: session.url!,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.PaymentFailed,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -381,13 +385,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripePaymentToPayment(pi),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.ResourceNotFound,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -413,13 +417,13 @@ export class StripeClientV1 implements ProviderClient {
       );
 
       return this.getPayment(ctx, input.paymentId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.RefundFailed,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -453,13 +457,13 @@ export class StripeClientV1 implements ProviderClient {
         },
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.UnknownError,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -477,13 +481,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripeSubscriptionToSubscription(sub),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.ResourceNotFound,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -509,13 +513,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripeSubscriptionToSubscription(sub),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.SubscriptionNotFound,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -542,13 +546,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripeSubscriptionToSubscription(sub),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.UnknownError,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -573,13 +577,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripeSubscriptionToSubscription(sub),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.UnknownError,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -611,13 +615,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripeCustomerToCustomer(customer),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.InvalidInput,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -644,13 +648,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripeCustomerToCustomer(customer),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.ResourceNotFound,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -668,13 +672,13 @@ export class StripeClientV1 implements ProviderClient {
         data: deleted.deleted,
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: false,
         status: "failed",
         error: {
           code: RevstackErrorCode.UnknownError,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -704,13 +708,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mapStripeCustomerToCustomer(customer),
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: null,
         status: "failed",
         error: {
           code: RevstackErrorCode.ResourceNotFound,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -752,13 +756,13 @@ export class StripeClientV1 implements ProviderClient {
         data: mappedMethods,
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: [],
         status: "failed",
         error: {
           code: RevstackErrorCode.UnknownError,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -777,13 +781,13 @@ export class StripeClientV1 implements ProviderClient {
         data: true,
         status: "success",
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         data: false,
         status: "failed",
         error: {
           code: RevstackErrorCode.UnknownError,
-          message: error.message,
+          message: (error as Error).message,
         },
       };
     }
@@ -791,6 +795,7 @@ export class StripeClientV1 implements ProviderClient {
 
   private extractResourceId(event: Stripe.Event): string | null {
     const obj = event.data.object as any;
+
     if (event.type.startsWith("customer.subscription")) return obj.id;
     if (event.type.startsWith("payment_intent")) return obj.id;
     if (event.type === "checkout.session.completed") return obj.id;

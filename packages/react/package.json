@@ -1,6 +1,6 @@
 {
-  "name": "@revstackhq/auth",
-  "version": "0.0.0-dev-20260215075706",
+  "name": "@revstackhq/react",
+  "version": "0.0.0-dev",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -9,6 +9,12 @@
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check-types": "tsc -p tsconfig.json --noEmit",
@@ -16,19 +22,19 @@
     "test": "node --import tsx --test test/**/*.test.ts"
   },
   "dependencies": {
-    "jose": "^6.1.0"
+    "@revstackhq/browser": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
     "@revstackhq/eslint-config": "workspace:*",
-    "@types/node": "^20.11.30",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.1",
-    "eslint-plugin-turbo": "^2.7.1",
-    "typescript": "5.9.2",
-    "typescript-eslint": "^8.50.0"
+    "typescript": "5.9.2"
   },
-  "publishConfig": {
-    "access": "public"
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

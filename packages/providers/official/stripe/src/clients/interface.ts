@@ -125,6 +125,6 @@ export interface ProviderClient {
   ): Promise<AsyncActionResult<boolean>>;
 
   parseWebhookEvent(
-    payload: any,
+    payload: unknown,
   ): Promise<AsyncActionResult<RevstackEvent | null>>;
 }
