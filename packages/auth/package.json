@@ -13,7 +13,7 @@
     "build": "tsc -p tsconfig.json",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "test": "node --import tsx --test test/**/*.test.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "jose": "^6.1.0"
@@ -26,7 +26,8 @@
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-turbo": "^2.7.1",
     "typescript": "5.9.2",
-    "typescript-eslint": "^8.50.0"
+    "typescript-eslint": "^8.50.0",
+    "vitest": "^4.0.18"
   },
   "publishConfig": {
     "access": "public"

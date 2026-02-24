@@ -44,6 +44,17 @@ export type UsageAggregation = "sum" | "max" | "last";
  */
 export type ResetBehavior = "reset" | "rollover" | "infinite";
 
+/**
+ * The lifecycle state of a customer's subscription.
+ * Used by the EntitlementEngine to gate access based on payment status.
+ */
+export type SubscriptionStatus =
+  | "active" // Subscription is current and paid
+  | "trialing" // Within trial period
+  | "past_due" // Payment failed — blocks access
+  | "canceled" // Subscription terminated — blocks access
+  | "paused"; // Temporarily paused (e.g., seasonal business)
+
 export type FeatureType =
   | "boolean" // On/Off feature (e.g., SSO Access)
   | "static" // Fixed number included (e.g., 5 Users)
@@ -176,6 +187,43 @@ export interface AddonDef extends ProductBase {
    * @default 'recurring'
    */
   type?: "recurring" | "one_time";
+}
+
+// ==========================================
+// 4b. Typed Generics for DX (Compile-Time Feature Safety)
+// ==========================================
+
+/**
+ * A stricter PlanDef where feature keys are constrained to the keys
+ * of a provided feature dictionary type `F`.
+ *
+ * @typeParam F - The feature dictionary (e.g., `typeof myFeatures`).
+ *
+ * @example
+ * ```typescript
+ * const plan: TypedPlanDef<typeof features> = {
+ *   // ...
+ *   features: {
+ *     seats: 5,       // ✅ 'seats' exists in features
+ *     typo: true,     // ❌ TypeScript error: 'typo' not in features
+ *   }
+ * };
+ * ```
+ */
+export interface TypedPlanDef<
+  F extends Record<string, FeatureDef>,
+> extends Omit<PlanDef, "features"> {
+  features: Partial<Record<keyof F, FeatureValue>>;
+}
+
+/**
+ * A stricter AddonDef where feature keys are constrained to the keys
+ * of a provided feature dictionary type `F`.
+ */
+export interface TypedAddonDef<
+  F extends Record<string, FeatureDef>,
+> extends Omit<AddonDef, "features"> {
+  features: Partial<Record<keyof F, FeatureValue>>;
 }
 
 // ==========================================

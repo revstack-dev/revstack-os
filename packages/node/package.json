@@ -19,17 +19,19 @@
     "build": "tsc -p tsconfig.json",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "test": "node --import tsx --test test/**/*.test.ts"
+    "test": "vitest run"
   },
   "dependencies": {
-    "@revstackhq/core": "workspace:*",
     "@revstackhq/auth": "workspace:*",
+    "@revstackhq/core": "workspace:*",
     "@revstackhq/providers-core": "workspace:*"
   },
   "devDependencies": {
     "@revstackhq/eslint-config": "workspace:*",
     "@types/node": "^20.11.30",
     "eslint": "^9.39.1",
-    "typescript": "5.9.2"
+    "msw": "^2.12.10",
+    "typescript": "5.9.2",
+    "vitest": "^4.0.18"
   }
 }

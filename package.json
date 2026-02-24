@@ -1,7 +1,7 @@
 {
   "name": "revstack-os",
   "private": false,
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE.md",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",

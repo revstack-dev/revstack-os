@@ -1,5 +1,5 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
-import { RevstackAuthContract, RevstackSession } from "./types";
+import { RevstackAuthContract, RevstackSession } from "@/types";
 
 export class TokenVerifier {
   private JWKS?: ReturnType<typeof createRemoteJWKSet>;

@@ -2,7 +2,7 @@
   "name": "@revstackhq/provider-stripe",
   "version": "0.0.0-dev-20260215075706",
   "private": false,
-  "license": "MIT",
+  "license": "FSL-1.1-MIT",
   "type": "module",
   "sideEffects": true,
   "main": "./dist/index.js",

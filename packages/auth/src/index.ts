@@ -3,11 +3,11 @@ import {
   AuthProviderManifest,
   AuthProviderSlug,
   RevstackAuthContract,
-} from "./types";
-import { TokenVerifier } from "./verifier";
+} from "@/types";
+import { TokenVerifier } from "@/verifier";
 
-export * from "./types";
-export * from "./verifier";
+export * from "@/types";
+export * from "@/verifier";
 
 const PROVIDERS: Record<AuthProviderSlug, AuthProviderManifest> = {
   auth0: {
@@ -20,7 +20,8 @@ const PROVIDERS: Record<AuthProviderSlug, AuthProviderManifest> = {
   clerk: {
     slug: "clerk",
     name: "Clerk",
-    description: "Authentication and user management platform with OIDC and JWKS.",
+    description:
+      "Authentication and user management platform with OIDC and JWKS.",
     logoUrl: "https://cdn.simpleicons.org/clerk/ffffff",
     supportedStrategies: ["RS256"],
   },
@@ -56,7 +57,7 @@ const PROVIDERS: Record<AuthProviderSlug, AuthProviderManifest> = {
 
 function assertNonEmptyString(
   value: unknown,
-  message: string,
+  message: string
 ): asserts value is string {
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new Error(message);
@@ -89,7 +90,7 @@ export function getAuthProvider(slug: AuthProviderSlug): AuthProviderManifest {
  */
 export function buildAuthContract<S extends AuthProviderSlug>(
   slug: S,
-  input: AuthProviderInputBySlug[S],
+  input: AuthProviderInputBySlug[S]
 ): RevstackAuthContract {
   switch (slug) {
     case "auth0": {
@@ -184,7 +185,7 @@ export function buildAuthContract<S extends AuthProviderSlug>(
       const typed = input as AuthProviderInputBySlug["custom"];
       assertNonEmptyString(
         typed.signingSecret,
-        "Custom signingSecret is required",
+        "Custom signingSecret is required"
       );
       return {
         provider: "custom",

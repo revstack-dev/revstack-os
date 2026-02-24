@@ -31,7 +31,7 @@ export class StripeProvider extends BaseProvider {
 
   async onInstall(
     ctx: ProviderContext,
-    input: InstallInput,
+    input: InstallInput
   ): Promise<AsyncActionResult<InstallResult>> {
     const client = getClient(input.config);
     const installVersion = manifest.version;
@@ -59,7 +59,7 @@ export class StripeProvider extends BaseProvider {
       try {
         const wh = await client.setupWebhooks(
           { ...ctx, config: input.config },
-          input.webhookUrl,
+          input.webhookUrl
         );
 
         const whData = wh.data as InstallResult;
@@ -107,13 +107,16 @@ export class StripeProvider extends BaseProvider {
 
   async onUninstall(
     ctx: ProviderContext,
-    input: UninstallInput,
+    input: UninstallInput
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(input.config);
 
     if (client.removeWebhooks && input.data.webhookEndpointId) {
       try {
-        await client.removeWebhooks(ctx, input.data.webhookEndpointId);
+        await client.removeWebhooks(
+          ctx,
+          input.data.webhookEndpointId as string
+        );
       } catch (e) {
         console.warn("Failed to remove webhook on uninstall:", e);
       }
@@ -128,7 +131,7 @@ export class StripeProvider extends BaseProvider {
     ctx: ProviderContext,
     payload: string | Buffer,
     headers: Record<string, string | string[] | undefined>,
-    secret: string,
+    secret: string
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(ctx.config);
     return client.verifyWebhookSignature(ctx, payload, headers, secret);
@@ -136,7 +139,7 @@ export class StripeProvider extends BaseProvider {
 
   async parseWebhookEvent(
     ctx: ProviderContext,
-    payload: any,
+    payload: any
   ): Promise<AsyncActionResult<RevstackEvent | null>> {
     const client = getClient(ctx.config);
     return client.parseWebhookEvent(payload);
@@ -155,7 +158,7 @@ export class StripeProvider extends BaseProvider {
 
   async createPayment(
     ctx: ProviderContext,
-    input: CreatePaymentInput,
+    input: CreatePaymentInput
   ): Promise<AsyncActionResult<Payment>> {
     const client = getClient(ctx.config);
 
@@ -175,7 +178,7 @@ export class StripeProvider extends BaseProvider {
 
   async getPayment(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Payment>> {
     const client = getClient(ctx.config);
 
@@ -195,7 +198,7 @@ export class StripeProvider extends BaseProvider {
 
   async refundPayment(
     ctx: ProviderContext,
-    input: RefundPaymentInput,
+    input: RefundPaymentInput
   ): Promise<AsyncActionResult<Payment>> {
     const client = getClient(ctx.config);
 
@@ -215,7 +218,7 @@ export class StripeProvider extends BaseProvider {
 
   async listPayments(
     ctx: ProviderContext,
-    pagination: PaginationOptions,
+    pagination: PaginationOptions
   ): Promise<AsyncActionResult<PaginatedResult<Payment>>> {
     const client = getClient(ctx.config);
 
@@ -239,7 +242,7 @@ export class StripeProvider extends BaseProvider {
 
   async createSubscription(
     ctx: ProviderContext,
-    input: CreateSubscriptionInput,
+    input: CreateSubscriptionInput
   ): Promise<AsyncActionResult<Subscription>> {
     const client = getClient(ctx.config);
 
@@ -259,7 +262,7 @@ export class StripeProvider extends BaseProvider {
 
   async getSubscription(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Subscription>> {
     const client = getClient(ctx.config);
 
@@ -280,7 +283,7 @@ export class StripeProvider extends BaseProvider {
   async cancelSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string,
+    reason?: string
   ): Promise<AsyncActionResult<Subscription>> {
     const client = getClient(ctx.config);
 
@@ -301,7 +304,7 @@ export class StripeProvider extends BaseProvider {
   async pauseSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string,
+    reason?: string
   ): Promise<AsyncActionResult<Subscription>> {
     const client = getClient(ctx.config);
 
@@ -322,7 +325,7 @@ export class StripeProvider extends BaseProvider {
   async resumeSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string,
+    reason?: string
   ): Promise<AsyncActionResult<Subscription>> {
     const client = getClient(ctx.config);
 
@@ -346,7 +349,7 @@ export class StripeProvider extends BaseProvider {
 
   async createCheckoutSession(
     ctx: ProviderContext,
-    input: CheckoutSessionInput,
+    input: CheckoutSessionInput
   ): Promise<AsyncActionResult<CheckoutSessionResult>> {
     const client = getClient(ctx.config);
 
@@ -370,7 +373,7 @@ export class StripeProvider extends BaseProvider {
 
   async createCustomer(
     ctx: ProviderContext,
-    input: CreateCustomerInput,
+    input: CreateCustomerInput
   ): Promise<AsyncActionResult<Customer>> {
     const client = getClient(ctx.config);
 
@@ -391,7 +394,7 @@ export class StripeProvider extends BaseProvider {
   async updateCustomer(
     ctx: ProviderContext,
     id: string,
-    input: UpdateCustomerInput,
+    input: UpdateCustomerInput
   ): Promise<AsyncActionResult<Customer>> {
     const client = getClient(ctx.config);
 
@@ -411,7 +414,7 @@ export class StripeProvider extends BaseProvider {
 
   async deleteCustomer(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(ctx.config);
 
@@ -431,7 +434,7 @@ export class StripeProvider extends BaseProvider {
 
   async getCustomer(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Customer>> {
     const client = getClient(ctx.config);
 
@@ -455,7 +458,7 @@ export class StripeProvider extends BaseProvider {
 
   async listPaymentMethods(
     ctx: ProviderContext,
-    customerId: string,
+    customerId: string
   ): Promise<AsyncActionResult<PaymentMethod[]>> {
     const client = getClient(ctx.config);
 
@@ -475,7 +478,7 @@ export class StripeProvider extends BaseProvider {
 
   async deletePaymentMethod(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(ctx.config);
 
