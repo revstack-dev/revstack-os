@@ -140,15 +140,31 @@ export type AuthProviderInputBySlug = {
   custom: CustomJwtInput;
 };
 
-export interface RevstackSession {
+export enum AuthErrorCode {
+  TOKEN_EXPIRED = "TOKEN_EXPIRED",
+  INVALID_SIGNATURE = "INVALID_SIGNATURE",
+  ISSUER_MISMATCH = "ISSUER_MISMATCH",
+  NETWORK_ERROR = "NETWORK_ERROR",
+  MISSING_CLAIM = "MISSING_CLAIM",
+  INVALID_FORMAT = "INVALID_FORMAT",
+  UNKNOWN_ERROR = "UNKNOWN_ERROR",
+}
+
+export interface RevstackSession<
+  T extends Record<string, unknown> = Record<string, any>,
+> {
   /** The authentic provider ID (e.g., "user_2xM...") */
   userId: string;
 
   /** The raw decoded token payload */
-  claims: Record<string, any>;
+  claims: T;
 
   /** Is the token valid? */
   isValid: boolean;
 
+  /** Human-readable error message if isValid is false */
   error?: string;
+
+  /** Specific error code if isValid is false */
+  errorCode?: AuthErrorCode;
 }

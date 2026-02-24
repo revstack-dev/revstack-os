@@ -109,4 +109,45 @@ describe("buildAuthContract", () => {
     expect(contract.issuer).toBe("https://issuer.example.com/");
     expect(contract.audience).toBe("my-audience");
   });
+
+  describe("Validation Errors", () => {
+    it("throws if auth0 domain is empty", () => {
+      expect(() => buildAuthContract("auth0", { domain: "   " })).toThrow(
+        /Auth0 domain is required/
+      );
+    });
+
+    it("throws if clerk issuerUrl is empty", () => {
+      expect(() => buildAuthContract("clerk", { issuerUrl: "" })).toThrow(
+        /Clerk issuerUrl is required/
+      );
+    });
+
+    it("throws if supabase projectUrl is empty", () => {
+      expect(() => buildAuthContract("supabase", { projectUrl: "" })).toThrow(
+        /Supabase projectUrl is required/
+      );
+    });
+
+    it("throws if cognito region or userPoolId is empty", () => {
+      expect(() =>
+        buildAuthContract("cognito", { region: "", userPoolId: "pool" })
+      ).toThrow(/Cognito region is required/);
+      expect(() =>
+        buildAuthContract("cognito", { region: "us-east-1", userPoolId: "" })
+      ).toThrow(/Cognito userPoolId is required/);
+    });
+
+    it("throws if firebase projectId is empty", () => {
+      expect(() => buildAuthContract("firebase", { projectId: "" })).toThrow(
+        /Firebase projectId is required/
+      );
+    });
+
+    it("throws if custom signingSecret is empty", () => {
+      expect(() =>
+        buildAuthContract("custom", { signingSecret: "   " })
+      ).toThrow(/Custom signingSecret is required/);
+    });
+  });
 });
