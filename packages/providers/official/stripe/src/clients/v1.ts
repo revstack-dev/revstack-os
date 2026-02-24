@@ -44,7 +44,7 @@ export class StripeClientV1 implements ProviderClient {
   }
 
   async validateCredentials(
-    ctx: ProviderContext,
+    ctx: ProviderContext
   ): Promise<AsyncActionResult<boolean>> {
     if (!ctx.config.apiKey) return { data: false, status: "success" };
 
@@ -59,7 +59,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async setupWebhooks(
     ctx: ProviderContext,
-    webhookUrl: string,
+    webhookUrl: string
   ): Promise<AsyncActionResult<InstallResult>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -93,7 +93,7 @@ export class StripeClientV1 implements ProviderClient {
       if (existingWebhook) {
         webhookEndpoint = await stripe.webhookEndpoints.update(
           existingWebhook.id,
-          { enabled_events },
+          { enabled_events }
         );
       } else {
         webhookEndpoint = await stripe.webhookEndpoints.create({
@@ -116,14 +116,14 @@ export class StripeClientV1 implements ProviderClient {
       console.error("Stripe Webhook Setup Failed:", error as Error);
       throw createError(
         RevstackErrorCode.UnknownError,
-        "Failed to setup webhooks in Stripe",
+        "Failed to setup webhooks in Stripe"
       );
     }
   }
 
   async removeWebhooks(
     ctx: ProviderContext,
-    webhookId: string,
+    webhookId: string
   ): Promise<AsyncActionResult<boolean>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
     try {
@@ -132,7 +132,7 @@ export class StripeClientV1 implements ProviderClient {
     } catch (error: unknown) {
       console.warn(
         "Webhook deletion failed (maybe already deleted):",
-        error as Error,
+        error as Error
       );
       return { data: false, status: "failed" };
     }
@@ -142,7 +142,7 @@ export class StripeClientV1 implements ProviderClient {
     ctx: ProviderContext,
     payload: string | Buffer,
     headers: Record<string, string | string[] | undefined>,
-    secret: string,
+    secret: string
   ): Promise<AsyncActionResult<boolean>> {
     const signatureHeader = headers["stripe-signature"];
     if (!signatureHeader || !secret) return { data: false, status: "failed" };
@@ -163,7 +163,7 @@ export class StripeClientV1 implements ProviderClient {
   }
 
   async parseWebhookEvent(
-    payload: unknown,
+    payload: unknown
   ): Promise<AsyncActionResult<RevstackEvent | null>> {
     const event = payload as Stripe.Event;
     if (!event || !event.type) return { data: null, status: "failed" };
@@ -188,7 +188,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async createCheckoutSession(
     ctx: ProviderContext,
-    input: CheckoutSessionInput,
+    input: CheckoutSessionInput
   ): Promise<AsyncActionResult<CheckoutSessionResult>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -211,10 +211,8 @@ export class StripeClientV1 implements ProviderClient {
               images: item.images,
             },
             unit_amount: item.amount,
-            // 👈 FIX: Mapping taxRates correctly
             tax_behavior: item.taxRates ? "exclusive" : "unspecified",
           },
-          // 👈 FIX: Stripe supports dynamic tax rates here
           tax_rates: item.taxRates,
           quantity: item.quantity,
         })),
@@ -250,7 +248,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async createPayment(
     ctx: ProviderContext,
-    input: CreatePaymentInput,
+    input: CreatePaymentInput
   ): Promise<AsyncActionResult<Payment>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -286,7 +284,7 @@ export class StripeClientV1 implements ProviderClient {
             revstack_trace_id: ctx.traceId ?? null,
           },
         },
-        { idempotencyKey: ctx.idempotencyKey },
+        { idempotencyKey: ctx.idempotencyKey }
       );
 
       return {
@@ -294,7 +292,7 @@ export class StripeClientV1 implements ProviderClient {
           session,
           input.amount,
           input.currency,
-          input.customerId,
+          input.customerId
         ),
         status: "requires_action",
         nextAction: {
@@ -316,7 +314,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async createSubscription(
     ctx: ProviderContext,
-    input: CreateSubscriptionInput,
+    input: CreateSubscriptionInput
   ): Promise<AsyncActionResult<Subscription>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -350,7 +348,7 @@ export class StripeClientV1 implements ProviderClient {
             revstack_trace_id: ctx.traceId ?? null,
           },
         },
-        { idempotencyKey: ctx.idempotencyKey },
+        { idempotencyKey: ctx.idempotencyKey }
       );
 
       return {
@@ -375,7 +373,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async getPayment(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Payment>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -399,7 +397,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async refundPayment(
     ctx: ProviderContext,
-    input: RefundPaymentInput,
+    input: RefundPaymentInput
   ): Promise<AsyncActionResult<Payment>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -413,7 +411,7 @@ export class StripeClientV1 implements ProviderClient {
             revstack_trace_id: ctx.traceId || null,
           },
         },
-        { idempotencyKey: ctx.idempotencyKey },
+        { idempotencyKey: ctx.idempotencyKey }
       );
 
       return this.getPayment(ctx, input.paymentId);
@@ -431,7 +429,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async listPayments(
     ctx: ProviderContext,
-    pagination: PaginationOptions,
+    pagination: PaginationOptions
   ): Promise<AsyncActionResult<PaginatedResult<Payment>>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -471,7 +469,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async getSubscription(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Subscription>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -496,7 +494,7 @@ export class StripeClientV1 implements ProviderClient {
   async cancelSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string,
+    reason?: string
   ): Promise<AsyncActionResult<Subscription>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -527,7 +525,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async pauseSubscription(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Subscription>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -539,7 +537,7 @@ export class StripeClientV1 implements ProviderClient {
             behavior: "void",
           },
         },
-        { idempotencyKey: ctx.idempotencyKey },
+        { idempotencyKey: ctx.idempotencyKey }
       );
 
       return {
@@ -560,7 +558,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async resumeSubscription(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Subscription>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -570,7 +568,7 @@ export class StripeClientV1 implements ProviderClient {
         {
           pause_collection: null,
         },
-        { idempotencyKey: ctx.idempotencyKey },
+        { idempotencyKey: ctx.idempotencyKey }
       );
 
       return {
@@ -591,7 +589,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async createCustomer(
     ctx: ProviderContext,
-    input: CreateCustomerInput,
+    input: CreateCustomerInput
   ): Promise<AsyncActionResult<Customer>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -608,7 +606,7 @@ export class StripeClientV1 implements ProviderClient {
             revstack_trace_id: ctx.traceId || null,
           },
         },
-        { idempotencyKey: ctx.idempotencyKey },
+        { idempotencyKey: ctx.idempotencyKey }
       );
 
       return {
@@ -630,7 +628,7 @@ export class StripeClientV1 implements ProviderClient {
   async updateCustomer(
     ctx: ProviderContext,
     id: string,
-    input: UpdateCustomerInput,
+    input: UpdateCustomerInput
   ): Promise<AsyncActionResult<Customer>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -662,7 +660,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async deleteCustomer(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<boolean>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -686,7 +684,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async getCustomer(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<Customer>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -722,7 +720,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async listPaymentMethods(
     ctx: ProviderContext,
-    customerId: string,
+    customerId: string
   ): Promise<AsyncActionResult<PaymentMethod[]>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
@@ -748,8 +746,8 @@ export class StripeClientV1 implements ProviderClient {
       const mappedMethods = paymentMethods.data.map((pm) =>
         mapStripePaymentMethodToPaymentMethod(
           pm,
-          defaultPaymentMethodId as string,
-        ),
+          defaultPaymentMethodId as string
+        )
       );
 
       return {
@@ -770,7 +768,7 @@ export class StripeClientV1 implements ProviderClient {
 
   async deletePaymentMethod(
     ctx: ProviderContext,
-    id: string,
+    id: string
   ): Promise<AsyncActionResult<boolean>> {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 

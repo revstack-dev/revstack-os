@@ -3,55 +3,51 @@ import { ProviderCategory } from "@/types/categories";
 
 export interface ProviderEngine {
   /**
-   * Semver range of the Revstack Core required to run this plugin.
-   * Example: "^1.0.0" or ">=2.0.0"
+   * required core semver range (e.g. "^1.0.0")
    */
   revstack: string;
 
   /**
-   * Optional Node.js version requirement.
-   * Example: ">=18.0.0"
+   * optional node version limit
    */
   node?: string;
 }
 
 export interface ProviderPricing {
   /**
-   * The pricing model of the external provider.
-   * Used to inform the merchant before they connect.
+   * underlying provider pricing model
    */
   model: "subscription" | "transactional" | "freemium" | "free";
 
   /**
-   * Human-readable fee structure.
-   * Example: "2.9% + $0.30 per transaction"
+   * human-readable fee text
    */
   fees?: string;
 
   /**
-   * Link to the official pricing page of the provider.
+   * link to provider pricing page
    */
   url?: string;
 }
 
 export interface ProviderMedia {
   /**
-   * Square icon for lists and grids (SVG/PNG).
+   * square icon (SVG/PNG)
    */
   icon: string;
 
   /**
-   * Full horizontal logo for headers and banners (SVG/PNG).
+   * horizontal logo (SVG/PNG)
    */
   logo: string;
 
   /**
-   * Large hero image for the plugin detail page.
+   * plugin detail hero image
    */
   banner?: string;
 
   /**
-   * Array of URLs showing the plugin in action (dashboard, settings).
+   * array of screenshot URLs
    */
   screenshots?: string[];
 }
@@ -59,7 +55,7 @@ export interface ProviderMedia {
 export type ProviderStatus = "stable" | "beta" | "deprecated" | "experimental";
 
 /**
- * Defines the input field type for the installation UI.
+ * input UI field types
  */
 export type ConfigFieldType =
   | "text"
@@ -70,8 +66,7 @@ export type ConfigFieldType =
   | "json";
 
 /**
- * Configuration schema for a provider setting.
- * Used to generate the UI and handle encryption.
+ * config field definition for UI rendering and encryption parsing
  */
 export interface ConfigFieldDefinition {
   /** Label to display in the UI */
@@ -110,13 +105,12 @@ export interface DataFieldDefinition {
 }
 
 /**
- * Defines the visual severity of the update in the Dashboard.
+ * dashboard update visual severity
  */
 export type UpdatePriority = "low" | "recommended" | "critical" | "security";
 
 /**
- * Release and Migration Strategy.
- * Controls how the system handles the transition from an old version to this new one.
+ * release versioning and migration plan
  */
 export interface ProviderRelease {
   /**
@@ -162,8 +156,7 @@ export interface ProviderRelease {
 }
 
 /**
- * The Provider Manifest.
- * Acts as the source of truth for the provider's metadata and capabilities.
+ * core provider metadata and capabilities schema
  */
 export interface ProviderManifest {
   /** Unique identifier (e.g., 'stripe', 'polar') */
@@ -175,8 +168,9 @@ export interface ProviderManifest {
   /** Provider category */
   category: ProviderCategory;
 
-  /** * Semantic version of the provider package (e.g., '1.0.0').
-   * Vital for managing updates in the marketplace.
+  /**
+   * semver provider version
+   * needed for marketplace updates
    */
   version: string;
 
@@ -195,36 +189,35 @@ export interface ProviderManifest {
   /** Link to the provider's dashboard for easy access to settings and metrics. */
   dashboardUrl?: string;
 
-  /** * List of supported ISO 3166-1 alpha-2 country codes (e.g., ['US', 'GB', 'BR']).
-   * Use ['global'] if the provider works worldwide.
-   * Used to filter providers in the UI based on the merchant's location.
+  /**
+   * supported country ISOs or ['global']
+   * filters UI by merchant location
    */
   regions?: string[];
 
   /**
-   * List of supported ISO 4217 currency codes (e.g., ['USD', 'EUR']).
-   * Use ['*'] if the provider supports all currencies.
+   * supported currencies or ['*']
    */
   currencies?: string[];
 
-  /** * Indicates if the provider supports a dedicated sandbox/test mode.
-   * If true, the UI should allow switching between Test and Live credentials.
+  /**
+   * flags if there's a dedicated sandbox mode
    */
   sandboxAvailable?: boolean;
 
-  /** * Schema to generate the installation form.
-   * Key is the internal config key (e.g., 'apiKey').
+  /**
+   * config schema mapped to internal keys
    */
   configSchema: Record<string, ConfigFieldDefinition>;
 
   /**
-   * Defines the fields that the provider generates and stores internally (Outputs).
-   * The Core uses this to know which fields to encrypt in the 'data' column.
+   * internal data output schema
+   * helps core figure out what to encrypt
    */
   dataSchema?: Record<string, DataFieldDefinition>;
 
   /**
-   * What this provider can do. Used for feature flagging in the core.
+   * capability flags
    */
   capabilities: ProviderCapabilities;
 

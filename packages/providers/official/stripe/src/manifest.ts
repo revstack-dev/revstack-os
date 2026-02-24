@@ -61,8 +61,7 @@ export const manifest: ProviderManifest = {
   },
   author: "Revstack",
   currencies: ["USD"],
-  description:
-    "Stripe is a payment processing platform that enables businesses to accept payments online. It provides a secure and convenient way for customers to pay for goods or services using various payment methods, including credit cards, bank transfers, and digital wallets.",
+  description: "Global payment processing platform.",
   documentationUrl: "https://docs.revstack.dev/providers/stripe",
   regions: ["*"],
   sandboxAvailable: true,
@@ -73,28 +72,23 @@ export const manifest: ProviderManifest = {
       type: "password",
       secure: true,
       required: true,
-      description:
-        "The secret key used to authenticate requests to the Stripe API. This is required to perform any operations on behalf of the connected account.",
+      description: "Stripe Secret API Key",
       pattern: "^sk_(test|live)_[a-zA-Z0-9]+$",
-      errorMessage:
-        "Invalid Secret Key. It must start with 'sk_test_' or 'sk_live_' followed by the alphanumeric key.",
+      errorMessage: "Must start with sk_test_ or sk_live_",
     },
   },
   dataSchema: {
     webhookEndpointId: {
       secure: false,
-      description:
-        "The ID of the webhook endpoint. This is used to verify the integrity of incoming webhook events.",
+      description: "Endpoint ID for webhooks",
     },
     webhookSecret: {
       secure: true,
-      description:
-        "The secret used to verify the integrity of incoming webhook events. This is used to ensure that the webhook events are not tampered with.",
+      description: "Webhook signing secret",
     },
     apiKey: {
       secure: true,
-      description:
-        "The API key used to authenticate requests to the Stripe API. This is required to perform any operations on behalf of the connected account.",
+      description: "Stripe Secret API Key",
     },
   },
 };

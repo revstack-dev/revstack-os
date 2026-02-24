@@ -2,8 +2,8 @@ export type EventType =
   // --- PAYMENTS (Transaction Lifecycle) ---
   | "PAYMENT_SUCCEEDED"
   | "PAYMENT_FAILED"
-  | "PAYMENT_PROCESSING" // 👈 CRITICAL MISSING: For async methods (Wire, Boleto, OXXO) that take hours/days.
-  | "PAYMENT_CANCELED" // 👈 MISSING: When the user closes the OXXO/Pix popup without paying or admin cancels it.
+  | "PAYMENT_PROCESSING"
+  | "PAYMENT_CANCELED"
   | "PAYMENT_AUTHORIZED" // Funds held (Auth)
   | "PAYMENT_CAPTURED" // Funds captured
 
@@ -18,9 +18,9 @@ export type EventType =
   | "SUBSCRIPTION_CREATED"
   | "SUBSCRIPTION_UPDATED"
   | "SUBSCRIPTION_CANCELED" // Definitive cancellation
-  | "SUBSCRIPTION_PAUSED" // 👈 MISSING: You implemented pauseSubscription, you need the event.
-  | "SUBSCRIPTION_RESUMED" // 👈 MISSING: You implemented resumeSubscription.
-  | "SUBSCRIPTION_TRIAL_WILL_END" // 👈 MISSING: Vital for sending the "Your trial ends in 3 days" email.
+  | "SUBSCRIPTION_PAUSED"
+  | "SUBSCRIPTION_RESUMED"
+  | "SUBSCRIPTION_TRIAL_WILL_END"
   | "SUBSCRIPTION_EXPIRING" // For cards that are about to expire (Churn prevention).
 
   // --- INVOICES (Recurring Billing Specific) ---
@@ -29,8 +29,8 @@ export type EventType =
   | "INVOICE_PAYMENT_FAILED"
 
   // --- PAYMENT METHODS ---
-  | "PAYMENT_METHOD_ATTACHED" // 👈 MISSING: When a user adds a card in "My Profile".
-  | "PAYMENT_METHOD_DETACHED" // When they delete it.
+  | "PAYMENT_METHOD_ATTACHED"
+  | "PAYMENT_METHOD_DETACHED"
   | "MANDATE_CREATED";
 
 export interface RevstackEvent {

@@ -2,19 +2,18 @@ import { RevstackError, RevstackErrorCode } from "@/types/errors";
 import { ConfigFieldDefinition } from "@/manifest";
 
 /**
- * Validates and casts raw input (e.g. from a POST request) against the Provider's schema.
- * Ensures that numbers are numbers, booleans are booleans, etc.
+ * normalize raw input against schema config
  */
 export function validateAndCastConfig(
   rawConfig: Record<string, any>,
-  schema: Record<string, ConfigFieldDefinition>,
+  schema: Record<string, ConfigFieldDefinition>
 ): Record<string, any> {
   const processedConfig: Record<string, any> = {};
 
   for (const [key, definition] of Object.entries(schema)) {
     let value = rawConfig[key];
 
-    // 1. Handle Missing Required Fields
+    // check required
     if (
       definition.required &&
       (value === undefined || value === null || value === "")
@@ -30,7 +29,7 @@ export function validateAndCastConfig(
       continue;
     }
 
-    // 2. Type Casting / Coercion
+    // coerce
     switch (definition.type) {
       case "text":
       case "password":
@@ -49,13 +48,13 @@ export function validateAndCastConfig(
         processedConfig[key] = num;
         break;
 
-      case "switch": // Boolean
-        // Handles "true", "1", true, 1 as true
+      case "switch":
+        // cast to bool
         processedConfig[key] =
           value === "true" || value === true || value === 1 || value === "1";
         break;
 
-      case "json": // Special case for complex metadata
+      case "json":
         try {
           processedConfig[key] =
             typeof value === "object" ? value : JSON.parse(value);

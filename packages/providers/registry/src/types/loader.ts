@@ -1,20 +1,17 @@
 import { IProvider, ProviderManifest } from "@revstackhq/providers-core";
 
 /**
- * Defines the shape of the module exported by a Provider Package.
- * Example: import * as stripeModule from '@revstack/provider-stripe';
+ * provider package module shape
  */
 export interface ProviderModule {
   /**
-   * The main class exported by the provider.
-   * Must implement the IProvider interface and have a constructor.
+   * main provider class
    */
   DefaultProvider: new () => IProvider;
   manifest: ProviderManifest;
 }
 
 /**
- * A function that loads a provider module dynamically.
- * Used for lazy loading via import().
+ * lazy loader for provider module
  */
 export type ProviderLoader = () => Promise<ProviderModule>;

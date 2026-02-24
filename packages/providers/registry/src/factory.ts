@@ -3,43 +3,39 @@ import { ProviderLoader, ProviderModule } from "@/types/loader";
 import { getProviderLoader, listRegisteredProviders } from "@/registry";
 
 /**
- * Factory class responsible for instantiating Provider SDKs.
- * It acts as the bridge between the Registry (loading mechanism) and the Core (execution).
+ * instantiates provider sdks
  */
 export class ProviderFactory {
   /**
-   * Instantiates a Provider SDK by its slug.
-   * * @param slug - The unique identifier of the provider (e.g., "stripe", "polar").
-   * @returns An instance of the provider class implementing the IProvider contract.
-   * @throws Error if the provider is not registered or fails to load.
+   * create an sdk instance by slug
    */
   static async create(slug: string): Promise<IProvider> {
-    // 1. Retrieve the loader function from the registry
+    // get loader
     const loader: ProviderLoader | undefined = getProviderLoader(slug);
 
     if (!loader) {
       const knownProviders = listRegisteredProviders();
       throw new Error(
-        `Provider '${slug}' is not registered in Revstack. Available providers: [${knownProviders.join(", ")}]`,
+        `Provider '${slug}' is not registered in Revstack. Available providers: [${knownProviders.join(", ")}]`
       );
     }
 
     try {
-      // 2. Execute the dynamic import
+      // load module
       const module: ProviderModule = await loader();
 
-      // 3. Validation: Ensure the module exports the expected class
+      // validate default export
       if (!module.DefaultProvider) {
         throw new Error(
-          `The package for '${slug}' does not export a 'DefaultProvider' class.`,
+          `The package for '${slug}' does not export a 'DefaultProvider' class.`
         );
       }
 
       return new module.DefaultProvider();
     } catch (error: any) {
-      // Improve error message context
+      // throw with context
       throw new Error(
-        `Failed to initialize provider '${slug}'. Details: ${error.message || error}`,
+        `Failed to initialize provider '${slug}'. Details: ${error.message || error}`
       );
     }
   }

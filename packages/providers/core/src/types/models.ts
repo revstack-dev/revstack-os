@@ -3,23 +3,23 @@
 // =============================================================================
 
 export enum PaymentStatus {
-  /** The payment was created but not yet processed. */
+  /** created but not yet processed */
   Pending = "pending",
-  /** The payment requires additional user action (e.g., 3DS authentication). */
+  /** requires additional user action (e.g., 3DS authentication) */
   RequiresAction = "requires_action",
-  /** The payment is authorized but not captured yet. */
+  /** authorized but not captured yet */
   Authorized = "authorized",
-  /** The payment completed successfully. */
+  /** completed successfully */
   Succeeded = "succeeded",
-  /** The payment failed. */
+  /** failed */
   Failed = "failed",
-  /** The payment was canceled. */
+  /** canceled */
   Canceled = "canceled",
-  /** The payment was fully refunded. */
+  /** fully refunded */
   Refunded = "refunded",
-  /** The payment was partially refunded. */
+  /** partially refunded */
   PartiallyRefunded = "partially_refunded",
-  /** The payment is under dispute. */
+  /** under dispute */
   Disputed = "disputed",
 }
 
@@ -43,61 +43,61 @@ export type PaymentMethodDetails = {
 };
 
 export type Payment = {
-  /** Internal payment identifier in Revstack. */
+  /** revstack internal id */
   id: string;
-  /** Provider identifier (e.g., "stripe"). */
+  /** provider slug (e.g. "stripe") */
   providerId: string;
-  /** Provider-side payment identifier (e.g., Stripe PaymentIntent id). */
+  /** external provider id (e.g. stripe pi_xxx) */
   externalId: string;
-  /** Total amount in the smallest currency unit (e.g., cents). */
+  /** amount in cents */
   amount: number;
-  /** ISO currency code (e.g., "USD"). */
+  /** iso currency (e.g. USD) */
   currency: string;
-  /** Current payment status in the Revstack domain model. */
+  /** normalized revstack status */
   status: PaymentStatus;
 
-  /** Breakdown of the total amount, when provided by the provider. */
+  /** amount breakdown */
   amountDetails?: {
-    /** Subtotal amount in the smallest currency unit. */
+    /** subtotal in cents */
     subtotal: number;
-    /** Tax amount in the smallest currency unit. */
+    /** tax in cents */
     tax: number;
-    /** Shipping amount in the smallest currency unit. */
+    /** shipping in cents */
     shipping: number;
-    /** Discount amount in the smallest currency unit. */
+    /** discount in cents */
     discount: number;
-    /** Processing fee amount in the smallest currency unit, when available. */
+    /** fee in cents */
     fee?: number;
   };
 
-  /** Amount refunded so far in the smallest currency unit. */
+  /** refunded amount in cents */
   amountRefunded: number;
 
-  /** Payment method details when available. */
+  /** payment method details when available. */
   method?: PaymentMethodDetails;
-  /** Optional payment description. */
+  /** optional description */
   description?: string;
 
-  /** Statement descriptor shown on the buyer's bank statement, when supported. */
+  /** bank statement descriptor */
   statementDescriptor?: string;
 
-  /** Internal customer identifier in Revstack, when applicable. */
+  /** revstack customer id */
   customerId?: string;
-  /** Provider-side customer identifier, when applicable. */
+  /** external customer id */
   externalCustomerId?: string;
 
-  /** Provider failure code, when the payment fails. */
+  /** provider failure code, when the payment fails. */
   failureCode?: string;
-  /** Human-readable failure message, when the payment fails. */
+  /** failure message, when the payment fails. */
   failureMessage?: string;
 
-  /** ISO timestamp when the payment was created. */
+  /** iso created at */
   createdAt: string;
-  /** ISO timestamp when the payment was last updated, when available. */
+  /** iso updated at */
   updatedAt?: string;
-  /** Arbitrary key-value metadata attached to the payment. */
+  /** custom metadata */
   metadata?: Record<string, any>;
-  /** Raw provider payload for debugging/inspection. */
+  /** raw provider payload */
   raw?: any;
 };
 
@@ -110,70 +110,70 @@ export enum SubscriptionStatus {
   Incomplete = "incomplete",
   /** Incomplete subscription expired before being completed. */
   IncompleteExpired = "incomplete_expired",
-  /** Subscription is in trial period. */
+  /** in trial period */
   Trialing = "trialing",
-  /** Subscription is active. */
+  /** active */
   Active = "active",
-  /** Subscription is past due (payment failed or pending). */
+  /** past due (payment failed or pending) */
   PastDue = "past_due",
-  /** Subscription has been canceled. */
+  /** has been canceled */
   Canceled = "canceled",
-  /** Subscription is unpaid (final state after retries). */
+  /** unpaid (final state after retries) */
   Unpaid = "unpaid",
-  /** Subscription is paused. */
+  /** paused */
   Paused = "paused",
 }
 
 export type Subscription = {
-  /** Internal subscription identifier in Revstack. */
+  /** revstack subscription id */
   id: string;
-  /** Provider identifier (e.g., "stripe"). */
+  /** provider slug (e.g. "stripe") */
   providerId: string;
-  /** Provider-side subscription identifier. */
+  /** external subscription id */
   externalId: string;
-  /** Current subscription status in the Revstack domain model. */
+  /** normalized status */
   status: SubscriptionStatus;
 
-  /** Internal plan identifier in Revstack, when applicable. */
+  /** revstack plan id */
   planId?: string;
-  /** Provider-side plan identifier, when applicable. */
+  /** external plan id */
   externalPlanId?: string;
 
-  /** Subscription amount in the smallest currency unit. */
+  /** amount in the smallest currency unit */
   amount: number;
-  /** ISO currency code (e.g., "USD"). */
+  /** iso currency (e.g. USD) */
   currency: string;
-  /** Billing interval unit. */
+  /** billing interval */
   interval: "day" | "week" | "month" | "year";
 
-  /** Internal customer identifier in Revstack. */
+  /** revstack customer id. */
   customerId: string;
 
-  /** ISO timestamp of the current billing period start. */
+  /** period start iso */
   currentPeriodStart: string;
-  /** ISO timestamp of the current billing period end. */
+  /** period end iso */
   currentPeriodEnd: string;
 
-  /** Whether the subscription will cancel at the end of the current period. */
+  /** cancels at period end */
   cancelAtPeriodEnd: boolean;
-  /** ISO timestamp when the subscription was canceled, when available. */
+  /** canceled at iso */
   canceledAt?: string;
-  /** ISO timestamp when the subscription started. */
+  /** started at iso */
   startedAt: string;
-  /** ISO timestamp when the subscription ended, when available. */
+  /** ended at iso */
   endedAt?: string;
 
-  /** ISO timestamp when the trial started, when available. */
+  /** trial start iso */
   trialStart?: string;
-  /** ISO timestamp when the trial ends, when available. */
+  /** trial end iso */
   trialEnd?: string;
 
-  /** ISO timestamp when a paused subscription will resume, when available. */
+  /** resume at iso */
   pauseResumesAt?: string;
 
-  /** Arbitrary key-value metadata attached to the subscription. */
+  /** custom metadata */
   metadata?: Record<string, any>;
-  /** Raw provider payload for debugging/inspection. */
+  /** raw provider payload */
   raw: any;
 };
 
@@ -182,139 +182,139 @@ export type Subscription = {
 // =============================================================================
 
 export type CreateCustomerInput = {
-  /** Customer email address. */
+  /** customer email */
   email: string;
-  /** Customer full name, when available. */
+  /** customer full name */
   name?: string;
-  /** Customer phone number, when available. */
+  /** customer phone */
   phone?: string;
-  /** Optional customer description. */
+  /** optional description */
   description?: string;
-  /** Customer billing address, when available. */
+  /** billing address */
   address?: Address;
-  /** Arbitrary key-value metadata attached to the customer. */
+  /** custom metadata */
   metadata?: Record<string, any>;
 };
 
 export type UpdateCustomerInput = Partial<CreateCustomerInput>;
 
 export type CreatePaymentInput = {
-  /** Amount to charge in the smallest currency unit. */
+  /** amount in cents */
   amount: number;
-  /** ISO currency code (e.g., "USD"). */
+  /** iso currency (e.g. USD) */
   currency: string;
-  /** Internal customer identifier in Revstack, when applicable. */
+  /** revstack customer id */
   customerId?: string;
-  /** Provider-side payment method identifier, when applicable. */
+  /** external payment method id */
   paymentMethodId?: string;
-  /** Optional payment description. */
+  /** optional description */
   description?: string;
 
-  /** Statement descriptor shown on the buyer's bank statement, when supported. */
+  /** bank statement descriptor */
   statementDescriptor?: string;
 
-  /** Whether to capture immediately (true) or authorize only (false), when supported. */
+  /** capture immediately or authorize only */
   capture?: boolean;
-  /** URL to redirect the user back after completing required actions. */
+  /** redirect return url */
   returnUrl?: string;
-  /** Billing address for the payment, when supported. */
+  /** billing address */
   billingAddress?: Address;
-  /** Shipping address for the payment, when supported. */
+  /** shipping address */
   shippingAddress?: Address;
-  /** Arbitrary key-value metadata attached to the payment. */
+  /** custom metadata */
   metadata?: Record<string, any>;
-  /** Provider-specific options payload. */
+  /** provider specific options */
   providerOptions?: any;
 };
 
 export type RefundPaymentInput = {
-  /** Internal payment identifier in Revstack. */
+  /** revstack internal id */
   paymentId: string;
-  /** Provider-side payment identifier, when known. */
+  /** external payment id */
   externalPaymentId?: string;
-  /** Amount to refund in the smallest currency unit (defaults to full amount). */
+  /** refund amount in cents */
   amount?: number;
-  /** Refund reason, when supported by the provider. */
+  /** refund reason */
   reason?: "duplicate" | "fraudulent" | "requested_by_customer";
-  /** Arbitrary key-value metadata attached to the refund request. */
+  /** custom metadata */
   metadata?: Record<string, any>;
 };
 
 export type SetupPaymentMethodInput = {
-  /** Internal customer identifier in Revstack. */
+  /** revstack customer id. */
   customerId: string;
-  /** URL to redirect the user back after setup completes. */
+  /** redirect return url */
   returnUrl: string;
-  /** Arbitrary key-value metadata attached to the setup request. */
+  /** custom metadata */
   metadata?: Record<string, any>;
 };
 
 export type CheckoutSessionInput = {
-  /** Internal customer identifier in Revstack, when applicable. */
+  /** revstack customer id */
   customerId?: string;
-  /** Customer email address when no customer id exists. */
+  /** fallback customer email */
   customerEmail?: string;
 
-  /** Merchant-provided reference id for reconciling sessions. */
+  /** client reference id */
   clientReferenceId?: string;
 
-  /** Whether to save the payment method for future usage, when supported. */
+  /** save payment method */
   setupFutureUsage?: boolean;
-  /** Items included in the checkout session. */
+  /** checkout line items */
   lineItems: {
-    /** Display name of the item. */
+    /** item name */
     name: string;
-    /** Optional description of the item. */
+    /** item description */
     description?: string;
-    /** Unit amount in the smallest currency unit. */
+    /** unit amount in cents */
     amount: number;
-    /** Quantity of the item. */
+    /** quantity */
     quantity: number;
-    /** ISO currency code (e.g., "USD"). */
+    /** iso currency (e.g. USD) */
     currency: string;
-    /** Optional array of image URLs for the item. */
+    /** item image urls */
     images?: string[];
-    /** Provider-side tax rate identifiers, when supported. */
+    /** external tax rates */
     taxRates?: string[];
   }[];
-  /** URL to redirect the user on successful completion. */
+  /** success url */
   successUrl: string;
-  /** URL to redirect the user on cancellation. */
+  /** cancel url */
   cancelUrl: string;
-  /** Controls collection of the billing address, when supported. */
+  /** billing address collection mode */
   billingAddressCollection?: "auto" | "required";
-  /** Checkout mode for the session. */
+  /** checkout mode */
   mode: "payment" | "subscription" | "setup";
 
-  /** Whether promotion codes are allowed, when supported. */
+  /** allow promo codes */
   allowPromotionCodes?: boolean;
 
-  /** Arbitrary key-value metadata attached to the session. */
+  /** custom metadata */
   metadata?: Record<string, any>;
 };
 
 export type CreateSubscriptionInput = {
-  /** Internal customer identifier in Revstack. */
+  /** revstack customer id. */
   customerId: string;
-  /** Internal plan identifier in Revstack, when applicable. */
+  /** revstack plan id */
   planId?: string;
-  /** Provider-side price identifier, when applicable. */
+  /** external price id */
   priceId?: string;
-  /** Quantity for metered/seat-based plans, when supported. */
+  /** metered quantity */
   quantity?: number;
-  /** URL to return to after completing subscription flow, when supported. */
+  /** return url */
   returnUrl?: string;
-  /** URL to return to if the user cancels the flow, when supported. */
+  /** cancel url */
   cancelUrl?: string;
-  /** Trial period length in days, when supported. */
+  /** trial days */
   trialDays?: number;
 
-  /** Internal discount identifier in Revstack, when applicable. */
+  /** revstack discount id */
   discountId?: string;
-  /** Provider-side promotion code, when applicable. */
+  /** external promo code */
   promotionCode?: string;
 
-  /** Arbitrary key-value metadata attached to the subscription. */
+  /** custom metadata */
   metadata?: Record<string, any>;
 };
 
@@ -325,106 +325,106 @@ export type CreateSubscriptionInput = {
 export type ActionStatus = "success" | "pending" | "requires_action" | "failed";
 
 export type AsyncActionResult<T> = {
-  /** Result data when available; null if not available or on failure. */
+  /** result data payload */
   data: T | null;
-  /** Current action status. */
+  /** action status */
   status: ActionStatus;
-  /** Follow-up action required to complete the flow, when applicable. */
+  /** next action required */
   nextAction?: {
-    /** Next action type to complete the flow. */
+    /** next action type */
     type: "redirect" | "url_load" | "show_modal";
-    /** URL to redirect/load, when applicable. */
+    /** action url */
     url?: string;
-    /** Provider-specific payload for the next step, when applicable. */
+    /** provider payload */
     payload?: any;
   };
-  /** Error information when the action fails. */
+  /** error information */
   error?: {
-    /** Stable error code for programmatic handling. */
+    /** stable error code */
     code: string;
     /** Human-readable error message. */
     message: string;
-    /** Provider-specific error details, when available. */
+    /** provider specific error details */
     providerError?: string;
   };
 };
 
 export type CheckoutSessionResult = {
-  /** Provider-side checkout session identifier. */
+  /** external checkout session id */
   id: string;
-  /** ISO timestamp when the session expires, when available. */
+  /** expires at iso */
   expiresAt?: string;
 };
 
 export type PaginationOptions = {
-  /** Maximum number of items to return. */
+  /** max limit */
   limit?: number;
-  /** Opaque cursor for cursor-based pagination. */
+  /** pagination cursor */
   cursor?: string;
-  /** Provider-side startingAfter cursor, when supported. */
+  /** external startingAfter cursor */
   startingAfter?: string;
-  /** Page number for page-based pagination, when supported. */
+  /** page number */
   page?: number;
 };
 
 export type PaginatedResult<T> = {
-  /** Page items. */
+  /** page items */
   data: T[];
-  /** Whether there are more items after this page. */
+  /** has more flag */
   hasMore: boolean;
-  /** Opaque cursor for the next page, when available. */
+  /** next page cursor */
   nextCursor?: string;
 };
 
 export type Address = {
-  /** Address line 1. */
+  /** address line 1 */
   line1: string;
-  /** Address line 2, when available. */
+  /** address line 2 */
   line2?: string;
-  /** City or locality. */
+  /** city */
   city: string;
-  /** State/region, when available. */
+  /** state */
   state?: string;
-  /** Postal or ZIP code. */
+  /** postal code */
   postalCode: string;
-  /** Country code (ISO 3166-1 alpha-2). */
+  /** iso country code */
   country: string; // ISO 3166-1 alpha-2
 };
 
 export type Customer = {
-  /** Internal customer identifier in Revstack. */
+  /** revstack customer id. */
   id: string;
-  /** Provider identifier (e.g., "stripe"). */
+  /** provider slug (e.g. "stripe") */
   providerId: string;
-  /** Provider-side customer identifier. */
+  /** external customer id. */
   externalId: string;
-  /** Customer email address. */
+  /** customer email */
   email: string;
-  /** Customer full name, when available. */
+  /** customer full name */
   name?: string;
-  /** Customer phone number, when available. */
+  /** customer phone */
   phone?: string;
-  /** Arbitrary key-value metadata attached to the customer. */
+  /** custom metadata */
   metadata?: Record<string, any>;
-  /** ISO timestamp when the customer was created. */
+  /** created at iso */
   createdAt: string;
-  /** Whether the customer was deleted, when supported. */
+  /** deleted flag */
   deleted?: boolean;
 };
 
 export type PaymentMethod = {
-  /** Internal payment method identifier in Revstack. */
+  /** revstack payment method id */
   id: string;
-  /** Internal customer identifier in Revstack. */
+  /** revstack customer id. */
   customerId: string;
-  /** Provider-side payment method identifier. */
+  /** external payment method id. */
   externalId: string;
-  /** High-level payment method type. */
+  /** payment method type */
   type: "card" | "bank_transfer" | "wallet";
   /** Detailed payment method metadata. */
   details: PaymentMethodDetails;
-  /** Whether this payment method is the default for the customer. */
+  /** is default flag */
   isDefault: boolean;
-  /** Arbitrary key-value metadata attached to the payment method. */
+  /** custom metadata */
   metadata?: Record<string, any>;
 };
