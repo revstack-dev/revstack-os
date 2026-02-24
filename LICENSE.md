@@ -17,6 +17,7 @@ Everything you need to integrate Revstack into your application is MIT-licensed.
 | `@revstackhq/ai`                | MIT     |
 | `@revstackhq/eslint-config`     | MIT     |
 | `@revstackhq/typescript-config` | MIT     |
+| `@revstackhq/cli`               | MIT     |
 
 These are the packages you install to build with Revstack. They will always be MIT.
 
