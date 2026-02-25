@@ -91,3 +91,63 @@ export async function revstackGenerateText(
 
   return result;
 }
+
+/**
+ * Factory to create pre-configured AI generation functions bound to your Revstack project.
+ *
+ * @example
+ * ```ts
+ * // lib/revstack.ts
+ * import { trackUsage } from "@revstackhq/next/server";
+ * import { createRevstackAI } from "@revstackhq/ai";
+ *
+ * export const revstack = createRevstackAI(
+ *   { secretKey: process.env.REVSTACK_SECRET_KEY! },
+ *   trackUsage
+ * );
+ * ```
+ */
+export function createRevstackAI<TConfig>(
+  config: TConfig,
+  trackFn: (
+    key: string,
+    usage: AIUsageData,
+    config: TConfig
+  ) => Promise<void> | void
+) {
+  return {
+    /**
+     * Wraps streamText with automatic usage tracking.
+     * Inherits all options from Vercel AI SDK and requires an `entitlementKey`.
+     */
+    streamText: (
+      options: StreamTextParameters & { entitlementKey: string }
+    ) => {
+      const { entitlementKey, ...streamOptions } = options;
+      // We safely cast options because streamText parameter destructuring drops the rest logic
+      return revstackStreamText({
+        ...(streamOptions as unknown as StreamTextParameters),
+        revstack: {
+          trackUsage: (usage) => trackFn(entitlementKey, usage, config),
+        },
+      });
+    },
+
+    /**
+     * Wraps generateText with automatic usage tracking.
+     * Inherits all options from Vercel AI SDK and requires an `entitlementKey`.
+     */
+    generateText: (
+      options: GenerateTextParameters & { entitlementKey: string }
+    ) => {
+      const { entitlementKey, ...generateOptions } = options;
+      // We safely cast options because generateText parameter destructuring drops the rest logic
+      return revstackGenerateText({
+        ...(generateOptions as unknown as GenerateTextParameters),
+        revstack: {
+          trackUsage: (usage) => trackFn(entitlementKey, usage, config),
+        },
+      });
+    },
+  };
+}

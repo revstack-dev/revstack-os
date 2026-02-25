@@ -19,31 +19,41 @@ npm install @revstackhq/ai ai
 
 ## Quick Start
 
-Replace your Vercel `streamText` call with `revstackStreamText` inside your Next.js Route Handler.
+### 1. Configure Revstack Once (IoC)
+
+Create a pre-configured instance of the AI wrapper in your app. Pass a `trackUsage` callback so `@revstackhq/ai` can report usage without knowing about your framework.
+
+```typescript
+// lib/revstack.ts
+import { trackUsage } from "@revstackhq/next/server";
+import { createRevstackAI } from "@revstackhq/ai";
+
+export const revstack = createRevstackAI(
+  { secretKey: process.env.REVSTACK_SECRET_KEY! },
+  async (key, usage, config) => {
+    // This fires every time a stream or generation completes
+    await trackUsage(key, usage, config);
+  }
+);
+```
+
+### 2. Replace `streamText` and `generateText`
+
+Import your pre-configured instance instead of the base Vercel functions. You now only need to provide an `entitlementKey`.
 
 ```typescript
 // app/api/chat/route.ts
-import { revstackStreamText } from "@revstackhq/ai";
+import { revstack } from "@/lib/revstack";
 import { openai } from "@ai-sdk/openai";
-
-// 1. You could use @revstackhq/next, or just use `fetch` directly!
-import { trackUsage } from "@revstackhq/next/server";
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const result = await revstackStreamText({
+  const result = await revstack.streamText({
     model: openai("gpt-4o"),
     messages,
-    // 1. Add the revstack callback to define the side effect
-    revstack: {
-      trackUsage: async (usage) => {
-        await trackUsage("ai_tokens", usage, {
-          secretKey: process.env.REVSTACK_SECRET_KEY!,
-        });
-      },
-    },
-    // 2. Your original onFinish still fires!
+    entitlementKey: "ai_tokens", // Triggers metering automatically
+    // Your original onFinish still fires!
     async onFinish(event) {
       console.log("Stream completed locally, and usage was already tracked.");
     },
@@ -59,8 +69,8 @@ When a user streams a generation:
 
 1. The stream begins sending chunks to the client instantly.
 2. Vercel's internal `onFinish` event fires when the stream ends.
-3. `@revstackhq/ai` intercepts this event, extracts the `model.id` and token counts.
-4. It calls your injected `trackUsage` callback, which can route the ledger deduction anywhere.
+3. Your pre-configured `revstack.streamText` wrapper intercepts this event, extracting the `model.id` and exact token split.
+4. It calls your injected `trackUsage` callback, transmitting the raw payload (e.g. `promptTokens: 10, completionTokens: 50`) to your backend.
 5. If you provided an `onFinish` handler, it runs sequentially afterward.
 
 _This offloads the complex math of "how many credits should GPT-4o cost vs Claude 3.5 Sonnet" entirely to your Revstack product configuration._
