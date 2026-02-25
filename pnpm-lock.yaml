@@ -36,9 +36,6 @@ importers:
 
   packages/ai:
     dependencies:
-      '@revstackhq/next':
-        specifier: workspace:*
-        version: link:../next
       ai:
         specifier: ^3.0.0
         version: 3.4.33(react@19.2.4)(sswr@2.2.0(svelte@5.53.3))(svelte@5.53.3)(vue@3.5.29(typescript@5.9.2))(zod@3.25.76)

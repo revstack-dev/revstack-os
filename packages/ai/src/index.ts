@@ -1,11 +1,16 @@
-import { streamText, generateText, type LanguageModelUsage } from "ai";
-import { trackUsage, type RevstackServerConfig } from "@revstackhq/next/server";
+import { streamText, generateText } from "ai";
+export interface AIUsageData {
+  ai: {
+    modelId: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
 
 export interface RevstackMeteringOptions {
-  /** The entitlement/metering key, e.g., 'ai_tokens' */
-  key: string;
-  /** Server configuration to authenticate the backend call */
-  config: RevstackServerConfig;
+  /** Callback fired automatically with the exact token consumption */
+  trackUsage: (usage: AIUsageData) => Promise<void> | void;
 }
 
 // Ensure the first argument types are dynamically extracted from the ai package
@@ -30,18 +35,14 @@ export async function revstackStreamText(
           : options.model.modelId;
 
       try {
-        await trackUsage(
-          revstack.key,
-          {
-            ai: {
-              modelId: modelId || "unknown",
-              promptTokens: event.usage.promptTokens,
-              completionTokens: event.usage.completionTokens,
-              totalTokens: event.usage.totalTokens,
-            },
+        await revstack.trackUsage({
+          ai: {
+            modelId: modelId || "unknown",
+            promptTokens: event.usage.promptTokens,
+            completionTokens: event.usage.completionTokens,
+            totalTokens: event.usage.totalTokens,
           },
-          revstack.config
-        );
+        });
       } catch (error) {
         // Usage tracking failed (e.g., ran out of credits).
         // For streaming, the generation is already complete, but we log the error.
@@ -73,18 +74,14 @@ export async function revstackGenerateText(
     typeof options.model === "string" ? options.model : options.model.modelId;
 
   try {
-    await trackUsage(
-      revstack.key,
-      {
-        ai: {
-          modelId: modelId || "unknown",
-          promptTokens: result.usage.promptTokens,
-          completionTokens: result.usage.completionTokens,
-          totalTokens: result.usage.totalTokens,
-        },
+    await revstack.trackUsage({
+      ai: {
+        modelId: modelId || "unknown",
+        promptTokens: result.usage.promptTokens,
+        completionTokens: result.usage.completionTokens,
+        totalTokens: result.usage.totalTokens,
       },
-      revstack.config
-    );
+    });
   } catch (error) {
     console.error(
       "[@revstackhq/ai] Failed to track usage after generation finish:",

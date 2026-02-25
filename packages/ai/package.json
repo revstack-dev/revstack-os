@@ -32,7 +32,6 @@
     "typescript": "5.9.2"
   },
   "peerDependencies": {
-    "ai": "^3.0.0",
-    "@revstackhq/next": "workspace:*"
+    "ai": "^3.0.0"
   }
 }

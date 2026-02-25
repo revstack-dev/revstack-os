@@ -14,39 +14,39 @@ If you are building an AI native application, this package is the fastest way to
 ## Installation
 
 ```bash
-npm install @revstackhq/ai @revstackhq/next ai
+npm install @revstackhq/ai ai
 ```
 
 ## Quick Start
 
 Replace your Vercel `streamText` call with `revstackStreamText` inside your Next.js Route Handler.
 
-```typescript
-// app/api/chat/route.ts
-import { revstackStreamText } from "@revstackhq/ai";
-import { openai } from "@ai-sdk/openai";
+// 1. You could use @revstackhq/next, or just use `fetch` directly!
+import { trackUsage } from "@revstackhq/next/server";
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+const { messages } = await req.json();
 
-  const result = await revstackStreamText({
-    model: openai("gpt-4o"),
-    messages,
-    // 1. Add the revstack configuration block
-    revstack: {
-      key: "ai_tokens",
-      config: {
-        secretKey: process.env.REVSTACK_SECRET_KEY!,
-      },
-    },
-    // 2. Your original onFinish still fires!
-    async onFinish(event) {
-      console.log("Stream completed locally, and usage was already tracked.");
-    },
-  });
+const result = await revstackStreamText({
+model: openai("gpt-4o"),
+messages,
+// 1. Add the revstack callback to define the side effect
+revstack: {
+trackUsage: async (usage) => {
+await trackUsage("ai_tokens", usage, {
+secretKey: process.env.REVSTACK_SECRET_KEY!,
+});
+},
+},
+// 2. Your original onFinish still fires!
+async onFinish(event) {
+console.log("Stream completed locally, and usage was already tracked.");
+},
+});
 
-  return result.toDataStreamResponse();
+return result.toDataStreamResponse();
 }
+
 ```
 
 ## How It Works
@@ -56,7 +56,8 @@ When a user streams a generation:
 1. The stream begins sending chunks to the client instantly.
 2. Vercel's internal `onFinish` event fires when the stream ends.
 3. `@revstackhq/ai` intercepts this event, extracts the `model.id` and token counts.
-4. It calls the Revstack `/api/v1/usage/track` endpoint, deducting credits from the user's ledger on the cloud.
+4. It calls your injected `trackUsage` callback, which can route the ledger deduction anywhere.
 5. If you provided an `onFinish` handler, it runs sequentially afterward.
 
 This offloads the complex math of "how many credits should GPT-4o cost vs Claude 3.5 Sonnet" entirely to your Revstack product configuration.
+```
