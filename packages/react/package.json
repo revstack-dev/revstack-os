@@ -23,18 +23,18 @@
   },
   "dependencies": {
     "@revstackhq/browser": "workspace:*",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "use-sync-external-store": "^1.2.0"
   },
   "devDependencies": {
     "@revstackhq/eslint-config": "workspace:*",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react": "~18.3.0",
+    "@types/react-dom": "~18.3.0",
+    "@types/use-sync-external-store": "^0.0.6",
     "eslint": "^9.39.1",
     "typescript": "5.9.2"
   },
   "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
   }
 }
