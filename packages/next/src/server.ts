@@ -129,6 +129,18 @@ export async function requireEntitlement(
   return entitlement;
 }
 
+export interface UsageData {
+  /** For standard, non-AI metered billing (e.g. 1 API call = 1 credit) */
+  amount?: number;
+  /** For AI-specific billing, where costs depend on models and token splits */
+  ai?: {
+    modelId: string;
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
 /**
  * Server-side usage tracking.
  *
@@ -141,7 +153,7 @@ export async function requireEntitlement(
  */
 export async function trackUsage(
   key: string,
-  amount: number,
+  usage: UsageData,
   config: RevstackServerConfig
 ): Promise<void> {
   const baseUrl = config.apiUrl ?? DEFAULT_API_URL;
@@ -154,7 +166,7 @@ export async function trackUsage(
       Authorization: `Bearer ${config.secretKey}`,
       ...identityHeaders,
     },
-    body: JSON.stringify({ key, amount }),
+    body: JSON.stringify({ key, usage }),
     cache: "no-store",
   });
 
@@ -203,7 +215,7 @@ export function withMetering(
 ): RouteHandler {
   return async (req, context) => {
     try {
-      await trackUsage(key, amount, config);
+      await trackUsage(key, { amount }, config);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Unknown metering error";

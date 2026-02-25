@@ -4,31 +4,35 @@
   "private": false,
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "node --import tsx --test test/**/*.test.ts"
   },
-  "dependencies": {
-    "ai": "^4.1.41",
-    "@revstackhq/core": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@revstackhq/eslint-config": "workspace:*",
     "@types/node": "^20.11.30",
     "eslint": "^9.39.1",
+    "tsup": "^8.1.0",
     "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "ai": "^3.0.0",
+    "@revstackhq/next": "workspace:*"
   }
 }
