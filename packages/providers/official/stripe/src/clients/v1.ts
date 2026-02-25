@@ -14,7 +14,7 @@ import {
   ProviderContext,
   InstallResult,
   RevstackEvent,
-  createError,
+  RevstackError,
   RevstackErrorCode,
   CheckoutSessionInput,
   CheckoutSessionResult,
@@ -35,12 +35,128 @@ import Stripe from "stripe";
 
 const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2026-01-28.clover";
 
-export class StripeClientV1 implements ProviderClient {
-  private getStripeClient(apiKey: string) {
-    return new Stripe(apiKey, {
+// cache stripe instances per api key
+const stripeClients = new Map<string, Stripe>();
+
+function getOrCreateStripe(apiKey: string): Stripe {
+  let client = stripeClients.get(apiKey);
+  if (!client) {
+    client = new Stripe(apiKey, {
       apiVersion: STRIPE_API_VERSION,
       typescript: true,
     });
+    stripeClients.set(apiKey, client);
+  }
+  return client;
+}
+
+/**
+ * maps stripe sdk errors to revstack error codes
+ */
+function mapStripeError(error: unknown): {
+  code: RevstackErrorCode;
+  message: string;
+  providerError?: string;
+} {
+  if (error instanceof Stripe.errors.StripeError) {
+    const msg = error.message;
+    const stripeCode = error.code;
+
+    switch (stripeCode) {
+      case "card_declined":
+        return {
+          code: RevstackErrorCode.CardDeclined,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "insufficient_funds":
+        return {
+          code: RevstackErrorCode.InsufficientFunds,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "expired_card":
+        return {
+          code: RevstackErrorCode.ExpiredCard,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "incorrect_cvc":
+        return {
+          code: RevstackErrorCode.IncorrectCvc,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "authentication_required":
+        return {
+          code: RevstackErrorCode.AuthenticationRequired,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "resource_missing":
+        return {
+          code: RevstackErrorCode.ResourceNotFound,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "idempotency_key_in_use":
+        return {
+          code: RevstackErrorCode.IdempotencyKeyConflict,
+          message: msg,
+          providerError: stripeCode,
+        };
+      default:
+        break;
+    }
+
+    // check by error type
+    switch (error.type) {
+      case "StripeRateLimitError":
+        return {
+          code: RevstackErrorCode.RateLimitExceeded,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "StripeAuthenticationError":
+        return {
+          code: RevstackErrorCode.InvalidCredentials,
+          message: msg,
+          providerError: stripeCode,
+        };
+      case "StripeConnectionError":
+        return {
+          code: RevstackErrorCode.ProviderUnavailable,
+          message: msg,
+          providerError: stripeCode,
+        };
+      default:
+        break;
+    }
+
+    return {
+      code: RevstackErrorCode.UnknownError,
+      message: msg,
+      providerError: stripeCode,
+    };
+  }
+
+  return {
+    code: RevstackErrorCode.UnknownError,
+    message: (error as Error).message || "Unknown error",
+  };
+}
+
+/**
+ * helper to build a query separator for URLs
+ */
+function appendQueryParam(url: string, param: string): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return url + sep + param;
+}
+
+export class StripeClientV1 implements ProviderClient {
+  private getStripeClient(apiKey: string) {
+    return getOrCreateStripe(apiKey);
   }
 
   async validateCredentials(
@@ -89,35 +205,45 @@ export class StripeClientV1 implements ProviderClient {
       const existingWebhook = webhooks.data.find((wh) => wh.url === webhookUrl);
 
       let webhookEndpoint;
+      let secret: string | undefined;
 
       if (existingWebhook) {
+        // update just refreshes events — stripe does NOT return the secret on update
         webhookEndpoint = await stripe.webhookEndpoints.update(
           existingWebhook.id,
           { enabled_events }
         );
+        // keep whatever secret was stored before, caller must not overwrite
+        secret = undefined;
       } else {
         webhookEndpoint = await stripe.webhookEndpoints.create({
           enabled_events,
           url: webhookUrl,
         });
+        // secret is only available on create
+        secret = webhookEndpoint.secret;
+      }
+
+      const data: Record<string, any> = {
+        webhookEndpointId: webhookEndpoint.id,
+      };
+      // only include secret when we actually have one (new endpoints)
+      if (secret) {
+        data.webhookSecret = secret;
       }
 
       return {
-        data: {
-          success: true,
-          data: {
-            webhookEndpointId: webhookEndpoint.id,
-            webhookSecret: webhookEndpoint.secret!,
-          },
-        },
+        data: { success: true, data },
         status: "success",
       };
     } catch (error: unknown) {
-      console.error("Stripe Webhook Setup Failed:", error as Error);
-      throw createError(
-        RevstackErrorCode.UnknownError,
-        "Failed to setup webhooks in Stripe"
-      );
+      const mapped = mapStripeError(error);
+      throw new RevstackError({
+        code: mapped.code,
+        message: mapped.message,
+        provider: "stripe",
+        cause: error,
+      });
     }
   }
 
@@ -196,12 +322,15 @@ export class StripeClientV1 implements ProviderClient {
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode: input.mode,
         client_reference_id: input.clientReferenceId,
-        success_url: input.successUrl + "&session_id={CHECKOUT_SESSION_ID}",
+        success_url: appendQueryParam(
+          input.successUrl,
+          "session_id={CHECKOUT_SESSION_ID}"
+        ),
         cancel_url: input.cancelUrl,
         customer: input.customerId,
         customer_email: !input.customerId ? input.customerEmail : undefined,
         allow_promotion_codes: input.allowPromotionCodes,
-        payment_method_types: ["card"],
+        // let stripe use the account's enabled payment methods
         line_items: input.lineItems.map((item) => ({
           price_data: {
             currency: item.currency.toLowerCase(),
@@ -235,13 +364,11 @@ export class StripeClientV1 implements ProviderClient {
         },
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.UnknownError,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -277,8 +404,11 @@ export class StripeClientV1 implements ProviderClient {
               quantity: 1,
             },
           ],
-          success_url: input.returnUrl + "?session_id={CHECKOUT_SESSION_ID}",
-          cancel_url: input.returnUrl + "?canceled=true",
+          success_url: appendQueryParam(
+            input.returnUrl || "",
+            "session_id={CHECKOUT_SESSION_ID}"
+          ),
+          cancel_url: appendQueryParam(input.returnUrl || "", "canceled=true"),
           metadata: {
             ...input.metadata,
             revstack_trace_id: ctx.traceId ?? null,
@@ -301,13 +431,11 @@ export class StripeClientV1 implements ProviderClient {
         },
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.PaymentFailed,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -360,17 +488,19 @@ export class StripeClientV1 implements ProviderClient {
         },
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.PaymentFailed,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
 
+  /**
+   * retrieves a payment by id
+   * accepts both pi_ (payment intent) and cs_ (checkout session) ids
+   */
   async getPayment(
     ctx: ProviderContext,
     id: string
@@ -378,19 +508,40 @@ export class StripeClientV1 implements ProviderClient {
     const stripe = this.getStripeClient(ctx.config.apiKey);
 
     try {
-      const pi = await stripe.paymentIntents.retrieve(id);
+      // if this is a checkout session id, resolve to payment intent
+      if (id.startsWith("cs_")) {
+        const session = await stripe.checkout.sessions.retrieve(id);
+        const piId =
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent?.id;
+
+        if (!piId) {
+          return {
+            data: null,
+            status: "failed",
+            error: {
+              code: RevstackErrorCode.ResourceNotFound,
+              message: "Checkout session has no associated payment intent yet",
+            },
+          };
+        }
+        id = piId;
+      }
+
+      const pi = await stripe.paymentIntents.retrieve(id, {
+        expand: ["latest_charge"],
+      });
       return {
         data: mapStripePaymentToPayment(pi),
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.ResourceNotFound,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -416,12 +567,17 @@ export class StripeClientV1 implements ProviderClient {
 
       return this.getPayment(ctx, input.paymentId);
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
         error: {
-          code: RevstackErrorCode.RefundFailed,
-          message: (error as Error).message,
+          code:
+            mapped.code === RevstackErrorCode.UnknownError
+              ? RevstackErrorCode.RefundFailed
+              : mapped.code,
+          message: mapped.message,
+          providerError: mapped.providerError,
         },
       };
     }
@@ -436,6 +592,7 @@ export class StripeClientV1 implements ProviderClient {
     try {
       const params: Stripe.PaymentIntentListParams = {
         limit: pagination.limit || 20,
+        expand: ["data.latest_charge"],
       };
 
       if (pagination.cursor) {
@@ -456,13 +613,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.UnknownError,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -480,13 +635,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.ResourceNotFound,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -512,13 +665,40 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      // differentiate: already canceled vs not found vs other
+      if (error instanceof Stripe.errors.StripeError) {
+        if (error.code === "resource_missing") {
+          return {
+            data: null,
+            status: "failed",
+            error: {
+              code: RevstackErrorCode.SubscriptionNotFound,
+              message: error.message,
+              providerError: error.code,
+            },
+          };
+        }
+        // subscription exists but can't be modified (already canceled, etc.)
+        if (
+          error.message.includes("cancel") ||
+          error.message.includes("status")
+        ) {
+          return {
+            data: null,
+            status: "failed",
+            error: {
+              code: RevstackErrorCode.InvalidState,
+              message: error.message,
+              providerError: error.code,
+            },
+          };
+        }
+      }
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.SubscriptionNotFound,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -545,13 +725,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.UnknownError,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -576,13 +754,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.UnknownError,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -614,13 +790,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.InvalidInput,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -647,13 +821,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.ResourceNotFound,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -671,13 +843,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: false,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.UnknownError,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -707,13 +877,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: null,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.ResourceNotFound,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -728,7 +896,6 @@ export class StripeClientV1 implements ProviderClient {
       const [paymentMethods, customer] = await Promise.all([
         stripe.paymentMethods.list({
           customer: customerId,
-          type: "card",
           limit: 100,
         }),
         stripe.customers.retrieve(customerId),
@@ -755,13 +922,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: [],
         status: "failed",
-        error: {
-          code: RevstackErrorCode.UnknownError,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }
@@ -780,13 +945,11 @@ export class StripeClientV1 implements ProviderClient {
         status: "success",
       };
     } catch (error: unknown) {
+      const mapped = mapStripeError(error);
       return {
         data: false,
         status: "failed",
-        error: {
-          code: RevstackErrorCode.UnknownError,
-          message: (error as Error).message,
-        },
+        error: mapped,
       };
     }
   }

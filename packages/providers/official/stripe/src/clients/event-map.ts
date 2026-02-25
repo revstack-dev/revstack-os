@@ -30,4 +30,6 @@ export const EVENT_MAP: Record<string, EventType> = {
 
   "payment_method.attached": "PAYMENT_METHOD_ATTACHED",
   "payment_method.detached": "PAYMENT_METHOD_DETACHED",
+
+  "mandate.updated": "MANDATE_CREATED",
 };

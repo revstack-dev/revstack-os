@@ -10,23 +10,49 @@ import {
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
 
+// stripe sdk types don't expose current_period_start/end even though the API returns them
+interface StripeSubscriptionWithPeriods extends Stripe.Subscription {
+  current_period_start?: number;
+  current_period_end?: number;
+}
+
+// --- STATUS MAPPERS ---
+
 export function mapStripeStatusToPaymentStatus(status: string): PaymentStatus {
   const map: Record<string, PaymentStatus> = {
     succeeded: PaymentStatus.Succeeded,
     requires_payment_method: PaymentStatus.Pending,
     requires_confirmation: PaymentStatus.Pending,
-    requires_action: PaymentStatus.Pending,
+    requires_action: PaymentStatus.RequiresAction,
     canceled: PaymentStatus.Canceled,
     processing: PaymentStatus.Pending,
   };
   return map[status] || PaymentStatus.Pending;
 }
 
+export function mapStripeSubStatusToSubscriptionStatus(
+  status: string
+): SubscriptionStatus {
+  const map: Record<string, SubscriptionStatus> = {
+    incomplete: SubscriptionStatus.Incomplete,
+    incomplete_expired: SubscriptionStatus.IncompleteExpired,
+    trialing: SubscriptionStatus.Trialing,
+    active: SubscriptionStatus.Active,
+    past_due: SubscriptionStatus.PastDue,
+    canceled: SubscriptionStatus.Canceled,
+    unpaid: SubscriptionStatus.Unpaid,
+    paused: SubscriptionStatus.Paused,
+  };
+  return map[status] || SubscriptionStatus.Active;
+}
+
+// --- SESSION → DOMAIN MAPPERS (for redirect-based checkout flows) ---
+
 export function mapSessionToPaymentResult(
   session: Stripe.Checkout.Session,
   amount: number,
   currency: string,
-  customerId?: string,
+  customerId?: string
 ): Payment {
   return {
     id: session.id,
@@ -44,7 +70,7 @@ export function mapSessionToPaymentResult(
 
 export function mapSessionToSubscriptionResult(
   session: Stripe.Checkout.Session,
-  customerId: string,
+  customerId: string
 ): Subscription {
   return {
     id: "sess_" + session.id,
@@ -72,13 +98,21 @@ export function mapSessionToCheckoutResult(session: Stripe.Checkout.Session) {
   };
 }
 
+// --- STRIPE OBJECT → DOMAIN MAPPERS ---
+
 export function mapStripePaymentToPayment(pi: Stripe.PaymentIntent): Payment {
+  // extract refund amount from the latest charge when expanded
+  let amountRefunded = 0;
+  if (pi.latest_charge && typeof pi.latest_charge === "object") {
+    amountRefunded = (pi.latest_charge as Stripe.Charge).amount_refunded || 0;
+  }
+
   return {
     id: pi.id,
     providerId: "stripe",
     externalId: pi.id,
     amount: pi.amount,
-    amountRefunded: 0,
+    amountRefunded,
     currency: pi.currency.toUpperCase(),
     status: mapStripeStatusToPaymentStatus(pi.status),
     customerId: typeof pi.customer === "string" ? pi.customer : pi.customer?.id,
@@ -88,15 +122,22 @@ export function mapStripePaymentToPayment(pi: Stripe.PaymentIntent): Payment {
 }
 
 export function mapStripeSubscriptionToSubscription(
-  sub: Stripe.Subscription,
+  rawSub: Stripe.Subscription
 ): Subscription {
+  const sub = rawSub as StripeSubscriptionWithPeriods;
   const price = sub.items.data[0]?.price;
+
+  // safe fallbacks: current_period fields aren't in the SDK types but exist at runtime
+  const periodStartTs =
+    sub.current_period_start ?? sub.start_date ?? sub.created;
+  const periodEndTs =
+    sub.current_period_end ?? sub.billing_cycle_anchor ?? sub.created;
 
   return {
     id: sub.id,
     providerId: "stripe",
     externalId: sub.id,
-    status: sub.status as SubscriptionStatus,
+    status: mapStripeSubStatusToSubscriptionStatus(sub.status),
 
     amount: price?.unit_amount || 0,
     currency: sub.currency.toUpperCase(),
@@ -105,8 +146,8 @@ export function mapStripeSubscriptionToSubscription(
     customerId:
       typeof sub.customer === "string" ? sub.customer : sub.customer?.id || "",
 
-    currentPeriodStart: new Date(sub.start_date * 1000).toISOString(),
-    currentPeriodEnd: new Date(sub.created * 1000).toISOString(),
+    currentPeriodStart: new Date(periodStartTs * 1000).toISOString(),
+    currentPeriodEnd: new Date(periodEndTs * 1000).toISOString(),
 
     cancelAtPeriodEnd: sub.cancel_at_period_end,
     startedAt: new Date(sub.start_date * 1000).toISOString(),
@@ -119,7 +160,7 @@ export function mapStripeSubscriptionToSubscription(
 }
 
 export function mapStripeCustomerToCustomer(
-  cust: Stripe.Customer | Stripe.DeletedCustomer,
+  cust: Stripe.Customer | Stripe.DeletedCustomer
 ): Customer {
   if (cust.deleted) {
     return {
@@ -150,7 +191,7 @@ export function mapStripeCustomerToCustomer(
 
 export function mapStripePaymentMethodToPaymentMethod(
   pm: Stripe.PaymentMethod,
-  defaultPaymentMethodId?: string | null,
+  defaultPaymentMethodId?: string | null
 ): PaymentMethod {
   let details: PaymentMethodDetails = { type: "card" };
 
@@ -180,7 +221,7 @@ export function mapStripePaymentMethodToPaymentMethod(
 }
 
 export function mapAddressToStripe(
-  addr?: Address,
+  addr?: Address
 ): Stripe.AddressParam | undefined {
   if (!addr) return undefined;
   return {
