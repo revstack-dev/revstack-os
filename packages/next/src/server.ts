@@ -164,3 +164,56 @@ export async function trackUsage(
     );
   }
 }
+
+// ── Route Handler utilities ──────────────────────────────────────────
+
+/** Standard Next.js App Router route handler signature */
+type RouteHandler = (
+  req: Request,
+  context: { params: Promise<Record<string, string>> }
+) => Promise<Response> | Response;
+
+/**
+ * Higher-order function that wraps a Next.js Route Handler with
+ * fixed-cost metering.
+ *
+ * Deducts `amount` units from the user's `key` quota *before* the
+ * handler runs. If the user lacks sufficient credits, returns a
+ * 402 Payment Required response without invoking the handler.
+ *
+ * @example
+ * ```ts
+ * // app/api/generate/route.ts
+ * import { withMetering } from "@revstackhq/next/server";
+ *
+ * const config = { secretKey: process.env.REVSTACK_SECRET_KEY! };
+ *
+ * export const POST = withMetering("ai-credits", 1, config, async (req) => {
+ *   const body = await req.json();
+ *   const result = await generateWithAI(body.prompt);
+ *   return Response.json({ result });
+ * });
+ * ```
+ */
+export function withMetering(
+  key: string,
+  amount: number,
+  config: RevstackServerConfig,
+  handler: RouteHandler
+): RouteHandler {
+  return async (req, context) => {
+    try {
+      await trackUsage(key, amount, config);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown metering error";
+
+      return Response.json(
+        { error: "Payment Required", details: message },
+        { status: 402 }
+      );
+    }
+
+    return handler(req, context);
+  };
+}
