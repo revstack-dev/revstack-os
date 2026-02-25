@@ -36,3 +36,13 @@ export interface IdentifyResponse {
 export interface CheckoutSessionResponse {
   sessionToken: string;
 }
+
+export interface BillingPortalParams {
+  /** url to redirect back to after the user leaves the portal */
+  returnUrl: string;
+}
+
+export interface BillingPortalResponse {
+  /** the full url to the billing portal session */
+  url: string;
+}

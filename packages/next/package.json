@@ -4,36 +4,41 @@
   "private": false,
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "node --import tsx --test test/**/*.test.ts"
   },
   "dependencies": {
-    "next": "^15.1.7",
-    "@revstackhq/node": "workspace:*"
+    "@revstackhq/browser": "workspace:*",
+    "@revstackhq/react": "workspace:*"
   },
   "devDependencies": {
     "@revstackhq/eslint-config": "workspace:*",
     "@types/node": "^20.11.30",
     "@types/react": "^19.0.0",
     "eslint": "^9.39.1",
+    "tsup": "^8.1.0",
     "typescript": "5.9.2"
   },
   "peerDependencies": {
-    "next": "^15.1.7",
-    "react": "^19.0.0"
+    "next": ">=14.0.0",
+    "react": ">=18.0.0"
   }
 }

@@ -3,6 +3,8 @@ import type {
   CheckoutParams,
   IdentifyResponse,
   CheckoutSessionResponse,
+  BillingPortalParams,
+  BillingPortalResponse,
 } from "@/types";
 
 const DEFAULT_API_URL = "https://app.revstack.dev";
@@ -84,4 +86,30 @@ export async function createCheckoutSession(
   }
 
   return res.json() as Promise<CheckoutSessionResponse>;
+}
+
+/**
+ * creates a billing portal session and returns the portal url
+ */
+export async function createBillingPortalSession(
+  config: RevstackConfig,
+  guestId: string | null,
+  params: BillingPortalParams
+): Promise<BillingPortalResponse> {
+  const baseUrl = config.apiUrl ?? DEFAULT_API_URL;
+  const headers = await buildHeaders(config, guestId);
+
+  const res = await fetch(`${baseUrl}/api/v1/billing/portal`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `Revstack billing portal failed: ${res.status} ${res.statusText}`
+    );
+  }
+
+  return res.json() as Promise<BillingPortalResponse>;
 }
