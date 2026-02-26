@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { EntitlementEngine } from "@/engine";
-import type { AddonDef, PlanDef } from "@/types";
+import { EntitlementEngine } from "../../src/engine";
+import type { AddonDef, PlanDef } from "../../src/types";
 
 describe("EntitlementEngine — Add-ons", () => {
   it("aggregates limits from plan and add-ons", () => {

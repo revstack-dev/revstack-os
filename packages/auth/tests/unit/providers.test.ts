@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getAuthProvider, getAuthProviders } from "@/index";
+import { getAuthProvider, getAuthProviders } from "../../src/index";
 
 describe("Auth Providers", () => {
   it("getAuthProviders returns all provider manifests", () => {

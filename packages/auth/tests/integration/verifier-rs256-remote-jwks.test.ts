@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { SignJWT, exportJWK, generateKeyPair } from "jose";
-import { TokenVerifier } from "@/verifier";
+import { TokenVerifier } from "../../src/verifier";
 
 describe("TokenVerifier — RS256 Remote JWKS", () => {
   const originalFetch = globalThis.fetch;

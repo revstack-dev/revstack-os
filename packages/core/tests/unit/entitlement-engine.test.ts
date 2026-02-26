@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { EntitlementEngine } from "@/engine";
-import type { PlanDef } from "@/types";
+import { EntitlementEngine } from "../../src/engine";
+import type { PlanDef } from "../../src/types";
 
 function createBasePlan(overrides: Partial<PlanDef> = {}): PlanDef {
   return {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SignJWT } from "jose";
-import { RevstackAuth } from "@/index";
-import { TokenVerifier } from "@/verifier";
+import { RevstackAuth } from "../../src/index";
+import { TokenVerifier } from "../../src/verifier";
 
 describe("TokenVerifier — HS256", () => {
   it("verifies HS256 JWTs", async () => {

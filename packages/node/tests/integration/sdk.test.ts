@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from "vitest";
 import { http, delay } from "msw";
 import { server, TEST_BASE_URL, TEST_SECRET_KEY } from "./setup";
-import { Revstack, RateLimitError, RevstackAPIError } from "@/index";
+import { Revstack, RateLimitError, RevstackAPIError } from "../../src/index";
 
 // ─── MSW Lifecycle ───────────────────────────────────────────
 

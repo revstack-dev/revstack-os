@@ -9,7 +9,7 @@ import { http, HttpResponse, delay } from "msw";
 import { setupServer } from "msw/node";
 
 /** Base URL the SDK is configured with during tests. */
-export const TEST_BASE_URL = "https://api.revstack.co/v1";
+export const TEST_BASE_URL = "https://app.revstack.dev/api/v1";
 
 /** Test secret key — all mock handlers verify this value. */
 export const TEST_SECRET_KEY = "sk_test_abc123";

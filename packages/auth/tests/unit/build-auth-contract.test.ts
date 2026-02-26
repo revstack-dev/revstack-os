@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildAuthContract } from "@/index";
+import { buildAuthContract } from "../../src/index";
 
 describe("buildAuthContract", () => {
   it("auth0 produces RS256 contract", () => {

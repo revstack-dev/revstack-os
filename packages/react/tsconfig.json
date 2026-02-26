@@ -3,6 +3,7 @@
   "extends": "../typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "src",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
@@ -15,6 +16,6 @@
     "allowImportingTsExtensions": false,
     "noEmit": false
   },
-  "include": ["src", "tests"],
+  "include": ["src"],
   "exclude": ["dist", "node_modules"]
 }

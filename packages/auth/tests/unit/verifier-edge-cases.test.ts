@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SignJWT, generateKeyPair } from "jose";
-import { TokenVerifier } from "@/verifier";
-import { AuthErrorCode } from "@/types";
+import { TokenVerifier } from "../../src/verifier";
+import { AuthErrorCode } from "../../src/types";
 
 describe("TokenVerifier — Edge Cases", () => {
   const secret = new TextEncoder().encode("super-secret");

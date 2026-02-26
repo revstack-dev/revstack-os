@@ -7,8 +7,8 @@
 
 import { describe, it, expect } from "vitest";
 import { createHmac } from "node:crypto";
-import { WebhooksClient } from "@/modules/webhooks";
-import { SignatureVerificationError } from "@/errors";
+import { WebhooksClient } from "../../src/modules/webhooks";
+import { SignatureVerificationError } from "../../src/errors";
 
 const webhooks = new WebhooksClient();
 const WEBHOOK_SECRET = "whsec_test_secret_key_for_hmac";
