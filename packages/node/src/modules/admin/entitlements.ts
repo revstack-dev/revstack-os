@@ -26,6 +26,10 @@ import {
  * ```
  */
 export class AdminEntitlementsClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * List all entitlement definitions with optional pagination.
    *
@@ -35,7 +39,7 @@ export class AdminEntitlementsClient extends BaseClient {
   async list(params?: ListParams): Promise<PaginatedResponse<Entitlement>> {
     return this.request<PaginatedResponse<Entitlement>>(
       `/admin/entitlements${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 
@@ -73,7 +77,7 @@ export class AdminEntitlementsClient extends BaseClient {
    */
   async update(
     entitlementId: string,
-    params: UpdateEntitlementParams
+    params: UpdateEntitlementParams,
   ): Promise<Entitlement> {
     return this.request<Entitlement>(`/admin/entitlements/${entitlementId}`, {
       method: "PATCH",
@@ -90,7 +94,7 @@ export class AdminEntitlementsClient extends BaseClient {
   async delete(entitlementId: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(
       `/admin/entitlements/${entitlementId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
   }
 

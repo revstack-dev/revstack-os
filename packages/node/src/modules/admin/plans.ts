@@ -27,6 +27,10 @@ import {
  * ```
  */
 export class AdminPlansClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * List all plans with optional filters.
    *
@@ -36,7 +40,7 @@ export class AdminPlansClient extends BaseClient {
   async list(params?: ListPlansParams): Promise<PaginatedResponse<Plan>> {
     return this.request<PaginatedResponse<Plan>>(
       `/admin/plans${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 

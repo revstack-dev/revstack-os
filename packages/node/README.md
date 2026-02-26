@@ -5,7 +5,7 @@ The official Node.js / TypeScript server SDK for [Revstack](https://revstack.dev
 Provides a single `Revstack` client with two namespaces:
 
 - **Data Plane** (`revstack.*`) — Daily backend operations: entitlement checks, usage reporting, subscriptions, customers, wallets, plans, invoices, and webhook verification.
-- **Control Plane** (`revstack.admin.*`) — Infrastructure management: plan CRUD, entitlement CRUD, integrations, environments, and Billing as Code sync.
+- **Control Plane** (`revstack.admin.*`) — Infrastructure management: plan CRUD, entitlement CRUD, integrations, and environments.
 
 ## Installation
 
@@ -28,7 +28,7 @@ const revstack = new Revstack({
 ```typescript
 const { allowed, limit, usage } = await revstack.entitlements.check(
   "cus_abc123",
-  "api-calls"
+  "api-calls",
 );
 
 if (!allowed) {
@@ -67,7 +67,7 @@ await revstack.subscriptions.changePlan(sub.id, {
 const event = revstack.webhooks.constructEvent(
   requestBody,
   signatureHeader,
-  webhookSecret
+  webhookSecret,
 );
 ```
 
@@ -88,13 +88,12 @@ const event = revstack.webhooks.constructEvent(
 
 ### Control Plane (`admin`)
 
-| Module               | Description                            |
-| -------------------- | -------------------------------------- |
-| `admin.plans`        | CRUD operations for billing plans      |
-| `admin.entitlements` | CRUD operations for entitlements       |
-| `admin.integrations` | Manage payment provider integrations   |
-| `admin.environments` | Manage deployment environments         |
-| `admin.system`       | Billing as Code sync (preview + apply) |
+| Module               | Description                          |
+| -------------------- | ------------------------------------ |
+| `admin.plans`        | CRUD operations for billing plans    |
+| `admin.entitlements` | CRUD operations for entitlements     |
+| `admin.integrations` | Manage payment provider integrations |
+| `admin.environments` | Manage deployment environments       |
 
 ### Error Hierarchy
 
@@ -121,7 +120,6 @@ try {
 | `RevstackAPIError`           | API returned a non-2xx response             |
 | `RateLimitError`             | Rate limit exceeded (includes `retryAfter`) |
 | `SignatureVerificationError` | Webhook signature verification failed       |
-| `SyncConflictError`          | Billing as Code sync conflict detected      |
 
 ### Constructor Options
 

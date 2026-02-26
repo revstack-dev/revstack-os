@@ -30,6 +30,10 @@ import {
  * ```
  */
 export class AdminIntegrationsClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * List all integrations with optional filters.
    *
@@ -37,11 +41,11 @@ export class AdminIntegrationsClient extends BaseClient {
    * @returns A paginated list of integrations.
    */
   async list(
-    params?: ListIntegrationsParams
+    params?: ListIntegrationsParams,
   ): Promise<PaginatedResponse<Integration>> {
     return this.request<PaginatedResponse<Integration>>(
       `/admin/integrations${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 
@@ -79,7 +83,7 @@ export class AdminIntegrationsClient extends BaseClient {
    */
   async update(
     integrationId: string,
-    params: UpdateIntegrationParams
+    params: UpdateIntegrationParams,
   ): Promise<Integration> {
     return this.request<Integration>(`/admin/integrations/${integrationId}`, {
       method: "PATCH",
@@ -96,7 +100,7 @@ export class AdminIntegrationsClient extends BaseClient {
   async delete(integrationId: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(
       `/admin/integrations/${integrationId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
   }
 
@@ -110,11 +114,11 @@ export class AdminIntegrationsClient extends BaseClient {
    */
   async listEvents(
     integrationId: string,
-    params?: ListProviderEventsParams
+    params?: ListProviderEventsParams,
   ): Promise<PaginatedResponse<ProviderEvent>> {
     return this.request<PaginatedResponse<ProviderEvent>>(
       `/admin/integrations/${integrationId}/events${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 
@@ -128,11 +132,11 @@ export class AdminIntegrationsClient extends BaseClient {
    */
   async listMetrics(
     integrationId: string,
-    params?: ListMetricsParams
+    params?: ListMetricsParams,
   ): Promise<PaginatedResponse<IntegrationMetric>> {
     return this.request<PaginatedResponse<IntegrationMetric>>(
       `/admin/integrations/${integrationId}/metrics${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 }

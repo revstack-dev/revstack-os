@@ -16,6 +16,10 @@ import { Invoice, ListInvoicesParams, PaginatedResponse } from "@/types";
  * ```
  */
 export class InvoicesClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * List invoices with optional filters.
    *
@@ -25,7 +29,7 @@ export class InvoicesClient extends BaseClient {
   async list(params?: ListInvoicesParams): Promise<PaginatedResponse<Invoice>> {
     return this.request<PaginatedResponse<Invoice>>(
       `/invoices${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 

@@ -20,6 +20,10 @@ import {
  * ```
  */
 export class SubscriptionsClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * List subscriptions with optional filters.
    *
@@ -27,11 +31,11 @@ export class SubscriptionsClient extends BaseClient {
    * @returns A paginated list of subscriptions.
    */
   async list(
-    params?: ListSubscriptionsParams
+    params?: ListSubscriptionsParams,
   ): Promise<PaginatedResponse<Subscription>> {
     return this.request<PaginatedResponse<Subscription>>(
       `/subscriptions${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 
@@ -70,7 +74,7 @@ export class SubscriptionsClient extends BaseClient {
   async cancel(subscriptionId: string): Promise<Subscription> {
     return this.request<Subscription>(
       `/subscriptions/${subscriptionId}/cancel`,
-      { method: "POST" }
+      { method: "POST" },
     );
   }
 
@@ -84,14 +88,14 @@ export class SubscriptionsClient extends BaseClient {
    */
   async changePlan(
     subscriptionId: string,
-    params: ChangePlanParams
+    params: ChangePlanParams,
   ): Promise<Subscription> {
     return this.request<Subscription>(
       `/subscriptions/${subscriptionId}/change-plan`,
       {
         method: "POST",
         body: JSON.stringify(params),
-      }
+      },
     );
   }
 }

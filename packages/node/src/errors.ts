@@ -44,8 +44,8 @@ export interface APIErrorResponse {
   requestId?: string;
   /** Seconds to wait before retrying (for 429 responses). */
   retryAfter?: number;
-  /** List of conflicts (for 409 sync responses). */
-  conflicts?: SyncConflict[];
+  /** List of conflicts in case of a 409 response */
+  conflicts?: any[];
 }
 
 /**
@@ -64,7 +64,7 @@ export class RevstackAPIError extends RevstackError {
     message: string,
     status: number,
     code: string,
-    requestId?: string
+    requestId?: string,
   ) {
     super(message);
     this.name = "RevstackAPIError";
@@ -117,32 +117,16 @@ export class SignatureVerificationError extends RevstackError {
   }
 }
 
-// ─── Sync Conflict ───────────────────────────────────────────
-
-/** Describes a single field-level conflict detected during a sync operation. */
-export interface SyncConflict {
-  /** The type of resource that has a conflict. */
-  resource: string;
-  /** The slug (natural key) of the conflicting resource. */
-  slug: string;
-  /** The field that has a conflicting value. */
-  field: string;
-  /** The value from the sync config. */
-  expected: unknown;
-  /** The current value in the database. */
-  actual: unknown;
-}
+// ─── Sync Conflict ──────────────────────────────────────────
 
 /**
- * Thrown when `admin.system.sync()` detects a conflict (HTTP 409).
- * This means the remote state has drifted from the expected state.
- * Inspect the `conflicts` array to understand what changed.
+ * Thrown when the system sync endpoint detects a conflict (HTTP 409).
  */
 export class SyncConflictError extends RevstackAPIError {
-  /** Detailed list of field-level conflicts between local config and remote state. */
-  public readonly conflicts: SyncConflict[];
+  /** The conflicts discovered during sync attempts. */
+  public readonly conflicts: any[];
 
-  constructor(message: string, conflicts: SyncConflict[], requestId?: string) {
+  constructor(message: string, conflicts: any[], requestId?: string) {
     super(message, 409, "SYNC_CONFLICT", requestId);
     this.name = "SyncConflictError";
     this.conflicts = conflicts;

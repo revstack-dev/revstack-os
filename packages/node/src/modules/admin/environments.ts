@@ -25,6 +25,10 @@ import {
  * ```
  */
 export class AdminEnvironmentsClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * List all environments with optional pagination.
    *
@@ -34,7 +38,7 @@ export class AdminEnvironmentsClient extends BaseClient {
   async list(params?: ListParams): Promise<PaginatedResponse<Environment>> {
     return this.request<PaginatedResponse<Environment>>(
       `/admin/environments${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 
@@ -72,7 +76,7 @@ export class AdminEnvironmentsClient extends BaseClient {
    */
   async update(
     environmentId: string,
-    params: UpdateEnvironmentParams
+    params: UpdateEnvironmentParams,
   ): Promise<Environment> {
     return this.request<Environment>(`/admin/environments/${environmentId}`, {
       method: "PATCH",
@@ -89,7 +93,7 @@ export class AdminEnvironmentsClient extends BaseClient {
   async delete(environmentId: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(
       `/admin/environments/${environmentId}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
   }
 
@@ -101,11 +105,11 @@ export class AdminEnvironmentsClient extends BaseClient {
    * @returns The new API key pair.
    */
   async rotateKeys(
-    environmentId: string
+    environmentId: string,
   ): Promise<{ apiKeyPublic: string; apiKeySecret: string }> {
     return this.request<{ apiKeyPublic: string; apiKeySecret: string }>(
       `/admin/environments/${environmentId}/rotate-keys`,
-      { method: "POST" }
+      { method: "POST" },
     );
   }
 }

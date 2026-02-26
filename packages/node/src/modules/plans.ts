@@ -18,6 +18,10 @@ import { Plan, ListPlansParams, PaginatedResponse } from "@/types";
  * ```
  */
 export class PlansClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * List plans with optional filters.
    *
@@ -27,7 +31,7 @@ export class PlansClient extends BaseClient {
   async list(params?: ListPlansParams): Promise<PaginatedResponse<Plan>> {
     return this.request<PaginatedResponse<Plan>>(
       `/plans${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 

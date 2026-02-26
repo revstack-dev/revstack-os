@@ -24,6 +24,10 @@ import {
  * ```
  */
 export class WalletsClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * Retrieve a customer's balance for a specific currency.
    *
@@ -33,7 +37,7 @@ export class WalletsClient extends BaseClient {
    */
   async getBalance(
     customerId: string,
-    currency: string
+    currency: string,
   ): Promise<BalanceResponse> {
     return this.request<BalanceResponse>(`/wallets/${customerId}/${currency}`, {
       method: "GET",

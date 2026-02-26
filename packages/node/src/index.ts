@@ -14,9 +14,6 @@
  *
  * // Data Plane: check if a customer can use a feature
  * const { allowed } = await revstack.entitlements.check("usr_abc", "api-calls");
- *
- * // Control Plane: sync billing config from code
- * await revstack.admin.system.sync({ plans: [...], entitlements: [...] });
  * ```
  *
  * @packageDocumentation
@@ -83,7 +80,7 @@ export class Revstack {
   constructor(options: RevstackOptions) {
     if (!options.secretKey) {
       throw new Error(
-        "Revstack: Secret Key is required. Get yours at https://app.revstack.dev"
+        "Revstack: Secret Key is required. Get yours at https://app.revstack.dev",
       );
     }
 
@@ -114,10 +111,7 @@ export {
   RevstackAPIError,
   RateLimitError,
   SignatureVerificationError,
-  SyncConflictError,
 } from "@/errors";
-
-export type { SyncConflict } from "@/errors";
 
 // ─── Data Plane Types ────────────────────────────
 export type {
@@ -168,8 +162,4 @@ export type {
   Environment,
   CreateEnvironmentParams,
   UpdateEnvironmentParams,
-  SyncConfig,
-  SyncPreview,
-  SyncChange,
-  SyncResult,
 } from "@/types";

@@ -24,6 +24,10 @@ import {
  * ```
  */
 export class EntitlementsClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * Check whether a customer has access to a specific feature.
    * This is the most critical method in the SDK — it evaluates the customer's
@@ -37,7 +41,7 @@ export class EntitlementsClient extends BaseClient {
   async check(
     customerId: string,
     featureId: string,
-    options?: EntitlementCheckOptions
+    options?: EntitlementCheckOptions,
   ): Promise<EntitlementCheckResult> {
     return this.request<EntitlementCheckResult>("/entitlements/check", {
       method: "POST",

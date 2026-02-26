@@ -21,6 +21,10 @@ import { ReportUsageParams, RevertUsageParams, UsageMeter } from "@/types";
  * ```
  */
 export class UsageClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * Report usage of a metered feature. Increments the customer's usage meter.
    *
@@ -61,7 +65,7 @@ export class UsageClient extends BaseClient {
   async getMeter(customerId: string, featureId: string): Promise<UsageMeter> {
     return this.request<UsageMeter>(
       `/usage/meters/${customerId}/${featureId}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 

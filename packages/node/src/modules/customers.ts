@@ -20,6 +20,10 @@ import {
  * ```
  */
 export class CustomersClient extends BaseClient {
+  constructor(config: { secretKey: string; baseUrl: string; timeout: number }) {
+    super(config);
+  }
+
   /**
    * Identify (upsert) a customer. Creates the customer if not found,
    * or updates it if a record with the same `customerId` already exists.
@@ -55,7 +59,7 @@ export class CustomersClient extends BaseClient {
   async list(params?: ListParams): Promise<PaginatedResponse<Customer>> {
     return this.request<PaginatedResponse<Customer>>(
       `/customers${this.buildQuery(params)}`,
-      { method: "GET" }
+      { method: "GET" },
     );
   }
 
@@ -68,7 +72,7 @@ export class CustomersClient extends BaseClient {
    */
   async update(
     customerId: string,
-    params: UpdateCustomerParams
+    params: UpdateCustomerParams,
   ): Promise<Customer> {
     return this.request<Customer>(`/customers/${customerId}`, {
       method: "PATCH",
