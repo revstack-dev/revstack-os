@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/core",
-  "version": "0.0.0-dev-20260226054346",
+  "version": "0.0.0-dev-20260226062415",
   "private": false,
   "license": "FSL-1.1-MIT",
   "type": "module",
@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run"
