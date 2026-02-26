@@ -21,7 +21,6 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@revstackhq/node"><img alt="npm" src="https://img.shields.io/npm/v/@revstackhq/node?style=flat-square&color=0a0a0a&labelColor=0a0a0a"></a>
   <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/badge/license-MIT%20%2F%20FSL-0a0a0a?style=flat-square&labelColor=0a0a0a"></a>
   <a href="https://github.com/revstackhq/revstack-os"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-0a0a0a?style=flat-square&labelColor=0a0a0a"></a>
 </p>
@@ -36,16 +35,19 @@ This monorepo contains the open-source client SDKs, the entitlement engine, and 
 
 ## Packages
 
-### Client SDKs `MIT`
+### Client SDKs & Ecosystem `MIT`
 
-| Package                                   | Description                                                    |
-| ----------------------------------------- | -------------------------------------------------------------- |
-| [`@revstackhq/node`](packages/node)       | Server-side SDK for Node.js                                    |
-| [`@revstackhq/next`](packages/next)       | Next.js integration                                            |
-| [`@revstackhq/react`](packages/react)     | React hooks and components                                     |
-| [`@revstackhq/browser`](packages/browser) | Browser-side SDK                                               |
-| [`@revstackhq/auth`](packages/auth)       | JWT verification for Auth0, Clerk, Supabase, Cognito, Firebase |
-| [`@revstackhq/ai`](packages/ai)           | AI utilities                                                   |
+| Package                                                       | Description                                                    |
+| ------------------------------------------------------------- | -------------------------------------------------------------- |
+| [`@revstackhq/node`](packages/node)                           | Server-side SDK for Node.js                                    |
+| [`@revstackhq/next`](packages/next)                           | Next.js integration                                            |
+| [`@revstackhq/react`](packages/react)                         | React hooks and components                                     |
+| [`@revstackhq/browser`](packages/browser)                     | Browser-side SDK                                               |
+| [`@revstackhq/auth`](packages/auth)                           | JWT verification for Auth0, Clerk, Supabase, Cognito, Firebase |
+| [`@revstackhq/ai`](packages/ai)                               | AI utilities                                                   |
+| [`@revstackhq/cli`](packages/cli)                             | Command-line interface                                         |
+| [`@revstackhq/eslint-config`](packages/eslint-config)         | Shared ESLint rules                                            |
+| [`@revstackhq/typescript-config`](packages/typescript-config) | Shared TypeScript configurations                               |
 
 ### Core Infrastructure `FSL-1.1-MIT`
 
@@ -56,7 +58,7 @@ This monorepo contains the open-source client SDKs, the entitlement engine, and 
 | [`@revstackhq/providers-registry`](packages/providers/registry)     | Provider discovery          |
 | [`@revstackhq/provider-stripe`](packages/providers/official/stripe) | Stripe provider             |
 
-> Client SDKs are MIT — use them anywhere. Core infrastructure uses the [Functional Source License](https://fsl.software/) and converts to MIT after two years. See [LICENSE.md](LICENSE.md).
+> Client SDKs & Ecosystem packages are MIT — use them anywhere. Core infrastructure uses the [Functional Source License](https://fsl.software/) and converts to MIT after two years. See [LICENSE.md](LICENSE.md).
 
 ## Development
 
