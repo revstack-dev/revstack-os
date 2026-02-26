@@ -12,11 +12,9 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import ora from "ora";
 
-const STARTER_CONFIG = `import { defineConfig, definePlan, defineFeature } from "@revstackhq/core";
+const STARTER_FEATURES = `import { defineFeature } from "@revstackhq/core";
 
-// ─── Features ────────────────────────────────────────────────
-
-const features = {
+export const features = {
   seats: defineFeature({
     name: "Seats",
     type: "static",
@@ -28,47 +26,56 @@ const features = {
     unit_type: "count",
   }),
 };
+`;
 
-// ─── Plans ───────────────────────────────────────────────────
+const STARTER_PLANS = `import { definePlan } from "@revstackhq/core";
+import { features } from "./features";
+
+export const plans = {
+  // DO NOT DELETE: Automatically created default plan for guests.
+  default: definePlan<typeof features>({
+    name: "Default",
+    description: "Automatically created default plan for guests.",
+    is_default: true,
+    is_public: false,
+    type: "free",
+    features: {},
+  }),
+  pro: definePlan<typeof features>({
+    name: "Pro",
+    description: "For professional teams.",
+    is_default: false,
+    is_public: true,
+    type: "paid",
+    prices: [
+      {
+        amount: 2900,
+        currency: "USD",
+        billing_interval: "monthly",
+        trial_period_days: 14,
+      },
+      {
+        amount: 29000,
+        currency: "USD",
+        billing_interval: "yearly",
+        trial_period_days: 14,
+      }
+    ],
+    features: {
+      seats: { value_limit: 5, is_hard_limit: true },
+      ai_tokens: { value_limit: 1000, reset_period: "monthly" },
+    },
+  }),
+};
+`;
+
+const STARTER_CONFIG = `import { defineConfig } from "@revstackhq/core";
+import { features } from "./revstack/features";
+import { plans } from "./revstack/plans";
 
 export default defineConfig({
   features,
-  plans: {
-    // DO NOT DELETE: Automatically created default plan for guests.
-    default: definePlan<typeof features>({
-      name: "Default",
-      description: "Automatically created default plan for guests.",
-      is_default: true,
-      is_public: false,
-      type: "free",
-      features: {},
-    }),
-    pro: definePlan<typeof features>({
-      name: "Pro",
-      description: "For professional teams.",
-      is_default: false,
-      is_public: true,
-      type: "paid",
-      prices: [
-        {
-          amount: 2900,
-          currency: "USD",
-          billing_interval: "monthly",
-          trial_period_days: 14,
-        },
-        {
-          amount: 29000,
-          currency: "USD",
-          billing_interval: "yearly",
-          trial_period_days: 14,
-        }
-      ],
-      features: {
-        seats: { value_limit: 5, is_hard_limit: true },
-        ai_tokens: { value_limit: 1000, reset_period: "monthly" },
-      },
-    }),
-  },
+  plans,
 });
 `;
 
@@ -77,6 +84,9 @@ export const initCommand = new Command("init")
   .action(async () => {
     const cwd = process.cwd();
     const configPath = path.resolve(cwd, "revstack.config.ts");
+    const revstackDir = path.resolve(cwd, "revstack");
+    const featuresPath = path.resolve(revstackDir, "features.ts");
+    const plansPath = path.resolve(revstackDir, "plans.ts");
 
     if (fs.existsSync(configPath)) {
       console.log(
@@ -87,7 +97,12 @@ export const initCommand = new Command("init")
       process.exit(1);
     }
 
-    // Step 1: Create revstack.config.ts
+    // Step 1: Create revstack directory and files
+    if (!fs.existsSync(revstackDir)) {
+      fs.mkdirSync(revstackDir, { recursive: true });
+    }
+    fs.writeFileSync(featuresPath, STARTER_FEATURES, "utf-8");
+    fs.writeFileSync(plansPath, STARTER_PLANS, "utf-8");
     fs.writeFileSync(configPath, STARTER_CONFIG, "utf-8");
 
     // Step 2: Detect package manager & verify package.json
@@ -160,12 +175,12 @@ export const initCommand = new Command("init")
 
     // Step 4: Final Success Message
     console.log(
-      "\\n" +
-        chalk.green("  ✔ Created revstack.config.ts\\n") +
-        "\\n" +
+      "\n" +
+        chalk.green("  ✔ Created revstack config structure\n") +
+        "\n" +
         chalk.dim("    Includes the ") +
         chalk.white("Default Guest Plan") +
-        chalk.dim(" (required by Revstack).\\n") +
+        chalk.dim(" (required by Revstack).\n") +
         "\\n" +
         chalk.dim("    Next steps:\\n") +
         (installFailed

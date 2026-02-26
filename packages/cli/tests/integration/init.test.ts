@@ -6,9 +6,27 @@ vi.mock("node:fs", () => ({
   default: {
     existsSync: vi.fn(),
     writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
   },
   existsSync: vi.fn(),
   writeFileSync: vi.fn(),
+  mkdirSync: vi.fn(),
+}));
+
+// ── Mock node:child_process ────────────────────────────────────
+vi.mock("node:child_process", () => ({
+  spawnSync: vi.fn().mockReturnValue({ status: 0, error: null }),
+}));
+
+// ── Mock ora ─────────────────────────────────────────────────
+const mockSpinner = {
+  start: vi.fn().mockReturnThis(),
+  succeed: vi.fn().mockReturnThis(),
+  fail: vi.fn().mockReturnThis(),
+};
+
+vi.mock("ora", () => ({
+  default: vi.fn(() => mockSpinner),
 }));
 
 // ── Mock chalk (no-op proxy) ─────────────────────────────────
@@ -67,13 +85,28 @@ describe("init command", () => {
     const program = createTestProgram();
     await program.parseAsync(["node", "revstack", "init"], { from: "node" });
 
+    expect(mockFs.mkdirSync).toHaveBeenCalledWith(
+      expect.stringContaining("revstack"),
+      { recursive: true },
+    );
+    expect(mockFs.writeFileSync).toHaveBeenCalledTimes(3);
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining("features.ts"),
+      expect.stringContaining("defineFeature"),
+      "utf-8",
+    );
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining("plans.ts"),
+      expect.stringContaining("definePlan"),
+      "utf-8",
+    );
     expect(mockFs.writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining("revstack.config.ts"),
       expect.stringContaining("defineConfig"),
-      "utf-8"
+      "utf-8",
     );
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Created revstack.config.ts")
+      expect.stringContaining("Created revstack config structure"),
     );
 
     consoleSpy.mockRestore();
@@ -86,7 +119,7 @@ describe("init command", () => {
     const program = createTestProgram();
 
     await expect(
-      program.parseAsync(["node", "revstack", "init"], { from: "node" })
+      program.parseAsync(["node", "revstack", "init"], { from: "node" }),
     ).rejects.toThrow(ProcessExitError);
 
     expect(exitSpy).toHaveBeenCalledWith(1);

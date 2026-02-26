@@ -52,19 +52,9 @@ interface RemoteConfig {
   plans: Record<string, RemotePlan>;
 }
 
-// ─── Code Generator ──────────────────────────────────────────
-
-function indent(text: string, spaces: number): string {
-  const pad = " ".repeat(spaces);
-  return text
-    .split("\n")
-    .map((line) => (line.trim() ? pad + line : line))
-    .join("\n");
-}
-
 function serializeObject(
   obj: Record<string, unknown>,
-  depth: number = 0
+  depth: number = 0,
 ): string {
   const entries = Object.entries(obj);
   if (entries.length === 0) return "{}";
@@ -110,8 +100,7 @@ function serializeArray(arr: unknown[], depth: number): string {
   return `[\n${items.join("\n")}\n${closePad}]`;
 }
 
-function generateConfigSource(config: RemoteConfig): string {
-  // ── Features ─────────────────────────────────────────────
+function generateFeaturesSource(config: RemoteConfig): string {
   const featureEntries = Object.entries(config.features).map(([slug, f]) => {
     const props: Record<string, unknown> = {
       name: f.name,
@@ -123,7 +112,15 @@ function generateConfigSource(config: RemoteConfig): string {
     return `  ${slug}: defineFeature(${serializeObject(props, 2)}),`;
   });
 
-  // ── Plans ────────────────────────────────────────────────
+  return `import { defineFeature } from "@revstackhq/core";
+
+export const features = {
+${featureEntries.join("\n")}
+};
+`;
+}
+
+function generatePlansSource(config: RemoteConfig): string {
   const planEntries = Object.entries(config.plans).map(([slug, plan]) => {
     const props: Record<string, unknown> = {
       name: plan.name,
@@ -146,21 +143,23 @@ function generateConfigSource(config: RemoteConfig): string {
     return `${comment}    ${slug}: definePlan<typeof features>(${serializeObject(props, 3)}),`;
   });
 
-  return `import { defineConfig, definePlan, defineFeature } from "@revstackhq/core";
+  return `import { definePlan } from "@revstackhq/core";
+import { features } from "./features";
 
-// ─── Features ────────────────────────────────────────────────
-
-const features = {
-${featureEntries.join("\n")}
+export const plans = {
+${planEntries.join("\n")}
 };
+`;
+}
 
-// ─── Plans ───────────────────────────────────────────────────
+function generateRootConfigSource(): string {
+  return `import { defineConfig } from "@revstackhq/core";
+import { features } from "./revstack/features";
+import { plans } from "./revstack/plans";
 
 export default defineConfig({
   features,
-  plans: {
-${planEntries.join("\n")}
-  },
+  plans,
 });
 `;
 }
@@ -173,7 +172,7 @@ const API_BASE = "https://app.revstack.dev";
 
 export const pullCommand = new Command("pull")
   .description(
-    "Pull the remote billing config and overwrite revstack.config.ts"
+    "Pull the remote billing config and overwrite local revstack.config.ts and revstack/ files",
   )
   .option("-e, --env <environment>", "Target environment", "test")
   .action(async (options: { env: string }) => {
@@ -185,7 +184,7 @@ export const pullCommand = new Command("pull")
           chalk.red("  ✖ Not authenticated.\n") +
           chalk.dim("    Run ") +
           chalk.bold("revstack login") +
-          chalk.dim(" first.\n")
+          chalk.dim(" first.\n"),
       );
       process.exit(1);
     }
@@ -203,13 +202,13 @@ export const pullCommand = new Command("pull")
         `${API_BASE}/api/v1/cli/pull?env=${encodeURIComponent(options.env)}`,
         {
           headers: { Authorization: `Bearer ${apiKey}` },
-        }
+        },
       );
 
       if (!res.ok) {
         spinner.fail("Failed to fetch remote config");
         console.error(
-          chalk.red(`\n  API returned ${res.status}: ${res.statusText}\n`)
+          chalk.red(`\n  API returned ${res.status}: ${res.statusText}\n`),
         );
         process.exit(1);
       }
@@ -230,19 +229,25 @@ export const pullCommand = new Command("pull")
       "\n" +
         chalk.dim("  Remote state: ") +
         chalk.white(`${featureCount} features, ${planCount} plans`) +
-        chalk.dim(` (${options.env})\n`)
+        chalk.dim(` (${options.env})\n`),
     );
 
     // ── 3. Confirm overwrite ───────────────────────────────
-    const configPath = path.resolve(process.cwd(), "revstack.config.ts");
-    const exists = fs.existsSync(configPath);
+    const cwd = process.cwd();
+    const configPath = path.resolve(cwd, "revstack.config.ts");
+    const revstackDir = path.resolve(cwd, "revstack");
+    const featuresPath = path.resolve(revstackDir, "features.ts");
+    const plansPath = path.resolve(revstackDir, "plans.ts");
 
-    if (exists) {
+    const rootExists = fs.existsSync(configPath);
+    const dirExists = fs.existsSync(revstackDir);
+
+    if (rootExists || dirExists) {
       const { confirm } = await prompts({
         type: "confirm",
         name: "confirm",
         message:
-          "This will overwrite your local revstack.config.ts. Are you sure?",
+          "This will overwrite your local configuration files (revstack.config.ts and revstack/ data). Are you sure?",
         initial: false,
       });
 
@@ -253,14 +258,23 @@ export const pullCommand = new Command("pull")
     }
 
     // ── 4. Generate and write ──────────────────────────────
-    const source = generateConfigSource(remoteConfig);
-    fs.writeFileSync(configPath, source, "utf-8");
+    if (!fs.existsSync(revstackDir)) {
+      fs.mkdirSync(revstackDir, { recursive: true });
+    }
+
+    const featuresSource = generateFeaturesSource(remoteConfig);
+    const plansSource = generatePlansSource(remoteConfig);
+    const rootSource = generateRootConfigSource();
+
+    fs.writeFileSync(featuresPath, featuresSource, "utf-8");
+    fs.writeFileSync(plansPath, plansSource, "utf-8");
+    fs.writeFileSync(configPath, rootSource, "utf-8");
 
     console.log(
       "\n" +
-        chalk.green("  ✔ revstack.config.ts updated from remote.\n") +
-        chalk.dim("    Review the file and run ") +
+        chalk.green("  ✔ Local files updated from remote.\n") +
+        chalk.dim("    Review the files and run ") +
         chalk.bold("revstack push") +
-        chalk.dim(" to re-deploy.\n")
+        chalk.dim(" to re-deploy.\n"),
     );
   });

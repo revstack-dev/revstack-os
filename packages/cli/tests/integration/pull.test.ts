@@ -37,9 +37,11 @@ vi.mock("node:fs", () => ({
   default: {
     existsSync: vi.fn(),
     writeFileSync: vi.fn(),
+    mkdirSync: vi.fn(),
   },
   existsSync: vi.fn(),
   writeFileSync: vi.fn(),
+  mkdirSync: vi.fn(),
 }));
 
 // ── Imports (after mocks) ────────────────────────────────────
@@ -130,7 +132,7 @@ describe("pull command", () => {
     const program = createTestProgram();
 
     await expect(
-      program.parseAsync(["node", "revstack", "pull"], { from: "node" })
+      program.parseAsync(["node", "revstack", "pull"], { from: "node" }),
     ).rejects.toThrow(ProcessExitError);
 
     expect(exitSpy).toHaveBeenCalledWith(1);
@@ -148,7 +150,7 @@ describe("pull command", () => {
     const program = createTestProgram();
 
     await expect(
-      program.parseAsync(["node", "revstack", "pull"], { from: "node" })
+      program.parseAsync(["node", "revstack", "pull"], { from: "node" }),
     ).rejects.toThrow(ProcessExitError);
 
     expect(exitSpy).toHaveBeenCalledWith(1);
@@ -157,7 +159,9 @@ describe("pull command", () => {
 
   it("pulls config and writes file after user confirmation", async () => {
     mockGetApiKey.mockReturnValue("sk_test_valid123");
-    mockFs.existsSync.mockReturnValue(true); // config file exists
+    mockFs.existsSync.mockImplementation((p) =>
+      String(p).endsWith("revstack.config.ts"),
+    ); // config file exists
 
     const mockFetch = vi
       .fn()
@@ -171,10 +175,25 @@ describe("pull command", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch.mock.calls[0][0]).toContain("/api/v1/cli/pull");
+    expect(mockFs.mkdirSync).toHaveBeenCalledWith(
+      expect.stringContaining("revstack"),
+      { recursive: true },
+    );
+    expect(mockFs.writeFileSync).toHaveBeenCalledTimes(3);
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining("features.ts"),
+      expect.stringContaining("defineFeature"),
+      "utf-8",
+    );
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining("plans.ts"),
+      expect.stringContaining("definePlan"),
+      "utf-8",
+    );
     expect(mockFs.writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining("revstack.config.ts"),
       expect.stringContaining("defineConfig"),
-      "utf-8"
+      "utf-8",
     );
   });
 
@@ -193,6 +212,7 @@ describe("pull command", () => {
     await program.parseAsync(["node", "revstack", "pull"], { from: "node" });
 
     expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(mockFs.mkdirSync).not.toHaveBeenCalled();
   });
 
   it("skips confirmation when config file does not exist", async () => {
@@ -211,6 +231,6 @@ describe("pull command", () => {
     // Prompts never called since file doesn't exist
     expect(mockPrompts).not.toHaveBeenCalled();
     // File was written directly
-    expect(mockFs.writeFileSync).toHaveBeenCalled();
+    expect(mockFs.writeFileSync).toHaveBeenCalledTimes(3);
   });
 });

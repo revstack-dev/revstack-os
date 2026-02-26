@@ -1,9 +1,10 @@
 import { defineConfig } from "tsup";
+import { execa } from "execa";
 
 export default defineConfig({
-  entry: ["src/cli.ts"],
+  entry: ["src/**/*.ts"],
   format: ["esm"],
-  dts: false,
+  dts: true,
   splitting: false,
   sourcemap: true,
   clean: true,
@@ -12,5 +13,10 @@ export default defineConfig({
   skipNodeModulesBundle: true,
   banner: {
     js: "#!/usr/bin/env node",
+  },
+  async onSuccess() {
+    await execa("tsc-alias", ["-p", "tsconfig.json"], {
+      stdio: "inherit",
+    });
   },
 });
