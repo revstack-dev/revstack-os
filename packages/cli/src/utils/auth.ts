@@ -28,7 +28,7 @@ export function setApiKey(key: string): void {
   fs.writeFileSync(
     CREDENTIALS_FILE,
     JSON.stringify(credentials, null, 2),
-    "utf-8"
+    "utf-8",
   );
 }
 

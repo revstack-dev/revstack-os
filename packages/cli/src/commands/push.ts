@@ -46,7 +46,7 @@ const DIFF_COLORS: Record<DiffEntry["action"], (text: string) => string> = {
 function printDiff(diff: DiffEntry[]): void {
   if (diff.length === 0) {
     console.log(
-      chalk.dim("\n  No changes detected. Your config is up to date.\n")
+      chalk.dim("\n  No changes detected. Your config is up to date.\n"),
     );
     return;
   }
@@ -58,7 +58,7 @@ function printDiff(diff: DiffEntry[]): void {
     const color = DIFF_COLORS[entry.action];
     const label = chalk.dim(`[${entry.entity}]`);
     console.log(
-      `${icon}${color(entry.id)} ${label} ${chalk.white(entry.message)}`
+      `${icon}${color(entry.id)} ${label} ${chalk.white(entry.message)}`,
     );
   }
 
@@ -74,7 +74,7 @@ function requireAuth(): string {
         chalk.red("  ✖ Not authenticated.\n") +
         chalk.dim("    Run ") +
         chalk.bold("revstack login") +
-        chalk.dim(" first.\n")
+        chalk.dim(" first.\n"),
     );
     process.exit(1);
   }
@@ -113,7 +113,7 @@ export const pushCommand = new Command("push")
       if (!res.ok) {
         spinner.fail("Failed to calculate diff");
         console.error(
-          chalk.red(`\n  API returned ${res.status}: ${res.statusText}\n`)
+          chalk.red(`\n  API returned ${res.status}: ${res.statusText}\n`),
         );
         process.exit(1);
       }
@@ -140,8 +140,8 @@ export const pushCommand = new Command("push")
       console.log(
         chalk.red("  ✖ Push is blocked.\n") +
           chalk.dim(
-            `    ${diffResponse.blockedReason ?? "The server rejected this configuration."}\n`
-          )
+            `    ${diffResponse.blockedReason ?? "The server rejected this configuration."}\n`,
+          ),
       );
       process.exit(1);
     }
@@ -185,7 +185,7 @@ export const pushCommand = new Command("push")
       if (!res.ok) {
         pushSpinner.fail("Push failed");
         console.error(
-          chalk.red(`\n  API returned ${res.status}: ${res.statusText}\n`)
+          chalk.red(`\n  API returned ${res.status}: ${res.statusText}\n`),
         );
         process.exit(1);
       }
@@ -196,7 +196,7 @@ export const pushCommand = new Command("push")
           chalk.green("  ✔ Config deployed to ") +
           envLabel +
           "\n" +
-          chalk.dim("    Changes are now live.\n")
+          chalk.dim("    Changes are now live.\n"),
       );
     } catch (error: unknown) {
       pushSpinner.fail("Push failed");

@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/cli",
-  "version": "0.0.0-dev-20260226063200",
+  "version": "0.0.0-dev-20260226064743",
   "description": "The official CLI for Revstack — Billing as Code",
   "license": "MIT",
   "type": "module",

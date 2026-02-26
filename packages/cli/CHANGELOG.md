@@ -1,5 +1,17 @@
 # @revstackhq/cli
 
+## 0.0.0-dev-20260226064743
+
+### Patch Changes
+
+- fix: respect snapshot releases during core package scaffold
+
+## 0.0.0-dev-20260226064458
+
+### Patch Changes
+
+- fix: format console output line breaks correctly in init command
+
 ## 0.0.0-dev-20260226063200
 
 ### Patch Changes

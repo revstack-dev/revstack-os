@@ -16,7 +16,7 @@ import chalk from "chalk";
  * @returns The parsed and sanitized configuration object.
  */
 export async function loadLocalConfig(
-  cwd: string
+  cwd: string,
 ): Promise<Record<string, unknown>> {
   const configPath = path.resolve(cwd, "revstack.config.ts");
 
@@ -38,17 +38,17 @@ export async function loadLocalConfig(
     ) {
       console.error(
         chalk.red(
-          "\n  ✖ Could not find revstack.config.ts in the current directory.\n"
+          "\n  ✖ Could not find revstack.config.ts in the current directory.\n",
         ) +
           chalk.dim("    Run ") +
           chalk.bold("revstack init") +
-          chalk.dim(" to create one.\n")
+          chalk.dim(" to create one.\n"),
       );
     } else {
       console.error(
         chalk.red("\n  ✖ Failed to parse revstack.config.ts\n") +
           chalk.dim("    " + (err.message ?? String(error))) +
-          "\n"
+          "\n",
       );
     }
 

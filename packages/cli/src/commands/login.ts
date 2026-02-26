@@ -13,7 +13,7 @@ export const loginCommand = new Command("login")
   .description("Authenticate with your Revstack Secret Key")
   .action(async () => {
     console.log(
-      "\n" + chalk.bold("  Revstack ") + chalk.dim("— Authentication\n")
+      "\n" + chalk.bold("  Revstack ") + chalk.dim("— Authentication\n"),
     );
 
     const response = await prompts({
@@ -34,6 +34,6 @@ export const loginCommand = new Command("login")
     console.log(
       "\n" +
         chalk.green("  ✔ Authenticated successfully!\n") +
-        chalk.dim("    Credentials saved to ~/.revstack/credentials.json\n")
+        chalk.dim("    Credentials saved to ~/.revstack/credentials.json\n"),
     );
   });

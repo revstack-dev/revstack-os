@@ -20,6 +20,8 @@ export const logoutCommand = new Command("logout")
     console.log(
       "\n" +
         chalk.green("  ✔ Successfully logged out.\n") +
-        chalk.dim("    Credentials removed from ~/.revstack/credentials.json\n")
+        chalk.dim(
+          "    Credentials removed from ~/.revstack/credentials.json\n",
+        ),
     );
   });

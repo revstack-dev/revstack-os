@@ -10,6 +10,7 @@ import chalk from "chalk";
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import ora from "ora";
 
 const STARTER_FEATURES = `import { defineFeature } from "@revstackhq/core";
@@ -130,9 +131,17 @@ export const initCommand = new Command("init")
     let installFailed = false;
 
     try {
-      // Use @dev tag if the CLI itself is a dev snapshot
-      const pkgVersion = process.env.npm_package_version || "dev";
-      const tag = pkgVersion.includes("dev") ? "@dev" : "@latest";
+      const cliDir = path.dirname(fileURLToPath(import.meta.url));
+      const pkgJsonPath = path.resolve(cliDir, "../../package.json");
+      let cliVersion = "dev";
+      try {
+        const pkgData = fs.readFileSync(pkgJsonPath, "utf-8");
+        cliVersion = JSON.parse(pkgData).version;
+      } catch (e) {
+        // Fallback
+      }
+
+      const tag = cliVersion.includes("dev") ? `@${cliVersion}` : "@latest";
       const pkgName = `@revstackhq/core${tag}`;
 
       const installArgs =
@@ -186,25 +195,25 @@ export const initCommand = new Command("init")
         chalk.dim("    Includes the ") +
         chalk.white("Default Guest Plan") +
         chalk.dim(" (required by Revstack).\n") +
-        "\\n" +
-        chalk.dim("    Next steps:\\n") +
+        "\n" +
+        chalk.dim("    Next steps:\n") +
         (installFailed
           ? chalk.dim("    0. ") +
             chalk.white(
               "Run " +
                 chalk.bold(packageManager + " install @revstackhq/core") +
-                " manually\\n",
+                " manually\n",
             )
           : "") +
         chalk.dim("    1. ") +
-        chalk.white("Edit the config to match your billing model\\n") +
+        chalk.white("Edit the config to match your billing model\n") +
         chalk.dim("    2. ") +
         chalk.white("Run ") +
         chalk.bold("revstack login") +
-        chalk.white(" to authenticate\\n") +
+        chalk.white(" to authenticate\n") +
         chalk.dim("    3. ") +
         chalk.white("Run ") +
         chalk.bold("revstack push") +
-        chalk.white(" to deploy\\n"),
+        chalk.white(" to deploy\n"),
     );
   });
