@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/ai",
-  "version": "0.0.0-dev",
+  "version": "0.0.0-dev-20260226054346",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -33,5 +33,8 @@
   },
   "peerDependencies": {
     "ai": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

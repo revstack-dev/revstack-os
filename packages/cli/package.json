@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/cli",
-  "version": "0.1.0",
+  "version": "0.0.0-dev-20260226054346",
   "description": "The official CLI for Revstack — Billing as Code",
   "license": "MIT",
   "type": "module",
@@ -18,12 +18,14 @@
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "jiti": "^2.4.2",
-    "ora": "^8.2.0",
     "prompts": "^2.4.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@types/ora": "^3.2.0",
     "@types/prompts": "^2.4.9",
+    "execa": "^9.6.1",
+    "ora": "^8.2.0",
     "tsup": "^8.1.0",
     "typescript": "5.9.2",
     "vitest": "^4.0.18"

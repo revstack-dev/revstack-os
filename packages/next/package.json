@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/next",
-  "version": "0.0.0-dev",
+  "version": "0.0.0-dev-20260226054346",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -40,5 +40,8 @@
   "peerDependencies": {
     "next": ">=14.0.0",
     "react": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

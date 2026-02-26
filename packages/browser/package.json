@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/browser",
-  "version": "0.0.0-dev",
+  "version": "0.0.0-dev-20260226054346",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -31,5 +31,8 @@
     "eslint": "^9.39.1",
     "tsup": "^8.1.0",
     "typescript": "5.9.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

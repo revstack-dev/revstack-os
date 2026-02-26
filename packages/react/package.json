@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/react",
-  "version": "0.0.0-dev",
+  "version": "0.0.0-dev-20260226054346",
   "private": false,
   "license": "MIT",
   "type": "module",
@@ -36,5 +36,8 @@
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
