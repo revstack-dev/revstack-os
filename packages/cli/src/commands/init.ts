@@ -130,22 +130,27 @@ export const initCommand = new Command("init")
     let installFailed = false;
 
     try {
+      // Use @dev tag if the CLI itself is a dev snapshot
+      const pkgVersion = process.env.npm_package_version || "dev";
+      const tag = pkgVersion.includes("dev") ? "@dev" : "@latest";
+      const pkgName = `@revstackhq/core${tag}`;
+
       const installArgs =
         packageManager === "yarn"
-          ? ["add", "@revstackhq/core"]
+          ? ["add", pkgName]
           : packageManager === "pnpm"
-            ? ["add", "@revstackhq/core"]
-            : ["install", "@revstackhq/core"];
+            ? ["add", pkgName]
+            : ["install", pkgName];
 
       let result = spawnSync(packageManager, installArgs, { cwd, shell: true });
       if (result.error || result.status !== 0) {
         if (packageManager === "pnpm") {
-          result = spawnSync("pnpm", ["add", "-w", "@revstackhq/core"], {
+          result = spawnSync("pnpm", ["add", "-w", pkgName], {
             cwd,
             shell: true,
           });
         } else if (packageManager === "yarn") {
-          result = spawnSync("yarn", ["add", "-W", "@revstackhq/core"], {
+          result = spawnSync("yarn", ["add", "-W", pkgName], {
             cwd,
             shell: true,
           });

@@ -1,5 +1,11 @@
 # @revstackhq/cli
 
+## 0.0.0-dev-20260226063200
+
+### Patch Changes
+
+- fix: respect snapshot releases during core package scaffold
+
 ## 0.0.0-dev-20260226061807
 
 ### Minor Changes
