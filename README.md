@@ -38,15 +38,14 @@ This monorepo contains the open-source client SDKs, the entitlement engine, and 
 
 ### Client SDKs `MIT`
 
-| Package                                     | Description                                                    |
-| ------------------------------------------- | -------------------------------------------------------------- |
-| [`@revstackhq/node`](packages/node)         | Server-side SDK for Node.js                                    |
-| [`@revstackhq/next`](packages/next)         | Next.js integration                                            |
-| [`@revstackhq/react`](packages/react)       | React hooks and components                                     |
-| [`@revstackhq/browser`](packages/browser)   | Browser-side SDK                                               |
-| [`@revstackhq/auth`](packages/auth)         | JWT verification for Auth0, Clerk, Supabase, Cognito, Firebase |
-| [`@revstackhq/checkout`](packages/checkout) | Checkout session helpers                                       |
-| [`@revstackhq/ai`](packages/ai)             | AI utilities                                                   |
+| Package                                   | Description                                                    |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| [`@revstackhq/node`](packages/node)       | Server-side SDK for Node.js                                    |
+| [`@revstackhq/next`](packages/next)       | Next.js integration                                            |
+| [`@revstackhq/react`](packages/react)     | React hooks and components                                     |
+| [`@revstackhq/browser`](packages/browser) | Browser-side SDK                                               |
+| [`@revstackhq/auth`](packages/auth)       | JWT verification for Auth0, Clerk, Supabase, Cognito, Firebase |
+| [`@revstackhq/ai`](packages/ai)           | AI utilities                                                   |
 
 ### Core Infrastructure `FSL-1.1-MIT`
 

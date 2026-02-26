@@ -13,7 +13,6 @@ Everything you need to integrate Revstack into your application is MIT-licensed.
 | `@revstackhq/react`             | MIT     |
 | `@revstackhq/browser`           | MIT     |
 | `@revstackhq/auth`              | MIT     |
-| `@revstackhq/checkout`          | MIT     |
 | `@revstackhq/ai`                | MIT     |
 | `@revstackhq/eslint-config`     | MIT     |
 | `@revstackhq/typescript-config` | MIT     |

@@ -60,7 +60,6 @@ revstack-os/
 │   ├── next/               # Next.js integration
 │   ├── react/              # React hooks and components
 │   ├── browser/            # Browser-side SDK
-│   ├── checkout/           # Checkout session helpers
 │   ├── ai/                 # AI-related utilities
 │   ├── providers/
 │   │   ├── core/           # Base classes and interfaces for providers
@@ -119,7 +118,7 @@ The `...` suffix tells Turbo to include upstream dependencies in the build graph
 
 - Strict mode is on. Don't use `any` unless you genuinely have no other option, and if you do, leave a comment explaining why.
 - Prefer discriminated unions over type assertions. If you have a union type, narrow it with a runtime check before accessing variant-specific properties.
-- Path aliases (`@/`) are configured per-package and point to `src/`. Use them in source and test files.
+- Use relative imports in test files (e.g. `../../src/module`).
 
 ### Exports
 
@@ -147,7 +146,7 @@ pnpm vitest
 ### Guidelines
 
 - Put unit tests under `tests/unit/` within each package.
-- Use the `@/` path alias in test imports, same as source code.
+- Use relative imports to reference source files (e.g. `../../src/module`).
 - Each test file gets its own `tsconfig.test.json` and `vitest.config.ts` already configured — just follow the existing pattern.
 - Don't mock things you don't own unless it's unavoidable (network calls, timers, etc.). For HTTP testing, we use [MSW](https://mswjs.io/) where possible.
 - Discriminated union types need runtime narrowing in tests too — TypeScript won't let you assert `contract.jwksUri` without first checking `contract.strategy === "RS256"`.
@@ -208,11 +207,11 @@ A provider package needs to:
 
 1. **Extend `BaseProvider`** from `@revstackhq/providers-core`.
 2. **Implement the required lifecycle hooks** — at minimum `onInstall`, `onUninstall`, `verifyWebhookSignature`, `parseWebhookEvent`, and `getWebhookResponse`.
-3. **Optionally implement feature interfaces** for payments, subscriptions, customers, checkout, etc.
+3. **Optionally implement feature interfaces** for payments, subscriptions, customers, etc.
 4. **Include a manifest** with metadata (slug, name, logo, version, supported features).
 5. **Return `AsyncActionResult<T>`** from every method — never throw from provider code.
 
-Look at `packages/providers/official/stripe` as a reference implementation. It covers the full surface area including webhook setup/teardown, customer management, and checkout sessions.
+Look at `packages/providers/official/stripe` as a reference implementation. It covers the full surface area including webhook setup/teardown and customer management.
 
 ### Provider checklist
 
@@ -251,7 +250,7 @@ A failing test case is worth a thousand words — if you can write one, include 
 
 This monorepo uses a split licensing model:
 
-- **Client SDKs and ecosystem packages** (Node, React, Next, Auth, AI, Browser, Checkout) are licensed under the **MIT License**. Use them anywhere, in any project.
+- **Client SDKs and ecosystem packages** (Node, React, Next, Auth, AI, Browser) are licensed under the **MIT License**. Use them anywhere, in any project.
 - **Core infrastructure packages** (Core, Providers) are licensed under the **[Functional Source License (FSL-1.1-MIT)](https://fsl.software/)**. They are free to use internally and for non-commercial purposes, but you may not use them to offer a competing hosted service. After two years, each release automatically converts to MIT.
 
 By contributing to this repository, you agree that your contributions will be licensed under the license that applies to the package you are contributing to. See [LICENSE.md](LICENSE.md) at the root of the repo for the full breakdown.
