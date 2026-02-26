@@ -5,21 +5,22 @@ import type { AddonDef, PlanDef } from "../../src/types";
 describe("EntitlementEngine — Add-ons", () => {
   it("aggregates limits from plan and add-ons", () => {
     const plan: PlanDef = {
-      id: "pro",
+      slug: "pro",
       name: "Pro",
-      price: 2900,
-      currency: "USD",
-      interval: "month",
-      features: { seats: 5 },
+      is_default: false,
+      is_public: true,
+      type: "paid",
+      status: "active",
+      prices: [{ amount: 2900, currency: "USD", billing_interval: "monthly" }],
+      features: { seats: { value_limit: 5, is_hard_limit: true } },
     };
 
     const addon: AddonDef = {
-      id: "extra_seats",
+      slug: "extra_seats",
       name: "Extra Seats",
-      price: 500,
-      currency: "USD",
-      interval: "month",
-      features: { seats: 3 },
+      type: "recurring",
+      price: { amount: 500, currency: "USD", billing_interval: "monthly" },
+      features: { seats: { value_limit: 3, is_hard_limit: true } },
     };
 
     const engine = new EntitlementEngine(plan, [addon]);
@@ -28,26 +29,27 @@ describe("EntitlementEngine — Add-ons", () => {
     expect(result.allowed).toBe(true);
     expect(result.reason).toBe("included");
     expect(result.remaining).toBe(2);
-    expect(result.grantedBy).toBe("extra_seats");
+    expect(result.granted_by).toBe("extra_seats");
   });
 
-  it("allows boolean access from add-on even if plan disables", () => {
+  it("allows boolean access from add-on even if plan lacks feature", () => {
     const plan: PlanDef = {
-      id: "starter",
+      slug: "starter",
       name: "Starter",
-      price: 900,
-      currency: "USD",
-      interval: "month",
-      features: { sso: false },
+      is_default: false,
+      is_public: true,
+      type: "paid",
+      status: "active",
+      prices: [{ amount: 900, currency: "USD", billing_interval: "monthly" }],
+      features: {},
     };
 
     const addon: AddonDef = {
-      id: "sso_module",
+      slug: "sso_module",
       name: "SSO Module",
-      price: 1000,
-      currency: "USD",
-      interval: "month",
-      features: { sso: true },
+      type: "recurring",
+      price: { amount: 1000, currency: "USD", billing_interval: "monthly" },
+      features: { sso: { value_bool: true } },
     };
 
     const engine = new EntitlementEngine(plan, [addon]);
@@ -55,6 +57,6 @@ describe("EntitlementEngine — Add-ons", () => {
 
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(Infinity);
-    expect(result.grantedBy).toBe("sso_module");
+    expect(result.granted_by).toBe("sso_module");
   });
 });

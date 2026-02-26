@@ -23,11 +23,10 @@
 import type {
   CheckResult,
   PlanDef,
-  FeatureValue,
-  FeatureEntitlement,
+  PlanFeatureValue,
   AddonDef,
   SubscriptionStatus,
-} from "./types";
+} from "@/types";
 
 // ─── Constants ───────────────────────────────────────────────
 
@@ -61,9 +60,7 @@ const BLOCKED_RESULT: Readonly<CheckResult> = Object.freeze({
  * - Stateless: no mutation, no side effects. Safe to call from any context.
  * - Add-on limits are *summed* with the base plan (e.g., plan gives 5 seats +
  *   addon gives 3 = 8 total).
- * - If ANY source sets `isHardLimit: false`, the entire feature becomes soft-limited.
- * - Overage cost uses the **highest** `unitPrice` found across plan + addons
- *   (conservative billing — always bills at the most expensive rate).
+ * - If ANY source sets `is_hard_limit: false`, the entire feature becomes soft-limited.
  */
 export class EntitlementEngine {
   /**
@@ -83,7 +80,7 @@ export class EntitlementEngine {
    * Aggregates limits from the base plan AND any active add-ons,
    * then evaluates the customer's current usage against those limits.
    *
-   * @param featureId - The feature to check (e.g., `"seats"`).
+   * @param featureId - The feature slug to check (e.g., `"seats"`).
    * @param currentUsage - Current consumption count (default: 0).
    * @returns A `CheckResult` with the access decision and metadata.
    */
@@ -96,14 +93,11 @@ export class EntitlementEngine {
     // ── 1. Gather entitlements from all sources ──────────────
     const planEntitlement = this.plan.features[featureId];
     const addonEntitlements = this.addons
-      .map((addon) => ({ id: addon.id, value: addon.features[featureId] }))
+      .map((addon) => ({ slug: addon.slug, value: addon.features[featureId] }))
       .filter((item) => item.value !== undefined);
 
     // If neither plan nor add-ons have this feature
-    if (
-      (planEntitlement === undefined || planEntitlement === false) &&
-      addonEntitlements.length === 0
-    ) {
+    if (planEntitlement === undefined && addonEntitlements.length === 0) {
       return { allowed: false, reason: "feature_missing" };
     }
 
@@ -112,44 +106,37 @@ export class EntitlementEngine {
     let isInfinite = false;
     let hasAccess = false;
     let hardLimit = true;
-    let grantedBy = this.plan.id;
-    let highestUnitPrice = 0; // Track highest unitPrice across all sources
+    let granted_by = this.plan.slug;
 
-    const processValue = (val: FeatureValue, sourceId: string): void => {
-      if (val === true) {
-        // Boolean `true` → unlimited access
+    const processValue = (val: PlanFeatureValue, sourceSlug: string): void => {
+      // Boolean feature
+      if (val.value_bool === true) {
         hasAccess = true;
         isInfinite = true;
-        grantedBy = sourceId;
-      } else if (typeof val === "number") {
-        // Numeric shorthand → static limit
+        granted_by = sourceSlug;
+        return;
+      }
+
+      // Numeric limit feature (static or metered)
+      if (val.value_limit !== undefined) {
         hasAccess = true;
-        totalLimit += val;
-        grantedBy = sourceId;
-      } else if (typeof val === "object") {
-        // Full FeatureEntitlement object
-        if (val.included) hasAccess = true;
-        if (val.limit !== undefined) totalLimit += val.limit;
+        totalLimit += val.value_limit;
+        granted_by = sourceSlug;
+      }
 
-        // If ANY source allows soft limits, the whole feature becomes soft
-        if (val.isHardLimit === false) hardLimit = false;
-
-        // Track the highest unit price for overage cost estimation
-        if (val.unitPrice !== undefined && val.unitPrice > highestUnitPrice) {
-          highestUnitPrice = val.unitPrice;
-        }
-
-        grantedBy = sourceId;
+      // Hard/soft limit flag
+      if (val.is_hard_limit === false) {
+        hardLimit = false;
       }
     };
 
     // Process base plan first
-    if (planEntitlement) processValue(planEntitlement, this.plan.id);
+    if (planEntitlement) processValue(planEntitlement, this.plan.slug);
 
     // Process add-ons (summation logic — limits stack)
     for (const item of addonEntitlements) {
       if (item.value === undefined) continue;
-      processValue(item.value, item.id);
+      processValue(item.value, item.slug);
     }
 
     // ── 3. Evaluate access ───────────────────────────────────
@@ -158,7 +145,7 @@ export class EntitlementEngine {
     }
 
     if (isInfinite) {
-      return { allowed: true, remaining: Infinity, grantedBy };
+      return { allowed: true, remaining: Infinity, granted_by };
     }
 
     // ── 4. Evaluate limits ───────────────────────────────────
@@ -167,21 +154,16 @@ export class EntitlementEngine {
         allowed: true,
         reason: "included",
         remaining: totalLimit - currentUsage,
-        grantedBy,
+        granted_by,
       };
     }
 
     // Limit reached — check if overage is allowed
     if (!hardLimit) {
-      const overageUnits = currentUsage - totalLimit + 1;
-      const estimatedCost =
-        highestUnitPrice > 0 ? overageUnits * highestUnitPrice : 0;
-
       return {
         allowed: true,
         reason: "overage_allowed",
         remaining: 0,
-        costEstimate: estimatedCost,
       };
     }
 
@@ -191,25 +173,8 @@ export class EntitlementEngine {
   /**
    * Evaluate multiple features in a single pass.
    *
-   * Useful for dashboards, pre-flight checks, and "can the user do all of
-   * these things?" gates. Iterates through the provided usage map and
-   * returns a corresponding map of `CheckResult` objects.
-   *
-   * @param usages - Map of `featureId → currentUsage` to evaluate.
-   * @returns Map of `featureId → CheckResult`.
-   *
-   * @example
-   * ```typescript
-   * const results = engine.checkBatch({
-   *   seats: 4,
-   *   ai_tokens: 12000,
-   *   sso: 0,
-   * });
-   *
-   * if (!results.seats.allowed) {
-   *   console.log("Seat limit reached");
-   * }
-   * ```
+   * @param usages - Map of `featureSlug → currentUsage` to evaluate.
+   * @returns Map of `featureSlug → CheckResult`.
    */
   public checkBatch(
     usages: Record<string, number>

@@ -4,12 +4,14 @@ import type { PlanDef } from "../../src/types";
 
 function createBasePlan(overrides: Partial<PlanDef> = {}): PlanDef {
   return {
-    id: "pro",
+    slug: "pro",
     name: "Pro",
     description: "Base plan for tests",
-    price: 2900,
-    currency: "USD",
-    interval: "month",
+    is_default: false,
+    is_public: true,
+    type: "paid",
+    status: "active",
+    prices: [{ amount: 2900, currency: "USD", billing_interval: "monthly" }],
     features: {},
     ...overrides,
   };
@@ -26,7 +28,9 @@ describe("EntitlementEngine", () => {
   });
 
   it("allows boolean feature with infinite remaining", () => {
-    const plan = createBasePlan({ features: { sso: true } });
+    const plan = createBasePlan({
+      features: { sso: { value_bool: true } },
+    });
     const engine = new EntitlementEngine(plan);
     const result = engine.check("sso");
 
@@ -35,7 +39,9 @@ describe("EntitlementEngine", () => {
   });
 
   it("allows numeric feature under limit", () => {
-    const plan = createBasePlan({ features: { seats: 5 } });
+    const plan = createBasePlan({
+      features: { seats: { value_limit: 5, is_hard_limit: true } },
+    });
     const engine = new EntitlementEngine(plan);
     const result = engine.check("seats", 3);
 
@@ -45,7 +51,9 @@ describe("EntitlementEngine", () => {
   });
 
   it("denies numeric feature at limit", () => {
-    const plan = createBasePlan({ features: { seats: 5 } });
+    const plan = createBasePlan({
+      features: { seats: { value_limit: 5, is_hard_limit: true } },
+    });
     const engine = new EntitlementEngine(plan);
     const result = engine.check("seats", 5);
 
@@ -54,11 +62,9 @@ describe("EntitlementEngine", () => {
     expect(result.remaining).toBe(0);
   });
 
-  it("denies object entitlement when not included", () => {
+  it("denies feature when value_bool is false", () => {
     const plan = createBasePlan({
-      features: {
-        audit_logs: { included: false, limit: 10 },
-      },
+      features: { audit_logs: { value_bool: false } },
     });
 
     const engine = new EntitlementEngine(plan);
@@ -68,14 +74,12 @@ describe("EntitlementEngine", () => {
     expect(result.reason).toBe("feature_missing");
   });
 
-  it("allows overage for soft limit and estimates cost", () => {
+  it("allows overage for soft limit", () => {
     const plan = createBasePlan({
       features: {
         ai_tokens: {
-          included: true,
-          limit: 10,
-          isHardLimit: false,
-          unitPrice: 2,
+          value_limit: 10,
+          is_hard_limit: false,
         },
       },
     });
@@ -86,6 +90,5 @@ describe("EntitlementEngine", () => {
     expect(result.allowed).toBe(true);
     expect(result.reason).toBe("overage_allowed");
     expect(result.remaining).toBe(0);
-    expect(result.costEstimate).toBe(2);
   });
 });

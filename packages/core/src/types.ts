@@ -1,277 +1,249 @@
 /**
  * @file types.ts
  * @description Core type definitions for Revstack's Billing Engine.
- * This file acts as the contract for "Billing as Code".
+ * These types map directly to the PostgreSQL database schema and
+ * serve as the contract for "Billing as Code".
  */
 
 // ==========================================
-// 1. Fundamentals & Currency
+// 1. Enums & Primitives
 // ==========================================
 
 /**
- * The base currency for the entire system is USD.
- * All internal calculations, limits, and price definitions in the OS repo
- * are assumed to be in USD cents unless specified otherwise.
- * External layers (FX) handle conversion before reaching this core.
+ * The type of a feature/entitlement.
+ * - 'boolean': On/Off flag (e.g., SSO Access).
+ * - 'static': Fixed numeric limit included in the plan (e.g., 5 Seats).
+ * - 'metered': Usage-based, tracked over time (e.g., AI Tokens).
  */
-export type BaseCurrency = "USD";
+export type FeatureType = "boolean" | "static" | "metered";
 
 /**
- * Supported billing intervals for subscriptions.
- * Extended to support weekly, quarterly, and one-time purchases.
+ * The unit of measurement for a feature.
+ * Used for display, analytics, and billing calculations.
  */
-export type BillingInterval =
-  | "day" // Daily billing (rare, but possible for high-velocity)
-  | "week" // Weekly billing
-  | "month" // Standard monthly billing
-  | "quarter" // Quarterly (every 3 months)
-  | "year" // Annual billing
-  | "one_time"; // Lifetime deals (LTDs) or single purchases
+export type UnitType =
+  | "count"
+  | "bytes"
+  | "seconds"
+  | "tokens"
+  | "requests"
+  | "custom";
 
 /**
- * How usage is aggregated over a billing period.
- * - 'sum': Adds up all usage (e.g., API calls).
- * - 'max': Takes the maximum usage seen (e.g., max concurrent connections).
- * - 'last': Takes the last recorded value (e.g., storage used at end of month).
+ * How often a feature's usage counter resets.
  */
-export type UsageAggregation = "sum" | "max" | "last";
+export type ResetPeriod = "monthly" | "yearly" | "never";
 
 /**
- * Defines what happens when a billing period ends for a specific entitlement.
- * - 'reset': Usage counter goes back to 0 (Standard SaaS limits).
- * - 'rollover': Unused usage carries over (e.g., rollover minutes).
- * - 'infinite': Usage never resets (Lifetime limits).
+ * Billing interval for a plan's price.
  */
-export type ResetBehavior = "reset" | "rollover" | "infinite";
+export type BillingInterval = "monthly" | "quarterly" | "yearly" | "one_time";
+
+/**
+ * The commercial classification of a plan.
+ * - 'free': No payment required (e.g., Default Guest Plan, Starter).
+ * - 'paid': Requires active payment method.
+ * - 'custom': Enterprise / negotiated pricing.
+ */
+export type PlanType = "paid" | "free" | "custom";
+
+/**
+ * The lifecycle status of a plan.
+ * - 'draft': Not yet visible or purchasable.
+ * - 'active': Live and available for subscription.
+ * - 'archived': No longer available for new subscriptions, existing ones honored.
+ */
+export type PlanStatus = "draft" | "active" | "archived";
 
 /**
  * The lifecycle state of a customer's subscription.
  * Used by the EntitlementEngine to gate access based on payment status.
  */
 export type SubscriptionStatus =
-  | "active" // Subscription is current and paid
-  | "trialing" // Within trial period
-  | "past_due" // Payment failed — blocks access
-  | "canceled" // Subscription terminated — blocks access
-  | "paused"; // Temporarily paused (e.g., seasonal business)
-
-export type FeatureType =
-  | "boolean" // On/Off feature (e.g., SSO Access)
-  | "static" // Fixed number included (e.g., 5 Users)
-  | "metered"; // Pay-as-you-go or usage-based (e.g., AI Tokens)
+  | "active"
+  | "trialing"
+  | "past_due"
+  | "canceled"
+  | "paused";
 
 // ==========================================
-// 2. Feature Definitions
+// 2. Feature Definitions (Entitlements)
 // ==========================================
 
 /**
  * Definition of a Feature available in the system.
- * This maps to the 'entitlements' table in the DB.
+ * Maps to the `entitlements` table in the database.
+ *
+ * The `slug` field is the primary identifier and matches the dictionary
+ * key in `RevstackConfig.features`.
  */
 export interface FeatureDef {
-  /** Unique slug/ID for the feature (e.g., 'audit_logs', 'seats') */
-  id: string;
-  /** Human readable description */
+  /** Unique slug/identifier (matches dictionary key in config). */
+  slug: string;
+  /** Human-readable display name. */
+  name: string;
+  /** Optional description for documentation and dashboard. */
   description?: string;
-  /** The data type of the feature */
+  /** The data type of the feature. */
   type: FeatureType;
-  /** * For metered features, how do we count them?
-   * @default 'sum'
-   */
-  aggregation?: UsageAggregation;
+  /** The unit of measurement. */
+  unit_type: UnitType;
 }
 
+/**
+ * Input type for `defineFeature()`.
+ * The `slug` is omitted because it is inferred from the dictionary key.
+ */
+export type FeatureDefInput = Omit<FeatureDef, "slug">;
+
 // ==========================================
-// 3. Entitlement Logic (The "Building Block")
+// 3. Plan Feature Values (Plan Entitlements)
 // ==========================================
 
 /**
  * Configures how a feature behaves inside a specific Plan.
- * This handles the logic for limits, overages, and pricing per unit.
+ * Maps to the `plan_entitlements` table in the database.
+ *
+ * Each field is optional — only set the fields relevant to the feature type:
+ * - Boolean features: use `value_bool`.
+ * - Static features: use `value_limit` + `is_hard_limit`.
+ * - Metered features: use `value_limit` + `reset_period`.
  */
-export interface FeatureEntitlement {
-  /** * Whether the feature is accessible at all.
-   * @default true
-   */
-  included: boolean;
-
-  /** * The limit included in the base price.
-   * - For 'static': Hard limit (e.g., 5 seats).
-   * - For 'metered': Included units before overage starts (e.g., 10k free tokens).
-   * - If null/undefined for metered, it means 0 included (pay from start).
-   * NOTE: In Add-ons, this value ADDS to the base plan limit.
-   */
-  limit?: number;
-
-  /**
-   * Price per unit in USD Cents.
-   * Used for:
-   * 1. 'static': Price for extra seats (e.g., $10 per extra user).
-   * 2. 'metered': Price per API call after limit is reached.
-   */
-  unitPrice?: number;
-
-  /**
-   * If true, the system will block usage when the limit is reached.
-   * If false, it allows overage (billable or silent).
-   * @default true
-   */
-  isHardLimit?: boolean;
-
-  /**
-   * How often this limit resets.
-   * @default 'month' (if the plan is monthly)
-   */
-  resetPeriod?: BillingInterval;
+export interface PlanFeatureValue {
+  /** Numeric limit (e.g., 5 seats, 10000 API calls). */
+  value_limit?: number;
+  /** Boolean toggle (e.g., SSO enabled/disabled). */
+  value_bool?: boolean;
+  /** Text value for display or metadata. */
+  value_text?: string;
+  /** If true, usage is blocked when limit is reached. */
+  is_hard_limit?: boolean;
+  /** How often usage resets. */
+  reset_period?: ResetPeriod;
 }
 
-/**
- * A shorthand type for developers defining plans.
- * They can pass:
- * - true: Access enabled, default limits.
- * - number: A simple static limit (e.g., `seats: 5`).
- * - FeatureEntitlement: Full configuration object.
- */
-export type FeatureValue = boolean | number | FeatureEntitlement;
-
 // ==========================================
-// 4. Plans & Add-ons (The "Products")
+// 4. Pricing
 // ==========================================
 
 /**
- * Common properties between Plans and Add-ons.
+ * Defines the pricing for a plan.
+ * Maps to the `prices` table in the database.
  */
-interface ProductBase {
-  /** Unique slug for the product variant */
-  id: string;
-  /** Display name */
+export interface PriceDef {
+  /** Price amount in the smallest currency unit (e.g., cents). */
+  amount: number;
+  /** ISO 4217 currency code (e.g., "USD", "EUR"). */
+  currency: string;
+  /** How often the customer is billed. */
+  billing_interval: BillingInterval;
+  /** Number of days for a free trial before billing starts. */
+  trial_period_days?: number;
+  /** Whether this price is currently active. */
+  is_active?: boolean;
+}
+
+// ==========================================
+// 5. Plans
+// ==========================================
+
+/**
+ * Full plan definition. Maps to the `plans` table in the database.
+ *
+ * The `slug` is the primary identifier and matches the dictionary
+ * key in `RevstackConfig.plans`.
+ */
+export interface PlanDef {
+  /** Unique slug/identifier (matches dictionary key in config). */
+  slug: string;
+  /** Human-readable display name. */
   name: string;
-  /** Human readable description */
+  /** Optional description. */
   description?: string;
-  /** Base price in USD Cents */
-  price: number;
-  /** The currency code (Strictly USD for Core) */
-  currency: BaseCurrency;
-  /** Billing frequency */
-  interval: BillingInterval;
-  /** * Number of intervals (e.g., interval='month', intervalCount=3 -> Quarterly).
-   * @default 1
-   */
-  intervalCount?: number;
-  /** Metadata for UI (badges, recommended flag, etc.) */
-  metadata?: Record<string, unknown>;
-  /** * The core map of features included in this product.
-   * Keys must match FeatureDef.id
-   */
-  features: Record<string, FeatureValue>;
+  /** Whether this is the default guest plan. */
+  is_default: boolean;
+  /** Whether this plan is visible on the pricing page. */
+  is_public: boolean;
+  /** Commercial classification. */
+  type: PlanType;
+  /** Lifecycle status. */
+  status: PlanStatus;
+  /** Optional pricing tiers (1:N). Free/default plans have no prices. */
+  prices?: PriceDef[];
+  /** Feature entitlements included in this plan. */
+  features: Record<string, PlanFeatureValue>;
 }
 
 /**
- * Represents a Pricing Tier or Plan Variant.
+ * Input type for `definePlan()`.
+ * - `slug` is omitted (inferred from dictionary key).
+ * - `status` is optional (defaults to `'active'`).
  */
-export interface PlanDef extends ProductBase {
-  /** * Trial period in days.
-   * @default 0
-   */
-  trialDays?: number;
-}
-
-/**
- * An Add-on is a product purchased ON TOP of a subscription.
- * e.g., "Extra 5 Seats" or "Premium Support Module".
- */
-export interface AddonDef extends ProductBase {
-  /**
-   * - 'recurring': Billed every cycle along with the subscription.
-   * - 'one_time': Billed once immediately (e.g. Setup Fee).
-   * @default 'recurring'
-   */
-  type?: "recurring" | "one_time";
-}
+export type PlanDefInput = Omit<PlanDef, "slug" | "status" | "features"> & {
+  status?: PlanStatus;
+  features: Record<string, PlanFeatureValue>;
+};
 
 // ==========================================
-// 4b. Typed Generics for DX (Compile-Time Feature Safety)
+// 6. Add-ons
 // ==========================================
 
 /**
- * A stricter PlanDef where feature keys are constrained to the keys
- * of a provided feature dictionary type `F`.
- *
- * @typeParam F - The feature dictionary (e.g., `typeof myFeatures`).
- *
- * @example
- * ```typescript
- * const plan: TypedPlanDef<typeof features> = {
- *   // ...
- *   features: {
- *     seats: 5,       // ✅ 'seats' exists in features
- *     typo: true,     // ❌ TypeScript error: 'typo' not in features
- *   }
- * };
- * ```
+ * An add-on is a product purchased on top of a subscription.
+ * Maps to the `addons` table in the database.
  */
-export interface TypedPlanDef<
-  F extends Record<string, FeatureDef>,
-> extends Omit<PlanDef, "features"> {
-  features: Partial<Record<keyof F, FeatureValue>>;
+export interface AddonDef {
+  /** Unique slug/identifier. */
+  slug: string;
+  /** Human-readable display name. */
+  name: string;
+  /** Optional description. */
+  description?: string;
+  /** Billing type. */
+  type: "recurring" | "one_time";
+  /** Add-on pricing. */
+  price: PriceDef;
+  /** Feature entitlements this add-on grants. */
+  features: Record<string, PlanFeatureValue>;
 }
 
 /**
- * A stricter AddonDef where feature keys are constrained to the keys
- * of a provided feature dictionary type `F`.
+ * Input type for `defineAddon()`.
+ * The `slug` is omitted (inferred from dictionary key).
  */
-export interface TypedAddonDef<
-  F extends Record<string, FeatureDef>,
-> extends Omit<AddonDef, "features"> {
-  features: Partial<Record<keyof F, FeatureValue>>;
-}
+export type AddonDefInput = Omit<AddonDef, "slug">;
 
 // ==========================================
-// 5. Discounts & Coupons
+// 7. Discounts & Coupons
 // ==========================================
 
 export type DiscountType = "percent" | "amount";
-
-export type DiscountDuration =
-  | "once" // Applies to the first invoice only
-  | "forever" // Applies to all invoices indefinitely
-  | "repeating"; // Applies for a specific number of months
+export type DiscountDuration = "once" | "forever" | "repeating";
 
 export interface DiscountDef {
-  /** The code user types in checkout (e.g., 'BLACKFRIDAY_24') */
+  /** The code the user enters at checkout (e.g., 'BLACKFRIDAY_24'). */
   code: string;
-  /** Friendly name for invoice */
+  /** Friendly name for invoices. */
   name?: string;
-  /** 'percent' (0-100) or 'amount' (USD Cents) */
+  /** 'percent' (0–100) or 'amount' (smallest currency unit). */
   type: DiscountType;
-  /** The value (e.g., 50 for 50%, or 1000 for $10 off) */
+  /** The discount value. */
   value: number;
-  /** How long the discount lasts */
+  /** How long the discount lasts. */
   duration: DiscountDuration;
-  /** If duration is 'repeating', how many months? */
-  durationInMonths?: number;
-  /** Restrict coupon to specific plan IDs. Empty = all. */
-  appliesToPlans?: string[];
-  /** Max redemptions globally */
-  maxRedemptions?: number;
-  /** Expiration date (ISO string) */
-  expiresAt?: string;
+  /** If duration is 'repeating', how many months. */
+  duration_in_months?: number;
+  /** Restrict to specific plan slugs. Empty = all. */
+  applies_to_plans?: string[];
+  /** Maximum number of redemptions globally. */
+  max_redemptions?: number;
+  /** Expiration date (ISO 8601). */
+  expires_at?: string;
 }
 
 // ==========================================
-// 6. Engine Inputs & Config
+// 8. Engine Output
 // ==========================================
-
-/**
- * Represents the current consumption of a user.
- * Fed into the engine to determine access.
- */
-export interface UserUsage {
-  /** * Map of feature_id -> amount consumed.
-   * e.g., { 'seats': 3, 'ai_tokens': 15000 }
-   */
-  [featureId: string]: number;
-}
 
 /**
  * The output of the Entitlement Engine.
@@ -280,40 +252,39 @@ export interface UserUsage {
 export interface CheckResult {
   /** Is the action allowed? */
   allowed: boolean;
-
   /** Why was it allowed or denied? */
   reason?:
-    | "feature_missing" // Feature not in plan
-    | "limit_reached" // Hard limit hit
-    | "past_due" // Subscription unpaid
-    | "included" // Within limits
-    | "overage_allowed"; // Allowed via overage
-
-  /** * How much is left before hitting the limit?
-   * Returns Infinity if no limit.
-   */
+    | "feature_missing"
+    | "limit_reached"
+    | "past_due"
+    | "included"
+    | "overage_allowed";
+  /** How many units remain before hitting the limit. Infinity if unlimited. */
   remaining?: number;
-
-  /**
-   * If usage triggers a cost (overage), this is the estimated cost in USD Cents.
-   * Useful for "Spend Management" agents.
-   */
-  costEstimate?: number;
-
-  /** Which source granted access? (Plan or Addon ID) */
-  grantedBy?: string;
+  /** Estimated overage cost in the smallest currency unit. */
+  cost_estimate?: number;
+  /** Which source granted access (plan or addon slug). */
+  granted_by?: string;
 }
+
+// ==========================================
+// 9. Config Root
+// ==========================================
 
 /**
  * The structure of the `revstack.config.ts` file.
+ *
+ * Features and plans are dictionaries keyed by slug.
+ * The define helpers (`defineFeature`, `definePlan`) return input types
+ * without `slug` — it is inferred from the dictionary key.
  */
 export interface RevstackConfig {
-  /** Dictionary of all available features */
-  features: Record<string, FeatureDef>;
-  /** Array of available plans */
-  plans: PlanDef[];
-  /** Array of available add-ons */
-  addons?: AddonDef[];
-  /** Array of available coupons */
+  /** Dictionary of all available features, keyed by slug. */
+  features: Record<string, FeatureDefInput>;
+  /** Dictionary of all plans, keyed by slug. */
+  plans: Record<string, PlanDefInput>;
+  /** Dictionary of available add-ons, keyed by slug. */
+  addons?: Record<string, AddonDefInput>;
+  /** Array of available coupons/discounts. */
   coupons?: DiscountDef[];
 }

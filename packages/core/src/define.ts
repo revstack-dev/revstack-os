@@ -8,38 +8,44 @@
  *
  * @example
  * ```typescript
- * import { defineConfig, defineFeature, definePlan, defineAddon, defineDiscount } from "@revstackhq/core";
+ * import { defineConfig, defineFeature, definePlan } from "@revstackhq/core";
  *
  * const features = {
- *   seats: defineFeature({ id: "seats", type: "static" }),
- *   sso:   defineFeature({ id: "sso",   type: "boolean" }),
+ *   seats: defineFeature({ name: "Seats", type: "static", unit_type: "count" }),
+ *   sso:   defineFeature({ name: "SSO",   type: "boolean", unit_type: "count" }),
  * };
  *
  * export default defineConfig({
  *   features,
- *   plans: [
- *     definePlan<typeof features>({
- *       id: "pro",
+ *   plans: {
+ *     default: definePlan<typeof features>({
+ *       name: "Default",
+ *       is_default: true,
+ *       is_public: false,
+ *       type: "free",
+ *       features: {},
+ *     }),
+ *     pro: definePlan<typeof features>({
  *       name: "Pro",
- *       price: 2900,
- *       currency: "USD",
- *       interval: "month",
+ *       is_default: false,
+ *       is_public: true,
+ *       type: "paid",
+ *       prices: [{ amount: 2900, currency: "USD", billing_interval: "monthly" }],
  *       features: {
- *         seats: 5,    // ✅ Autocomplete + type-safe
- *         sso: true,   // ✅
- *         // typo: 1,  // ❌ TypeScript error
+ *         seats: { value_limit: 5, is_hard_limit: true },
+ *         sso:   { value_bool: true },
  *       },
  *     }),
- *   ],
+ *   },
  * });
  * ```
  */
 
 import type {
-  FeatureDef,
-  FeatureValue,
-  PlanDef,
-  AddonDef,
+  FeatureDefInput,
+  PlanDefInput,
+  PlanFeatureValue,
+  AddonDefInput,
   DiscountDef,
   RevstackConfig,
 } from "@/types";
@@ -50,7 +56,7 @@ import type {
  * Define a feature with full type inference.
  * Identity function — returns the input as-is.
  */
-export function defineFeature<T extends FeatureDef>(config: T): T {
+export function defineFeature<T extends FeatureDefInput>(config: T): T {
   return config;
 }
 
@@ -67,22 +73,22 @@ export function defineFeature<T extends FeatureDef>(config: T): T {
  * @example
  * ```typescript
  * // Strict mode — typos cause compile errors:
- * definePlan<typeof features>({ features: { seats: 5 } });
+ * definePlan<typeof features>({ ..., features: { seats: { value_limit: 5 } } });
  *
  * // Loose mode — any string key accepted (backwards compatible):
- * definePlan({ features: { anything: true } });
+ * definePlan({ ..., features: { anything: { value_bool: true } } });
  * ```
  */
 export function definePlan<
-  F extends Record<string, FeatureDef> = Record<string, FeatureDef>,
+  F extends Record<string, FeatureDefInput> = Record<string, FeatureDefInput>,
 >(
-  config: Omit<PlanDef, "features"> & {
-    features: F extends Record<string, FeatureDef>
-      ? Partial<Record<keyof F, FeatureValue>>
-      : Record<string, FeatureValue>;
+  config: Omit<PlanDefInput, "features"> & {
+    features: F extends Record<string, FeatureDefInput>
+      ? Partial<Record<keyof F, PlanFeatureValue>>
+      : Record<string, PlanFeatureValue>;
   }
-): PlanDef {
-  return config as PlanDef;
+): PlanDefInput {
+  return config as PlanDefInput;
 }
 
 // ─── Add-on (Typed against feature dictionary) ───────────────
@@ -94,15 +100,15 @@ export function definePlan<
  * @typeParam F - Feature dictionary type for key restriction.
  */
 export function defineAddon<
-  F extends Record<string, FeatureDef> = Record<string, FeatureDef>,
+  F extends Record<string, FeatureDefInput> = Record<string, FeatureDefInput>,
 >(
-  config: Omit<AddonDef, "features"> & {
-    features: F extends Record<string, FeatureDef>
-      ? Partial<Record<keyof F, FeatureValue>>
-      : Record<string, FeatureValue>;
+  config: Omit<AddonDefInput, "features"> & {
+    features: F extends Record<string, FeatureDefInput>
+      ? Partial<Record<keyof F, PlanFeatureValue>>
+      : Record<string, PlanFeatureValue>;
   }
-): AddonDef {
-  return config as AddonDef;
+): AddonDefInput {
+  return config as AddonDefInput;
 }
 
 // ─── Discount ────────────────────────────────────────────────
@@ -120,16 +126,6 @@ export function defineDiscount<T extends DiscountDef>(config: T): T {
 /**
  * Define the root billing configuration.
  * Wraps the entire `revstack.config.ts` export for type inference.
- *
- * @example
- * ```typescript
- * export default defineConfig({
- *   features: { ... },
- *   plans: [ ... ],
- *   addons: [ ... ],
- *   coupons: [ ... ],
- * });
- * ```
  */
 export function defineConfig<T extends RevstackConfig>(config: T): T {
   return config;

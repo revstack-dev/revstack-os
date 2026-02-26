@@ -3,11 +3,13 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: ["src/cli.ts"],
   format: ["esm"],
-  dts: true,
+  dts: false,
   splitting: false,
   sourcemap: true,
   clean: true,
-  minify: true,
-  target: "esnext",
+  target: "node18",
   outDir: "dist",
+  banner: {
+    js: "#!/usr/bin/env node",
+  },
 });

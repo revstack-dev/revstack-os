@@ -5,18 +5,18 @@
  * Validates the business logic invariants of a `RevstackConfig` object
  * before it is synced to the backend. Catches misconfigurations early
  * that TypeScript's type system cannot enforce (e.g., referencing
- * undefined features, negative prices, duplicate IDs).
+ * undefined features, negative prices, duplicate slugs).
  *
  * @example
  * ```typescript
  * import { validateConfig, defineConfig } from "@revstackhq/core";
  *
- * const config = defineConfig({ features: {}, plans: [] });
+ * const config = defineConfig({ features: {}, plans: {} });
  * validateConfig(config); // throws RevstackValidationError if invalid
  * ```
  */
 
-import type { RevstackConfig, FeatureValue } from "@/types";
+import type { RevstackConfig, PlanFeatureValue } from "@/types";
 
 // ─── Error Class ─────────────────────────────────────────────
 
@@ -52,82 +52,76 @@ export class RevstackValidationError extends Error {
  */
 function validateFeatureReferences(
   productType: string,
-  productId: string,
-  features: Record<string, FeatureValue>,
-  knownFeatureIds: Set<string>,
+  productSlug: string,
+  features: Record<string, PlanFeatureValue>,
+  knownFeatureSlugs: Set<string>,
   errors: string[]
 ): void {
-  for (const featureId of Object.keys(features)) {
-    if (!knownFeatureIds.has(featureId)) {
+  for (const featureSlug of Object.keys(features)) {
+    if (!knownFeatureSlugs.has(featureSlug)) {
       errors.push(
-        `${productType} "${productId}" references undefined feature "${featureId}".`
+        `${productType} "${productSlug}" references undefined feature "${featureSlug}".`
       );
     }
   }
 }
 
+// ─── Pricing Validation ──────────────────────────────────────
+
 /**
- * Validates that all prices and limits within a product's features
- * are non-negative, and that the product's base price is non-negative.
+ * Validates that prices within a plan are non-negative.
  */
-function validateProductPricing(
-  productType: string,
-  productId: string,
-  basePrice: number,
-  features: Record<string, FeatureValue>,
+function validatePlanPricing(
+  planSlug: string,
+  prices: Array<{ amount: number }> | undefined,
+  features: Record<string, PlanFeatureValue>,
   errors: string[]
 ): void {
-  // Base price must be non-negative
-  if (basePrice < 0) {
-    errors.push(
-      `${productType} "${productId}" has a negative base price (${basePrice}).`
-    );
+  if (prices) {
+    for (const price of prices) {
+      if (price.amount < 0) {
+        errors.push(
+          `Plan "${planSlug}" has a negative price amount (${price.amount}).`
+        );
+      }
+    }
   }
 
-  // Validate each feature's numeric fields
-  for (const [featureId, value] of Object.entries(features)) {
-    if (typeof value === "object" && value !== null) {
-      if (value.limit !== undefined && value.limit < 0) {
-        errors.push(
-          `${productType} "${productId}" → feature "${featureId}" has a negative limit (${value.limit}).`
-        );
-      }
-      if (value.unitPrice !== undefined && value.unitPrice < 0) {
-        errors.push(
-          `${productType} "${productId}" → feature "${featureId}" has a negative unitPrice (${value.unitPrice}).`
-        );
-      }
+  for (const [featureSlug, value] of Object.entries(features)) {
+    if (value.value_limit !== undefined && value.value_limit < 0) {
+      errors.push(
+        `Plan "${planSlug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`
+      );
     }
   }
 }
 
-// ─── Duplicate ID Detection ─────────────────────────────────
+// ─── Default Plan Validation ─────────────────────────────────
 
 /**
- * Detects duplicate IDs within an array of items.
- * Returns a set of IDs that appear more than once.
+ * Ensures exactly one plan has `is_default: true`.
  */
-function findDuplicateIds(
-  items: Array<{ id: string }>,
-  label: string,
-  errors: string[]
-): void {
-  const seen = new Set<string>();
+function validateDefaultPlan(config: RevstackConfig, errors: string[]): void {
+  const defaultPlans = Object.entries(config.plans).filter(
+    ([, plan]) => plan.is_default
+  );
 
-  for (const item of items) {
-    if (seen.has(item.id)) {
-      errors.push(`Duplicate ${label} ID: "${item.id}".`);
-    }
-    seen.add(item.id);
+  if (defaultPlans.length === 0) {
+    errors.push(
+      "No default plan found. Every project must have exactly one plan with is_default: true."
+    );
+  } else if (defaultPlans.length > 1) {
+    const slugs = defaultPlans.map(([slug]) => slug).join(", ");
+    errors.push(
+      `Multiple default plans found (${slugs}). Only one plan can have is_default: true.`
+    );
   }
 }
 
 // ─── Discount Validation ─────────────────────────────────────
 
 /**
- * Validates discount-specific business rules:
- * - Percentage discounts must have value in [0, 100].
- * - Amount discounts must be non-negative.
+ * Validates discount-specific business rules.
  */
 function validateDiscounts(config: RevstackConfig, errors: string[]): void {
   if (!config.coupons) return;
@@ -153,50 +147,41 @@ function validateDiscounts(config: RevstackConfig, errors: string[]): void {
  * Validates a complete Revstack billing configuration.
  *
  * Checks the following invariants:
- * 1. **Feature references** — Plans/addons only reference features defined in `config.features`.
- * 2. **Non-negative pricing** — All `price`, `unitPrice` values are ≥ 0.
- * 3. **Non-negative limits** — All `limit` values are ≥ 0.
- * 4. **Unique IDs** — No duplicate plan IDs or addon IDs.
- * 5. **Discount bounds** — Percentage discounts have values in [0, 100].
+ * 1. **Default plan** — Exactly one plan has `is_default: true`.
+ * 2. **Feature references** — Plans/addons only reference features defined in `config.features`.
+ * 3. **Non-negative pricing** — All price amounts and limits are ≥ 0.
+ * 4. **Discount bounds** — Percentage discounts have values in [0, 100].
  *
  * @param config - The billing configuration to validate.
  * @throws {RevstackValidationError} If any violations are found.
  */
 export function validateConfig(config: RevstackConfig): void {
   const errors: string[] = [];
-  const knownFeatureIds = new Set(Object.keys(config.features));
+  const knownFeatureSlugs = new Set(Object.keys(config.features));
+
+  // ── Default Plan ───────────────────────────────────────────
+  validateDefaultPlan(config, errors);
 
   // ── Plans ──────────────────────────────────────────────────
-  findDuplicateIds(config.plans, "Plan", errors);
-
-  for (const plan of config.plans) {
+  for (const [slug, plan] of Object.entries(config.plans)) {
     validateFeatureReferences(
       "Plan",
-      plan.id,
+      slug,
       plan.features,
-      knownFeatureIds,
+      knownFeatureSlugs,
       errors
     );
-    validateProductPricing("Plan", plan.id, plan.price, plan.features, errors);
+    validatePlanPricing(slug, plan.prices, plan.features, errors);
   }
 
   // ── Add-ons ────────────────────────────────────────────────
   if (config.addons) {
-    findDuplicateIds(config.addons, "Addon", errors);
-
-    for (const addon of config.addons) {
+    for (const [slug, addon] of Object.entries(config.addons)) {
       validateFeatureReferences(
         "Addon",
-        addon.id,
+        slug,
         addon.features,
-        knownFeatureIds,
-        errors
-      );
-      validateProductPricing(
-        "Addon",
-        addon.id,
-        addon.price,
-        addon.features,
+        knownFeatureSlugs,
         errors
       );
     }
