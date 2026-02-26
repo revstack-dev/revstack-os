@@ -32,12 +32,14 @@ Scaffold a new `revstack.config.ts` in your project root:
 revstack init
 ```
 
-This creates a starter config with example plans and features using the type-safe helpers from `@revstackhq/core`:
+This creates a `revstack/` directory and a `revstack.config.ts` file in your project root, scaffolding a starter config with example plans and features using type-safe helpers from `@revstackhq/core`:
+
+**`revstack/features.ts`**
 
 ```typescript
-import { defineConfig, definePlan, defineFeature } from "@revstackhq/core";
+import { defineFeature } from "@revstackhq/core";
 
-const features = {
+export const features = {
   seats: defineFeature({
     name: "Seats",
     type: "static",
@@ -49,44 +51,62 @@ const features = {
     unit_type: "count",
   }),
 };
+```
+
+**`revstack/plans.ts`**
+
+```typescript
+import { definePlan } from "@revstackhq/core";
+import { features } from "./features";
+
+export const plans = {
+  // DO NOT DELETE: Automatically created default plan for guests.
+  default: definePlan<typeof features>({
+    name: "Default",
+    description: "Automatically created default plan for guests.",
+    is_default: true,
+    is_public: false,
+    type: "free",
+    features: {},
+  }),
+  pro: definePlan<typeof features>({
+    name: "Pro",
+    description: "For professional teams.",
+    is_default: false,
+    is_public: true,
+    type: "paid",
+    prices: [
+      {
+        amount: 2900,
+        currency: "USD",
+        billing_interval: "monthly",
+        trial_period_days: 14,
+      },
+      {
+        amount: 29000,
+        currency: "USD",
+        billing_interval: "yearly",
+        trial_period_days: 14,
+      },
+    ],
+    features: {
+      seats: { value_limit: 5, is_hard_limit: true },
+      ai_tokens: { value_limit: 1000, reset_period: "monthly" },
+    },
+  }),
+};
+```
+
+**`revstack.config.ts`**
+
+```typescript
+import { defineConfig } from "@revstackhq/core";
+import { features } from "./revstack/features";
+import { plans } from "./revstack/plans";
 
 export default defineConfig({
   features,
-  plans: {
-    default: definePlan<typeof features>({
-      name: "Default",
-      description: "Automatically created default plan for guests.",
-      is_default: true,
-      is_public: false,
-      type: "free",
-      features: {},
-    }),
-    pro: definePlan<typeof features>({
-      name: "Pro",
-      description: "For professional teams.",
-      is_default: false,
-      is_public: true,
-      type: "paid",
-      prices: [
-        {
-          amount: 2900,
-          currency: "USD",
-          billing_interval: "monthly",
-          trial_period_days: 14,
-        },
-        {
-          amount: 29000,
-          currency: "USD",
-          billing_interval: "yearly",
-          trial_period_days: 14,
-        },
-      ],
-      features: {
-        seats: { value_limit: 5, is_hard_limit: true },
-        ai_tokens: { value_limit: 1000, reset_period: "monthly" },
-      },
-    }),
-  },
+  plans,
 });
 ```
 
