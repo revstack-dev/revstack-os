@@ -1,5 +1,18 @@
 # @revstackhq/cli
 
+## 0.0.0-dev-20260227093823
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/core@0.0.0-dev-20260227093823
+
+## 0.0.0-dev-20260227092523
+
+### Minor Changes
+
+- implement modular enterprise configuration structure and interactive addons in init command
+
 ## 0.0.0-dev-20260226064743
 
 ### Patch Changes

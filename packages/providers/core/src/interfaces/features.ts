@@ -21,6 +21,14 @@ import {
   PaginationOptions,
   PaginatedResult,
   AsyncActionResult,
+  ProductInput,
+  Product,
+  PriceInput,
+  Price,
+  Addon,
+  CreateAddonInput,
+  UpdateAddonInput,
+  DeleteAddonInput,
 } from "@/types/models";
 
 /**
@@ -235,7 +243,7 @@ export interface ICustomerFeature {
   createCustomer(
     ctx: ProviderContext,
     input: CreateCustomerInput,
-  ): Promise<AsyncActionResult<Customer>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Updates an existing customer's details (e.g., changing email or address).
@@ -248,7 +256,7 @@ export interface ICustomerFeature {
     ctx: ProviderContext,
     id: string,
     input: UpdateCustomerInput,
-  ): Promise<AsyncActionResult<Customer>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Deletes (or archives) a customer in the provider's system.
@@ -312,6 +320,133 @@ export interface IPaymentMethodFeature {
 }
 
 /**
+ * Interface for Product & Price Catalog Management.
+ *
+ * Required for providers with `catalog.strategy: "pre_created"`.
+ * For `inline` providers (e.g., Stripe), these are optional convenience methods.
+ */
+export interface ICatalogFeature {
+  /**
+   * Creates a product in the provider's catalog.
+   */
+  createProduct?(
+    ctx: ProviderContext,
+    input: ProductInput,
+  ): Promise<AsyncActionResult<string>>;
+
+  /**
+   * Retrieves a product by its external ID.
+   */
+  getProduct?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Product>>;
+
+  /**
+   * Lists products with pagination.
+   */
+  listProducts?(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Product>>>;
+
+  /**
+   * Updates an existing product.
+   */
+  updateProduct?(
+    ctx: ProviderContext,
+    id: string,
+    input: Partial<ProductInput>,
+  ): Promise<AsyncActionResult<string>>;
+
+  /**
+   * Deletes (deactivates) a product.
+   */
+  deleteProduct?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<boolean>>;
+
+  /**
+   * Creates a price for a product.
+   */
+  createPrice?(
+    ctx: ProviderContext,
+    input: PriceInput,
+  ): Promise<AsyncActionResult<string>>;
+
+  /**
+   * Retrieves a price by its external ID.
+   */
+  getPrice?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Price>>;
+
+  /**
+   * Lists prices for a product.
+   */
+  listPrices?(
+    ctx: ProviderContext,
+    productId: string,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Price>>>;
+}
+
+/**
+ * Interface for Subscription Add-ons (e.g. Extra Seats, Priority Support).
+ * These are items attached to an existing subscription rather than standalone.
+ */
+export interface IAddonFeature {
+  /**
+   * Adds a new add-on (extra recurring item) to an active subscription.
+   *
+   * @param ctx - The execution context.
+   * @param input - The subscription ID, price ID, and quantity.
+   */
+  createAddon?(
+    ctx: ProviderContext,
+    input: CreateAddonInput,
+  ): Promise<AsyncActionResult<string>>;
+
+  /**
+   * Retrieves an existing add-on by ID.
+   */
+  getAddon?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Addon>>;
+
+  /**
+   * Updates an add-on (e.g. changing quantity or switching prices).
+   */
+  updateAddon?(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateAddonInput,
+  ): Promise<AsyncActionResult<string>>;
+
+  /**
+   * Removes an add-on from a subscription.
+   *
+   * Warning: Providers like Stripe do not allow a subscription to have zero items. If this is the last addon/item, the provider will throw an error. The orchestrator should catch this and call `cancelSubscription` instead.
+   */
+  deleteAddon?(
+    ctx: ProviderContext,
+    input: DeleteAddonInput,
+  ): Promise<AsyncActionResult<boolean>>;
+
+  /**
+   * Lists all add-ons attached to a specific subscription.
+   */
+  listAddons?(
+    ctx: ProviderContext,
+    subscriptionId: string,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Addon>>>;
+}
+
+/**
  * Unified interface that all providers must satisfy.
  *
  * This aggregate interface serves as the main contract for the Revstack Core.
@@ -325,7 +460,9 @@ export interface IProvider
     ISubscriptionFeature,
     ICheckoutFeature,
     ICustomerFeature,
-    IPaymentMethodFeature {
+    IPaymentMethodFeature,
+    ICatalogFeature,
+    IAddonFeature {
   // ==========================================================
   // METADATA (Required by Core at runtime)
   // ==========================================================

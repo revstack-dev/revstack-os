@@ -11,6 +11,9 @@ import {
   SetupPaymentMethodInput,
   CreateCustomerInput,
   UpdateCustomerInput,
+  CreateAddonInput,
+  UpdateAddonInput,
+  DeleteAddonInput,
 } from "@revstackhq/providers-core";
 
 import * as payments from "./payments";
@@ -18,6 +21,7 @@ import * as subscriptions from "./subscriptions";
 import * as checkout from "./checkout";
 import * as customers from "./customers";
 import * as webhooks from "./webhooks";
+import * as addons from "./addons";
 
 export class StripeClientV1 implements ProviderClient {
   // ===========================================================================
@@ -159,5 +163,33 @@ export class StripeClientV1 implements ProviderClient {
 
   listCustomers(ctx: ProviderContext, pagination: PaginationOptions) {
     return customers.listCustomers(ctx, pagination);
+  }
+
+  // ===========================================================================
+  // ADDONS
+  // ===========================================================================
+
+  createAddon(ctx: ProviderContext, input: CreateAddonInput) {
+    return addons.createAddon(ctx, input);
+  }
+
+  getAddon(ctx: ProviderContext, id: string) {
+    return addons.getAddon(ctx, id);
+  }
+
+  updateAddon(ctx: ProviderContext, id: string, input: UpdateAddonInput) {
+    return addons.updateAddon(ctx, id, input);
+  }
+
+  deleteAddon(ctx: ProviderContext, input: DeleteAddonInput) {
+    return addons.deleteAddon(ctx, input);
+  }
+
+  listAddons(
+    ctx: ProviderContext,
+    subscriptionId: string,
+    pagination: PaginationOptions,
+  ) {
+    return addons.listAddons(ctx, subscriptionId, pagination);
   }
 }

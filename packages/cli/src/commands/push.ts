@@ -11,6 +11,7 @@ import prompts from "prompts";
 import ora from "ora";
 import { getApiKey } from "@/utils/auth";
 import { loadLocalConfig } from "@/utils/config-loader";
+import { validateConfig, RevstackValidationError } from "@revstackhq/core";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -91,7 +92,44 @@ export const pushCommand = new Command("push")
     const apiKey = requireAuth();
     const config = await loadLocalConfig(process.cwd());
 
-    // ── Step 1: Compute diff ──────────────────────────────────
+    // ── Step 1: Validate config ────────────────────────────────
+
+    const validationSpinner = ora({
+      text: "Validating billing configuration...",
+      prefixText: " ",
+    }).start();
+
+    try {
+      validateConfig(config as any); // cast to match RevstackConfig expected by validateConfig
+      validationSpinner.succeed("Configuration validated");
+    } catch (error: any) {
+      if (
+        error instanceof RevstackValidationError ||
+        error?.name === "RevstackValidationError"
+      ) {
+        validationSpinner.fail("Configuration invalid");
+        console.error(
+          chalk.red(
+            "\n  ✖ The billing configuration contains business logic errors:\n",
+          ),
+        );
+        for (const err of error.errors || []) {
+          console.error(chalk.red(`    • ${err}`));
+        }
+        console.log();
+        process.exit(1);
+      }
+
+      validationSpinner.fail("Validation failed");
+      console.error(
+        chalk.red(
+          `\n  An unexpected error occurred during validation: ${error?.message || String(error)}\n`,
+        ),
+      );
+      process.exit(1);
+    }
+
+    // ── Step 2: Compute diff ──────────────────────────────────
 
     const spinner = ora({
       text: "Calculating diff...",

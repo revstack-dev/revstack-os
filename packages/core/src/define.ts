@@ -45,10 +45,11 @@ import type {
   FeatureDefInput,
   PlanDefInput,
   PlanFeatureValue,
+  AddonFeatureValue,
   AddonDefInput,
   DiscountDef,
   RevstackConfig,
-} from "@/types";
+} from "@/types.js";
 
 // ─── Feature ─────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ export function definePlan<
     features: F extends Record<string, FeatureDefInput>
       ? Partial<Record<keyof F, PlanFeatureValue>>
       : Record<string, PlanFeatureValue>;
-  }
+  },
 ): PlanDefInput {
   return config as PlanDefInput;
 }
@@ -104,9 +105,9 @@ export function defineAddon<
 >(
   config: Omit<AddonDefInput, "features"> & {
     features: F extends Record<string, FeatureDefInput>
-      ? Partial<Record<keyof F, PlanFeatureValue>>
-      : Record<string, PlanFeatureValue>;
-  }
+      ? Partial<Record<keyof F, AddonFeatureValue>>
+      : Record<string, AddonFeatureValue>;
+  },
 ): AddonDefInput {
   return config as AddonDefInput;
 }

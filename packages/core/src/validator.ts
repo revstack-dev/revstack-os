@@ -16,7 +16,7 @@
  * ```
  */
 
-import type { RevstackConfig, PlanFeatureValue } from "@/types";
+import type { RevstackConfig, PlanFeatureValue } from "@/types.js";
 
 // ─── Error Class ─────────────────────────────────────────────
 
@@ -55,12 +55,12 @@ function validateFeatureReferences(
   productSlug: string,
   features: Record<string, PlanFeatureValue>,
   knownFeatureSlugs: Set<string>,
-  errors: string[]
+  errors: string[],
 ): void {
   for (const featureSlug of Object.keys(features)) {
     if (!knownFeatureSlugs.has(featureSlug)) {
       errors.push(
-        `${productType} "${productSlug}" references undefined feature "${featureSlug}".`
+        `${productType} "${productSlug}" references undefined feature "${featureSlug}".`,
       );
     }
   }
@@ -75,13 +75,13 @@ function validatePlanPricing(
   planSlug: string,
   prices: Array<{ amount: number }> | undefined,
   features: Record<string, PlanFeatureValue>,
-  errors: string[]
+  errors: string[],
 ): void {
   if (prices) {
     for (const price of prices) {
       if (price.amount < 0) {
         errors.push(
-          `Plan "${planSlug}" has a negative price amount (${price.amount}).`
+          `Plan "${planSlug}" has a negative price amount (${price.amount}).`,
         );
       }
     }
@@ -90,7 +90,7 @@ function validatePlanPricing(
   for (const [featureSlug, value] of Object.entries(features)) {
     if (value.value_limit !== undefined && value.value_limit < 0) {
       errors.push(
-        `Plan "${planSlug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`
+        `Plan "${planSlug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`,
       );
     }
   }
@@ -103,17 +103,17 @@ function validatePlanPricing(
  */
 function validateDefaultPlan(config: RevstackConfig, errors: string[]): void {
   const defaultPlans = Object.entries(config.plans).filter(
-    ([, plan]) => plan.is_default
+    ([, plan]) => plan.is_default,
   );
 
   if (defaultPlans.length === 0) {
     errors.push(
-      "No default plan found. Every project must have exactly one plan with is_default: true."
+      "No default plan found. Every project must have exactly one plan with is_default: true.",
     );
   } else if (defaultPlans.length > 1) {
     const slugs = defaultPlans.map(([slug]) => slug).join(", ");
     errors.push(
-      `Multiple default plans found (${slugs}). Only one plan can have is_default: true.`
+      `Multiple default plans found (${slugs}). Only one plan can have is_default: true.`,
     );
   }
 }
@@ -129,13 +129,13 @@ function validateDiscounts(config: RevstackConfig, errors: string[]): void {
   for (const coupon of config.coupons) {
     if (coupon.type === "percent" && (coupon.value < 0 || coupon.value > 100)) {
       errors.push(
-        `Discount "${coupon.code}" has an invalid percentage value (${coupon.value}). Must be 0–100.`
+        `Discount "${coupon.code}" has an invalid percentage value (${coupon.value}). Must be 0–100.`,
       );
     }
 
     if (coupon.type === "amount" && coupon.value < 0) {
       errors.push(
-        `Discount "${coupon.code}" has a negative amount value (${coupon.value}).`
+        `Discount "${coupon.code}" has a negative amount value (${coupon.value}).`,
       );
     }
   }
@@ -169,7 +169,7 @@ export function validateConfig(config: RevstackConfig): void {
       slug,
       plan.features,
       knownFeatureSlugs,
-      errors
+      errors,
     );
     validatePlanPricing(slug, plan.prices, plan.features, errors);
   }
@@ -180,10 +180,28 @@ export function validateConfig(config: RevstackConfig): void {
       validateFeatureReferences(
         "Addon",
         slug,
-        addon.features,
+        addon.features as Record<string, PlanFeatureValue>,
         knownFeatureSlugs,
-        errors
+        errors,
       );
+
+      if (addon.prices) {
+        for (const price of addon.prices) {
+          if (price.amount < 0) {
+            errors.push(
+              `Addon "${slug}" has a negative price amount (${price.amount}).`,
+            );
+          }
+        }
+      }
+
+      for (const [featureSlug, value] of Object.entries(addon.features)) {
+        if (value.value_limit !== undefined && value.value_limit < 0) {
+          errors.push(
+            `Addon "${slug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`,
+          );
+        }
+      }
     }
   }
 

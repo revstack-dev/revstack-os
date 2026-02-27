@@ -17,9 +17,13 @@ import {
   Customer,
   UpdateCustomerInput,
   PaymentMethod,
-  RevstackEvent,
   InstallResult,
   AsyncActionResult,
+  Addon,
+  CreateAddonInput,
+  UpdateAddonInput,
+  DeleteAddonInput,
+  RevstackEvent,
 } from "@revstackhq/providers-core";
 
 export interface ProviderClient {
@@ -117,16 +121,16 @@ export interface ProviderClient {
     input: BillingPortalInput,
   ): Promise<AsyncActionResult<BillingPortalResult>>;
 
-  createCustomer?(
+  createCustomer(
     ctx: ProviderContext,
     input: CreateCustomerInput,
-  ): Promise<AsyncActionResult<Customer>>;
+  ): Promise<AsyncActionResult<string>>;
 
-  updateCustomer?(
+  updateCustomer(
     ctx: ProviderContext,
     id: string,
     input: UpdateCustomerInput,
-  ): Promise<AsyncActionResult<Customer>>;
+  ): Promise<AsyncActionResult<string>>;
 
   deleteCustomer?(
     ctx: ProviderContext,
@@ -163,4 +167,31 @@ export interface ProviderClient {
   parseWebhookEvent(
     payload: unknown,
   ): Promise<AsyncActionResult<RevstackEvent | null>>;
+
+  createAddon?(
+    ctx: ProviderContext,
+    input: CreateAddonInput,
+  ): Promise<AsyncActionResult<string>>;
+
+  getAddon?(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Addon>>;
+
+  updateAddon?(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateAddonInput,
+  ): Promise<AsyncActionResult<string>>;
+
+  deleteAddon?(
+    ctx: ProviderContext,
+    input: DeleteAddonInput,
+  ): Promise<AsyncActionResult<boolean>>;
+
+  listAddons?(
+    ctx: ProviderContext,
+    subscriptionId: string,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Addon>>>;
 }

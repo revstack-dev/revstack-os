@@ -13,81 +13,29 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import ora from "ora";
 
-const STARTER_FEATURES = `import { defineFeature } from "@revstackhq/core";
-
-export const features = {
-  seats: defineFeature({
-    name: "Seats",
-    type: "static",
-    unit_type: "count",
-  }),
-  ai_tokens: defineFeature({
-    name: "AI Tokens",
-    type: "metered",
-    unit_type: "count",
-  }),
-};
-`;
-
-const STARTER_PLANS = `import { definePlan } from "@revstackhq/core";
-import { features } from "./features";
-
-export const plans = {
-  // DO NOT DELETE: Automatically created default plan for guests.
-  default: definePlan<typeof features>({
-    name: "Default",
-    description: "Automatically created default plan for guests.",
-    is_default: true,
-    is_public: false,
-    type: "free",
-    features: {},
-  }),
-  pro: definePlan<typeof features>({
-    name: "Pro",
-    description: "For professional teams.",
-    is_default: false,
-    is_public: true,
-    type: "paid",
-    prices: [
-      {
-        amount: 2900,
-        currency: "USD",
-        billing_interval: "monthly",
-        trial_period_days: 14,
-      },
-      {
-        amount: 29000,
-        currency: "USD",
-        billing_interval: "yearly",
-        trial_period_days: 14,
-      }
-    ],
-    features: {
-      seats: { value_limit: 5, is_hard_limit: true },
-      ai_tokens: { value_limit: 1000, reset_period: "monthly" },
-    },
-  }),
-};
-`;
-
-const STARTER_CONFIG = `import { defineConfig } from "@revstackhq/core";
-import { features } from "./revstack/features";
-import { plans } from "./revstack/plans";
-
-export default defineConfig({
-  features,
-  plans,
-});
-`;
+import { TEMPLATES } from "./templates/index";
 
 export const initCommand = new Command("init")
   .description("Scaffold a new revstack.config.ts in the current directory")
-  .action(async () => {
+  .option(
+    "-t, --template <name>",
+    "Choose a starting template (starter, b2b-saas, usage-based)",
+    "starter",
+  )
+  .action(async (options) => {
+    const templateName = options.template || "starter";
+    const template = TEMPLATES[templateName];
+
+    if (!template) {
+      console.log(
+        chalk.red(
+          `\n  ✖ Unknown template "${templateName}". Available templates: ${Object.keys(TEMPLATES).join(", ")}\n`,
+        ),
+      );
+      process.exit(1);
+    }
     const cwd = process.cwd();
     const configPath = path.resolve(cwd, "revstack.config.ts");
-    const revstackDir = path.resolve(cwd, "revstack");
-    const featuresPath = path.resolve(revstackDir, "features.ts");
-    const plansPath = path.resolve(revstackDir, "plans.ts");
 
     if (fs.existsSync(configPath)) {
       console.log(
@@ -98,13 +46,33 @@ export const initCommand = new Command("init")
       process.exit(1);
     }
 
-    // Step 1: Create revstack directory and files
+    // Step 1: Create revstack directory and config files
+    const revstackDir = path.resolve(cwd, "revstack");
     if (!fs.existsSync(revstackDir)) {
       fs.mkdirSync(revstackDir, { recursive: true });
     }
-    fs.writeFileSync(featuresPath, STARTER_FEATURES, "utf-8");
-    fs.writeFileSync(plansPath, STARTER_PLANS, "utf-8");
-    fs.writeFileSync(configPath, STARTER_CONFIG, "utf-8");
+
+    fs.writeFileSync(
+      path.resolve(revstackDir, "features.ts"),
+      template.features,
+      "utf-8",
+    );
+    fs.writeFileSync(
+      path.resolve(revstackDir, "addons.ts"),
+      template.addons,
+      "utf-8",
+    );
+    fs.writeFileSync(
+      path.resolve(revstackDir, "plans.ts"),
+      template.plans,
+      "utf-8",
+    );
+    fs.writeFileSync(
+      path.resolve(revstackDir, "index.ts"),
+      template.index,
+      "utf-8",
+    );
+    fs.writeFileSync(configPath, template.root, "utf-8");
 
     // Step 2: Detect package manager & verify package.json
     let packageManager = "npm";

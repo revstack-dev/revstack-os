@@ -5,3 +5,4 @@ packages:
   - "packages/providers/registry"
   - "packages/providers/official/*"
   - "packages/providers/community/*"
+  - "apps/checkout"

@@ -19,6 +19,8 @@ export type Address = {
 
 export type ActionStatus = "success" | "pending" | "requires_action" | "failed";
 
+export type ProrationBehavior = "create_prorations" | "none" | "always_invoice";
+
 export type AsyncActionResult<T> = {
   /** result data payload */
   data: T | null;

@@ -122,6 +122,22 @@ export interface PlanFeatureValue {
   reset_period?: ResetPeriod;
 }
 
+/**
+ * Configures how a feature behaves inside a specific Addon.
+ * An addon can either incrementally increase a plan's limit, set an absolute new limit,
+ * or grant boolean access.
+ */
+export interface AddonFeatureValue {
+  /** Numeric limit to add or set. */
+  value_limit?: number;
+  /** How the limit is applied. 'increment' adds to the base plan, 'set' overrides it. */
+  type?: "increment" | "set";
+  /** Boolean toggle (e.g. granting access). */
+  has_access?: boolean;
+  /** If false, allows overage (relaxes the limit to a soft limit). */
+  is_hard_limit?: boolean;
+}
+
 // ==========================================
 // 4. Pricing
 // ==========================================
@@ -172,6 +188,8 @@ export interface PlanDef {
   prices?: PriceDef[];
   /** Feature entitlements included in this plan. */
   features: Record<string, PlanFeatureValue>;
+  /** Slugs of addons that can be attached to this plan. */
+  available_addons?: string[];
 }
 
 /**
@@ -182,6 +200,7 @@ export interface PlanDef {
 export type PlanDefInput = Omit<PlanDef, "slug" | "status" | "features"> & {
   status?: PlanStatus;
   features: Record<string, PlanFeatureValue>;
+  available_addons?: string[];
 };
 
 // ==========================================
@@ -201,10 +220,10 @@ export interface AddonDef {
   description?: string;
   /** Billing type. */
   type: "recurring" | "one_time";
-  /** Add-on pricing. */
-  price: PriceDef;
-  /** Feature entitlements this add-on grants. */
-  features: Record<string, PlanFeatureValue>;
+  /** Add-on pricing configurations (1:N). */
+  prices?: PriceDef[];
+  /** Feature entitlements this add-on modifies or grants. */
+  features: Record<string, AddonFeatureValue>;
 }
 
 /**
@@ -263,8 +282,8 @@ export interface CheckResult {
   remaining?: number;
   /** Estimated overage cost in the smallest currency unit. */
   cost_estimate?: number;
-  /** Which source granted access (plan or addon slug). */
-  granted_by?: string;
+  /** Which sources granted access (plan and/or addon slugs). */
+  granted_by?: string[];
 }
 
 // ==========================================

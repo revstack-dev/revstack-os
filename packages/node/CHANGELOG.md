@@ -1,5 +1,12 @@
 # @revstackhq/node
 
+## 0.0.0-dev-20260227093823
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/core@0.0.0-dev-20260227093823
+
 ## 0.0.0-dev-20260227040420
 
 ### Patch Changes

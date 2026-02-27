@@ -89,10 +89,15 @@ describe("init command", () => {
       expect.stringContaining("revstack"),
       { recursive: true },
     );
-    expect(mockFs.writeFileSync).toHaveBeenCalledTimes(3);
+    expect(mockFs.writeFileSync).toHaveBeenCalledTimes(5);
     expect(mockFs.writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining("features.ts"),
       expect.stringContaining("defineFeature"),
+      "utf-8",
+    );
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining("addons.ts"),
+      expect.stringContaining("defineAddon"),
       "utf-8",
     );
     expect(mockFs.writeFileSync).toHaveBeenCalledWith(
@@ -101,8 +106,13 @@ describe("init command", () => {
       "utf-8",
     );
     expect(mockFs.writeFileSync).toHaveBeenCalledWith(
-      expect.stringContaining("revstack.config.ts"),
+      expect.stringContaining("index.ts"),
       expect.stringContaining("defineConfig"),
+      "utf-8",
+    );
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining("revstack.config.ts"),
+      expect.stringContaining("import config from"),
       "utf-8",
     );
     expect(consoleSpy).toHaveBeenCalledWith(

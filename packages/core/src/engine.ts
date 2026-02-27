@@ -23,10 +23,9 @@
 import type {
   CheckResult,
   PlanDef,
-  PlanFeatureValue,
   AddonDef,
   SubscriptionStatus,
-} from "@/types";
+} from "@/types.js";
 
 // ─── Constants ───────────────────────────────────────────────
 
@@ -71,7 +70,7 @@ export class EntitlementEngine {
   constructor(
     private plan: PlanDef,
     private addons: AddonDef[] = [],
-    private subscriptionStatus: SubscriptionStatus = "active"
+    private subscriptionStatus: SubscriptionStatus = "active",
   ) {}
 
   /**
@@ -106,37 +105,66 @@ export class EntitlementEngine {
     let isInfinite = false;
     let hasAccess = false;
     let hardLimit = true;
-    let granted_by = this.plan.slug;
+    let grantedBy: string[] = [];
 
-    const processValue = (val: PlanFeatureValue, sourceSlug: string): void => {
-      // Boolean feature
-      if (val.value_bool === true) {
+    // Process base plan first
+    if (planEntitlement) {
+      if (planEntitlement.value_bool === true) {
         hasAccess = true;
         isInfinite = true;
-        granted_by = sourceSlug;
-        return;
+        grantedBy = [this.plan.slug];
+      }
+      if (planEntitlement.value_limit !== undefined) {
+        hasAccess = true;
+        totalLimit += planEntitlement.value_limit;
+        grantedBy = [this.plan.slug];
+      }
+      if (planEntitlement.is_hard_limit === false) {
+        hardLimit = false;
+      }
+    }
+
+    // Sort add-ons deterministically: process "set" overrides before "increment" additions
+    const sortedAddons = [...addonEntitlements].sort((a, b) => {
+      const typeA = a.value?.type === "set" ? 0 : 1;
+      const typeB = b.value?.type === "set" ? 0 : 1;
+      return typeA - typeB;
+    });
+
+    // Process add-ons sequentially
+    for (const item of sortedAddons) {
+      const val = item.value;
+      if (val === undefined) continue;
+
+      if (val.has_access === true) {
+        hasAccess = true;
+        isInfinite = true;
+        // If it's a new access grant not yet tracked, or if it overwrites the boolean, we can just track the addon slug.
+        // For boolean features, usually the first true wins, but we track all sources.
+        if (!grantedBy.includes(item.slug)) {
+          grantedBy.push(item.slug);
+        }
       }
 
-      // Numeric limit feature (static or metered)
       if (val.value_limit !== undefined) {
         hasAccess = true;
-        totalLimit += val.value_limit;
-        granted_by = sourceSlug;
+        if (val.type === "set") {
+          // 'set' completely overrides the previous limit and replaces the granting sources
+          totalLimit = val.value_limit;
+          grantedBy = [item.slug];
+        } else {
+          // 'increment' adds to the limit and appends to the sources
+          totalLimit += val.value_limit;
+          if (!grantedBy.includes(item.slug)) {
+            grantedBy.push(item.slug);
+          }
+        }
       }
 
-      // Hard/soft limit flag
+      // Check if this add-on relaxes the limit to a soft limit
       if (val.is_hard_limit === false) {
         hardLimit = false;
       }
-    };
-
-    // Process base plan first
-    if (planEntitlement) processValue(planEntitlement, this.plan.slug);
-
-    // Process add-ons (summation logic — limits stack)
-    for (const item of addonEntitlements) {
-      if (item.value === undefined) continue;
-      processValue(item.value, item.slug);
     }
 
     // ── 3. Evaluate access ───────────────────────────────────
@@ -145,7 +173,7 @@ export class EntitlementEngine {
     }
 
     if (isInfinite) {
-      return { allowed: true, remaining: Infinity, granted_by };
+      return { allowed: true, remaining: Infinity, granted_by: grantedBy };
     }
 
     // ── 4. Evaluate limits ───────────────────────────────────
@@ -154,7 +182,7 @@ export class EntitlementEngine {
         allowed: true,
         reason: "included",
         remaining: totalLimit - currentUsage,
-        granted_by,
+        granted_by: grantedBy,
       };
     }
 
@@ -164,10 +192,16 @@ export class EntitlementEngine {
         allowed: true,
         reason: "overage_allowed",
         remaining: 0,
+        granted_by: grantedBy,
       };
     }
 
-    return { allowed: false, reason: "limit_reached", remaining: 0 };
+    return {
+      allowed: false,
+      reason: "limit_reached",
+      remaining: 0,
+      granted_by: grantedBy,
+    };
   }
 
   /**
@@ -177,7 +211,7 @@ export class EntitlementEngine {
    * @returns Map of `featureSlug → CheckResult`.
    */
   public checkBatch(
-    usages: Record<string, number>
+    usages: Record<string, number>,
   ): Record<string, CheckResult> {
     const results: Record<string, CheckResult> = {};
 

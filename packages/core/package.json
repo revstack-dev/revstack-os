@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/core",
-  "version": "0.0.0-dev-20260226062415",
+  "version": "0.0.0-dev-20260227093823",
   "private": false,
   "license": "FSL-1.1-MIT",
   "type": "module",
@@ -16,7 +16,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "check-types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run"
@@ -28,6 +29,8 @@
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-turbo": "^2.7.1",
+    "tsc-alias": "^1.8.16",
+    "tsup": "^8.3.5",
     "typescript": "5.9.2",
     "typescript-eslint": "^8.50.0",
     "vitest": "^4.0.18"

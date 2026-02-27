@@ -26,6 +26,10 @@ import {
   Subscription,
   UninstallInput,
   UpdateCustomerInput,
+  Addon,
+  CreateAddonInput,
+  UpdateAddonInput,
+  DeleteAddonInput,
   WebhookResponse,
 } from "@revstackhq/providers-core";
 
@@ -378,7 +382,7 @@ export class StripeProvider extends BaseProvider {
   async createCustomer(
     ctx: ProviderContext,
     input: CreateCustomerInput,
-  ): Promise<AsyncActionResult<Customer>> {
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.createCustomer) {
@@ -399,7 +403,7 @@ export class StripeProvider extends BaseProvider {
     ctx: ProviderContext,
     id: string,
     input: UpdateCustomerInput,
-  ): Promise<AsyncActionResult<Customer>> {
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.updateCustomer) {
@@ -624,5 +628,111 @@ export class StripeProvider extends BaseProvider {
     }
 
     return client.createBillingPortalSession(ctx, input);
+  }
+
+  // ===========================================================================
+  // ADDONS
+  // ===========================================================================
+
+  async createAddon(
+    ctx: ProviderContext,
+    input: CreateAddonInput,
+  ): Promise<AsyncActionResult<string>> {
+    const client = getClient(ctx.config);
+
+    if (!client.createAddon) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Create Addon not supported",
+        },
+      };
+    }
+
+    return client.createAddon(ctx, input);
+  }
+
+  async getAddon(
+    ctx: ProviderContext,
+    id: string,
+  ): Promise<AsyncActionResult<Addon>> {
+    const client = getClient(ctx.config);
+
+    if (!client.getAddon) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Get Addon not supported",
+        },
+      };
+    }
+
+    return client.getAddon(ctx, id);
+  }
+
+  async updateAddon(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateAddonInput,
+  ): Promise<AsyncActionResult<string>> {
+    const client = getClient(ctx.config);
+
+    if (!client.updateAddon) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Update Addon not supported",
+        },
+      };
+    }
+
+    return client.updateAddon(ctx, id, input);
+  }
+
+  async deleteAddon(
+    ctx: ProviderContext,
+    input: DeleteAddonInput,
+  ): Promise<AsyncActionResult<boolean>> {
+    const client = getClient(ctx.config);
+
+    if (!client.deleteAddon) {
+      return {
+        data: false,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Delete Addon not supported",
+        },
+      };
+    }
+
+    return client.deleteAddon(ctx, input);
+  }
+
+  async listAddons(
+    ctx: ProviderContext,
+    subscriptionId: string,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Addon>>> {
+    const client = getClient(ctx.config);
+
+    if (!client.listAddons) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "List Addons not supported",
+        },
+      };
+    }
+
+    return client.listAddons(ctx, subscriptionId, pagination);
   }
 }

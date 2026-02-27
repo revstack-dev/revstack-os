@@ -127,4 +127,21 @@ export interface ProviderCapabilities {
      */
     verification: "signature" | "secret" | "none";
   };
+
+  /**
+   * Configuration for Product / Price Catalog Management.
+   *
+   * This tells the orchestrator how to handle line items during checkout.
+   */
+  catalog?: {
+    supported: boolean;
+    /**
+     * - `"inline"`: The provider supports creating prices on-the-fly during checkout
+     *   (e.g., Stripe `price_data`). No pre-creation needed.
+     * - `"pre_created"`: The provider requires Products and Prices to exist before
+     *   they can be referenced in checkout (e.g., Polar, PayPal Catalog).
+     *   The orchestrator must call `createProduct` + `createPrice` before checkout.
+     */
+    strategy: "inline" | "pre_created";
+  };
 }

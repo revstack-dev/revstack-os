@@ -16,6 +16,22 @@ vi.mock("prompts", () => ({
   default: vi.fn(),
 }));
 
+// ── Mock @revstackhq/core ────────────────────────────────────
+vi.mock("@revstackhq/core", () => {
+  class RevstackValidationError extends Error {
+    errors: string[];
+    constructor(errors: string[]) {
+      super("Validation failed");
+      this.name = "RevstackValidationError";
+      this.errors = errors;
+    }
+  }
+  return {
+    validateConfig: vi.fn(),
+    RevstackValidationError,
+  };
+});
+
 // ── Mock ora ─────────────────────────────────────────────────
 const mockSpinner = {
   start: vi.fn().mockReturnThis(),
@@ -129,7 +145,7 @@ describe("push command", () => {
     const program = createTestProgram();
 
     await expect(
-      program.parseAsync(["node", "revstack", "push"], { from: "node" })
+      program.parseAsync(["node", "revstack", "push"], { from: "node" }),
     ).rejects.toThrow(ProcessExitError);
 
     expect(exitSpy).toHaveBeenCalledWith(1);
@@ -139,7 +155,7 @@ describe("push command", () => {
   it("diffs, confirms, and pushes successfully", async () => {
     mockGetApiKey.mockReturnValue("sk_test_valid123");
     mockLoadLocalConfig.mockResolvedValue(
-      SAMPLE_CONFIG as Record<string, unknown>
+      SAMPLE_CONFIG as Record<string, unknown>,
     );
 
     const diffResponse = {
@@ -169,7 +185,7 @@ describe("push command", () => {
   it("exits early when push is blocked (canPush: false)", async () => {
     mockGetApiKey.mockReturnValue("sk_test_valid123");
     mockLoadLocalConfig.mockResolvedValue(
-      SAMPLE_CONFIG as Record<string, unknown>
+      SAMPLE_CONFIG as Record<string, unknown>,
     );
 
     const diffResponse = {
@@ -194,7 +210,7 @@ describe("push command", () => {
     const program = createTestProgram();
 
     await expect(
-      program.parseAsync(["node", "revstack", "push"], { from: "node" })
+      program.parseAsync(["node", "revstack", "push"], { from: "node" }),
     ).rejects.toThrow(ProcessExitError);
 
     // Only diff called, push never reached

@@ -18,7 +18,7 @@ import { getOrCreateStripe } from "./shared";
 export async function createCustomer(
   ctx: ProviderContext,
   input: CreateCustomerInput,
-): Promise<AsyncActionResult<Customer>> {
+): Promise<AsyncActionResult<string>> {
   const stripe = getOrCreateStripe(ctx.config.apiKey);
 
   try {
@@ -38,7 +38,7 @@ export async function createCustomer(
     );
 
     return {
-      data: mapStripeCustomerToCustomer(customer),
+      data: customer.id,
       status: "success",
     };
   } catch (error: unknown) {
@@ -55,7 +55,7 @@ export async function updateCustomer(
   ctx: ProviderContext,
   id: string,
   input: UpdateCustomerInput,
-): Promise<AsyncActionResult<Customer>> {
+): Promise<AsyncActionResult<string>> {
   const stripe = getOrCreateStripe(ctx.config.apiKey);
 
   try {
@@ -69,7 +69,7 @@ export async function updateCustomer(
     });
 
     return {
-      data: mapStripeCustomerToCustomer(customer),
+      data: customer.id,
       status: "success",
     };
   } catch (error: unknown) {

@@ -61,6 +61,10 @@ export const manifest: ProviderManifest = {
       supported: true,
       verification: "signature",
     },
+    catalog: {
+      supported: true,
+      strategy: "inline",
+    },
   },
   author: "Revstack",
   currencies: [

@@ -1,6 +1,6 @@
 {
   "name": "@revstackhq/cli",
-  "version": "0.0.0-dev-20260226064743",
+  "version": "0.0.0-dev-20260227093823",
   "description": "The official CLI for Revstack — Billing as Code",
   "license": "MIT",
   "type": "module",
@@ -15,6 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@revstackhq/core": "workspace:*",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "execa": "^9.6.1",

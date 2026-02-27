@@ -9,6 +9,7 @@ import {
   RevstackErrorCode,
   Subscription,
   SubscriptionStatus,
+  Addon,
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
 
@@ -117,6 +118,23 @@ export function mapStripeSubscriptionToSubscription(
       : undefined,
 
     raw: sub,
+  };
+}
+
+export function mapStripeSubscriptionItemToAddon(
+  item: Stripe.SubscriptionItem,
+): Addon {
+  return {
+    id: item.id,
+    providerId: "stripe",
+    externalId: item.id,
+    subscriptionId: item.subscription,
+    customerId: "", // Sub items don't return customer ID directly in Stripe
+    priceId: typeof item.price === "string" ? item.price : item.price.id,
+    quantity: item.quantity || 1,
+    createdAt: new Date(item.created * 1000).toISOString(),
+    metadata: item.metadata || {},
+    raw: item,
   };
 }
 
