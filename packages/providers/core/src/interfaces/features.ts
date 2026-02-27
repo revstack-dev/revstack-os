@@ -5,8 +5,12 @@ import { InstallInput, InstallResult, UninstallInput } from "@/types/lifecycle";
 import {
   CreatePaymentInput,
   CreateSubscriptionInput,
+  UpdateSubscriptionInput,
   CheckoutSessionInput,
   CheckoutSessionResult,
+  BillingPortalInput,
+  BillingPortalResult,
+  SetupPaymentMethodInput,
   Subscription,
   CreateCustomerInput,
   Customer,
@@ -34,12 +38,12 @@ export interface IPaymentFeature {
    *
    * @param ctx - The execution context containing decrypted credentials and trace IDs.
    * @param input - The payment details (amount, currency, customer, method).
-   * @returns The standardized Payment object wrapped in an AsyncActionResult.
+   * @returns The entity ID wrapped in an AsyncActionResult.
    */
   createPayment(
     ctx: ProviderContext,
     input: CreatePaymentInput,
-  ): Promise<AsyncActionResult<Payment>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Retrieves the current status and details of a specific payment.
@@ -62,7 +66,7 @@ export interface IPaymentFeature {
   refundPayment(
     ctx: ProviderContext,
     input: RefundPaymentInput,
-  ): Promise<AsyncActionResult<Payment>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Lists historical payments with pagination support.
@@ -74,6 +78,20 @@ export interface IPaymentFeature {
     ctx: ProviderContext,
     pagination: PaginationOptions,
   ): Promise<AsyncActionResult<PaginatedResult<Payment>>>;
+
+  /**
+   * Captures a previously authorized payment.
+   * Only applicable when `capture: true` is set in capabilities.
+   *
+   * @param ctx - The execution context.
+   * @param id - The Payment ID to capture.
+   * @param amount - Optional amount to capture (partial capture).
+   */
+  capturePayment?(
+    ctx: ProviderContext,
+    id: string,
+    amount?: number,
+  ): Promise<AsyncActionResult<string>>;
 }
 
 /**
@@ -91,7 +109,7 @@ export interface ISubscriptionFeature {
   createSubscription(
     ctx: ProviderContext,
     input: CreateSubscriptionInput,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Cancels an active subscription.
@@ -107,7 +125,7 @@ export interface ISubscriptionFeature {
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Temporarily halts billing and service access without deleting the subscription.
@@ -119,7 +137,7 @@ export interface ISubscriptionFeature {
   pauseSubscription(
     ctx: ProviderContext,
     id: string,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Reactivates a paused subscription, resuming the billing cycle.
@@ -130,7 +148,7 @@ export interface ISubscriptionFeature {
   resumeSubscription(
     ctx: ProviderContext,
     id: string,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
 
   /**
    * Retrieves the latest state of a subscription.
@@ -142,6 +160,27 @@ export interface ISubscriptionFeature {
     ctx: ProviderContext,
     id: string,
   ): Promise<AsyncActionResult<Subscription>>;
+
+  /**
+   * Lists subscriptions with pagination.
+   */
+  listSubscriptions?(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Subscription>>>;
+
+  /**
+   * Updates an existing subscription (e.g., upgrade/downgrade plan, change quantity).
+   *
+   * @param ctx - The execution context.
+   * @param id - The Subscription ID.
+   * @param input - Fields to update.
+   */
+  updateSubscription?(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateSubscriptionInput,
+  ): Promise<AsyncActionResult<string>>;
 }
 
 /**
@@ -163,6 +202,22 @@ export interface ICheckoutFeature {
     ctx: ProviderContext,
     input: CheckoutSessionInput,
   ): Promise<AsyncActionResult<CheckoutSessionResult>>;
+
+  /**
+   * Creates a setup-mode checkout session to save a payment method.
+   */
+  setupPaymentMethod?(
+    ctx: ProviderContext,
+    input: SetupPaymentMethodInput,
+  ): Promise<AsyncActionResult<CheckoutSessionResult>>;
+
+  /**
+   * Creates a billing portal session for customer self-service.
+   */
+  createBillingPortalSession?(
+    ctx: ProviderContext,
+    input: BillingPortalInput,
+  ): Promise<AsyncActionResult<BillingPortalResult>>;
 }
 
 /**
@@ -217,6 +272,14 @@ export interface ICustomerFeature {
     ctx: ProviderContext,
     id: string,
   ): Promise<AsyncActionResult<Customer>>;
+
+  /**
+   * Lists customers with pagination.
+   */
+  listCustomers?(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Customer>>>;
 }
 
 /**

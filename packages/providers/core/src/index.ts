@@ -5,6 +5,7 @@ export * from "@/types/capabilities";
 export * from "@/types/errors";
 export * from "@/types/lifecycle";
 export * from "@/types/categories";
+export * from "@/types/regions";
 export * from "@/manifest";
 export * from "@/base";
 export * from "@/context";

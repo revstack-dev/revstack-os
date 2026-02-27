@@ -42,6 +42,8 @@ export enum RevstackErrorCode {
   AuthenticationRequired = "authentication_required", // SCA / 3D Secure required
   LimitExceeded = "limit_exceeded", // Velocity limit or card limit
   DuplicateTransaction = "duplicate_transaction",
+  FraudDetected = "fraud_detected", // Blocked by fraud detection (Stripe Radar, etc.)
+  PaymentMethodExpired = "payment_method_expired", // Stored payment method expired (renewal failures)
 
   // --- 6. SUBSCRIPTIONS ---
   SubscriptionNotFound = "subscription_not_found",
@@ -53,6 +55,7 @@ export enum RevstackErrorCode {
   // --- 7. DISPUTES & REFUNDS ---
   RefundFailed = "refund_failed",
   RefundAlreadyProcessed = "refund_already_processed",
+  RefundWindowExpired = "refund_window_expired", // Outside the refund time window
   DisputeLost = "dispute_lost",
 
   // --- 8. PROVIDER SPECIFIC ---
@@ -114,6 +117,7 @@ export class RevstackError extends Error {
       case RevstackErrorCode.PaymentMethodNotSupported:
       case RevstackErrorCode.RefundFailed:
       case RevstackErrorCode.RefundAlreadyProcessed:
+      case RevstackErrorCode.RefundWindowExpired:
         return 400;
 
       // 401 Unauthorized
@@ -129,6 +133,7 @@ export class RevstackError extends Error {
       // 403 Forbidden
       case RevstackErrorCode.AccountSuspended:
       case RevstackErrorCode.ProviderRejected:
+      case RevstackErrorCode.FraudDetected:
         return 403;
 
       // 404 Not Found

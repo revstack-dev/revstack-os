@@ -6,9 +6,13 @@ import {
   PaginationOptions,
   PaginatedResult,
   CreateSubscriptionInput,
+  UpdateSubscriptionInput,
   Subscription,
   CheckoutSessionInput,
   CheckoutSessionResult,
+  BillingPortalInput,
+  BillingPortalResult,
+  SetupPaymentMethodInput,
   CreateCustomerInput,
   Customer,
   UpdateCustomerInput,
@@ -36,7 +40,7 @@ export interface ProviderClient {
   createPayment?(
     ctx: ProviderContext,
     input: CreatePaymentInput,
-  ): Promise<AsyncActionResult<Payment>>;
+  ): Promise<AsyncActionResult<string>>;
 
   getPayment?(
     ctx: ProviderContext,
@@ -46,17 +50,23 @@ export interface ProviderClient {
   refundPayment?(
     ctx: ProviderContext,
     input: RefundPaymentInput,
-  ): Promise<AsyncActionResult<Payment>>;
+  ): Promise<AsyncActionResult<string>>;
 
   listPayments?(
     ctx: ProviderContext,
     pagination: PaginationOptions,
   ): Promise<AsyncActionResult<PaginatedResult<Payment>>>;
 
+  capturePayment?(
+    ctx: ProviderContext,
+    id: string,
+    amount?: number,
+  ): Promise<AsyncActionResult<string>>;
+
   createSubscription?(
     ctx: ProviderContext,
     input: CreateSubscriptionInput,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
 
   getSubscription?(
     ctx: ProviderContext,
@@ -67,24 +77,45 @@ export interface ProviderClient {
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
 
   pauseSubscription?(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
 
   resumeSubscription?(
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<AsyncActionResult<Subscription>>;
+  ): Promise<AsyncActionResult<string>>;
+
+  listSubscriptions?(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Subscription>>>;
+
+  updateSubscription?(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateSubscriptionInput,
+  ): Promise<AsyncActionResult<string>>;
 
   createCheckoutSession?(
     ctx: ProviderContext,
     input: CheckoutSessionInput,
   ): Promise<AsyncActionResult<CheckoutSessionResult>>;
+
+  setupPaymentMethod?(
+    ctx: ProviderContext,
+    input: SetupPaymentMethodInput,
+  ): Promise<AsyncActionResult<CheckoutSessionResult>>;
+
+  createBillingPortalSession?(
+    ctx: ProviderContext,
+    input: BillingPortalInput,
+  ): Promise<AsyncActionResult<BillingPortalResult>>;
 
   createCustomer?(
     ctx: ProviderContext,
@@ -116,6 +147,11 @@ export interface ProviderClient {
     ctx: ProviderContext,
     id: string,
   ): Promise<AsyncActionResult<boolean>>;
+
+  listCustomers?(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Customer>>>;
 
   verifyWebhookSignature(
     ctx: ProviderContext,

@@ -1,5 +1,6 @@
 export type EventType =
   // --- PAYMENTS (Transaction Lifecycle) ---
+  | "PAYMENT_CREATED"
   | "PAYMENT_SUCCEEDED"
   | "PAYMENT_FAILED"
   | "PAYMENT_PROCESSING"
@@ -8,25 +9,35 @@ export type EventType =
   | "PAYMENT_CAPTURED" // Funds captured
 
   // --- REFUNDS & DISPUTES ---
+  | "REFUND_CREATED"
   | "REFUND_PROCESSED"
   | "REFUND_FAILED"
   | "DISPUTE_CREATED"
-  | "DISPUTE_RESOLVED" // Or "DISPUTE_WON" / "DISPUTE_LOST" if you want more granularity
-  | "DISPUTE_EXPIRED" // When the merchant fails to provide evidence in time
+  | "DISPUTE_RESOLVED"
+  | "DISPUTE_EXPIRED" // Merchant failed to provide evidence in time
+
+  // --- CHECKOUT ---
+  | "CHECKOUT_COMPLETED"
+  | "CHECKOUT_EXPIRED"
 
   // --- SUBSCRIPTIONS (Lifecycle) ---
   | "SUBSCRIPTION_CREATED"
   | "SUBSCRIPTION_UPDATED"
-  | "SUBSCRIPTION_CANCELED" // Definitive cancellation
+  | "SUBSCRIPTION_CANCELED"
   | "SUBSCRIPTION_PAUSED"
   | "SUBSCRIPTION_RESUMED"
   | "SUBSCRIPTION_TRIAL_WILL_END"
-  | "SUBSCRIPTION_EXPIRING" // For cards that are about to expire (Churn prevention).
+  | "SUBSCRIPTION_EXPIRING"
+  | "SUBSCRIPTION_PAYMENT_FAILED" // Recurring invoice payment specifically failed
 
   // --- INVOICES (Recurring Billing Specific) ---
-  // Sometimes PAYMENT_FAILED is too generic. Knowing a recurring invoice failed is vital.
   | "INVOICE_PAYMENT_SUCCEEDED"
   | "INVOICE_PAYMENT_FAILED"
+
+  // --- CUSTOMERS ---
+  | "CUSTOMER_CREATED"
+  | "CUSTOMER_UPDATED"
+  | "CUSTOMER_DELETED"
 
   // --- PAYMENT METHODS ---
   | "PAYMENT_METHOD_ATTACHED"

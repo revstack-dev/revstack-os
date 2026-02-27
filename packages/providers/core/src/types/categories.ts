@@ -1,10 +1,11 @@
 export enum ProviderCategory {
-  Card = "card", // Stripe, Adyen, dLocal
-  BankTransfer = "bank", // PSE, PIX, Wire, Spei
-  Wallet = "wallet", // PayPal, MercadoPago, ApplePay
-  Crypto = "crypto", // Coinbase, BitPay
-  Cash = "cash", // OXXO, Rapipago, PagoFácil
-  BuyNowPayLater = "bnpl", // Klarna, Affirm
+  Card = "card",
+  BankTransfer = "bank",
+  Wallet = "wallet",
+  Crypto = "crypto",
+  Cash = "cash",
+  BuyNowPayLater = "bnpl",
+  Marketplace = "marketplace",
 }
 
 export const CATEGORY_LABELS: Record<ProviderCategory, string> = {
@@ -14,4 +15,5 @@ export const CATEGORY_LABELS: Record<ProviderCategory, string> = {
   [ProviderCategory.Crypto]: "Cryptocurrency",
   [ProviderCategory.Cash]: "Cash Payment",
   [ProviderCategory.BuyNowPayLater]: "Buy Now, Pay Later",
+  [ProviderCategory.Marketplace]: "Marketplace / Digital Goods",
 };

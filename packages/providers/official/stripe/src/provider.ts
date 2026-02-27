@@ -3,11 +3,15 @@ import { manifest } from "@/manifest";
 import {
   AsyncActionResult,
   BaseProvider,
+  BillingPortalInput,
+  BillingPortalResult,
   CheckoutSessionInput,
   CheckoutSessionResult,
   CreateCustomerInput,
   CreatePaymentInput,
   CreateSubscriptionInput,
+  UpdateSubscriptionInput,
+  SetupPaymentMethodInput,
   Customer,
   InstallInput,
   InstallResult,
@@ -31,7 +35,7 @@ export class StripeProvider extends BaseProvider {
 
   async onInstall(
     ctx: ProviderContext,
-    input: InstallInput
+    input: InstallInput,
   ): Promise<AsyncActionResult<InstallResult>> {
     const client = getClient(input.config);
     const installVersion = manifest.version;
@@ -59,7 +63,7 @@ export class StripeProvider extends BaseProvider {
       try {
         const wh = await client.setupWebhooks(
           { ...ctx, config: input.config },
-          input.webhookUrl
+          input.webhookUrl,
         );
 
         const whData = wh.data as InstallResult;
@@ -107,7 +111,7 @@ export class StripeProvider extends BaseProvider {
 
   async onUninstall(
     ctx: ProviderContext,
-    input: UninstallInput
+    input: UninstallInput,
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(input.config);
 
@@ -115,7 +119,7 @@ export class StripeProvider extends BaseProvider {
       try {
         await client.removeWebhooks(
           ctx,
-          input.data.webhookEndpointId as string
+          input.data.webhookEndpointId as string,
         );
       } catch (e) {
         console.warn("Failed to remove webhook on uninstall:", e);
@@ -131,7 +135,7 @@ export class StripeProvider extends BaseProvider {
     ctx: ProviderContext,
     payload: string | Buffer,
     headers: Record<string, string | string[] | undefined>,
-    secret: string
+    secret: string,
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(ctx.config);
     return client.verifyWebhookSignature(ctx, payload, headers, secret);
@@ -139,7 +143,7 @@ export class StripeProvider extends BaseProvider {
 
   async parseWebhookEvent(
     ctx: ProviderContext,
-    payload: any
+    payload: any,
   ): Promise<AsyncActionResult<RevstackEvent | null>> {
     const client = getClient(ctx.config);
     return client.parseWebhookEvent(payload);
@@ -158,8 +162,8 @@ export class StripeProvider extends BaseProvider {
 
   async createPayment(
     ctx: ProviderContext,
-    input: CreatePaymentInput
-  ): Promise<AsyncActionResult<Payment>> {
+    input: CreatePaymentInput,
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.createPayment) {
@@ -178,7 +182,7 @@ export class StripeProvider extends BaseProvider {
 
   async getPayment(
     ctx: ProviderContext,
-    id: string
+    id: string,
   ): Promise<AsyncActionResult<Payment>> {
     const client = getClient(ctx.config);
 
@@ -198,8 +202,8 @@ export class StripeProvider extends BaseProvider {
 
   async refundPayment(
     ctx: ProviderContext,
-    input: RefundPaymentInput
-  ): Promise<AsyncActionResult<Payment>> {
+    input: RefundPaymentInput,
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.refundPayment) {
@@ -218,7 +222,7 @@ export class StripeProvider extends BaseProvider {
 
   async listPayments(
     ctx: ProviderContext,
-    pagination: PaginationOptions
+    pagination: PaginationOptions,
   ): Promise<AsyncActionResult<PaginatedResult<Payment>>> {
     const client = getClient(ctx.config);
 
@@ -242,8 +246,8 @@ export class StripeProvider extends BaseProvider {
 
   async createSubscription(
     ctx: ProviderContext,
-    input: CreateSubscriptionInput
-  ): Promise<AsyncActionResult<Subscription>> {
+    input: CreateSubscriptionInput,
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.createSubscription) {
@@ -262,7 +266,7 @@ export class StripeProvider extends BaseProvider {
 
   async getSubscription(
     ctx: ProviderContext,
-    id: string
+    id: string,
   ): Promise<AsyncActionResult<Subscription>> {
     const client = getClient(ctx.config);
 
@@ -283,8 +287,8 @@ export class StripeProvider extends BaseProvider {
   async cancelSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string
-  ): Promise<AsyncActionResult<Subscription>> {
+    reason?: string,
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.cancelSubscription) {
@@ -304,8 +308,8 @@ export class StripeProvider extends BaseProvider {
   async pauseSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string
-  ): Promise<AsyncActionResult<Subscription>> {
+    reason?: string,
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.pauseSubscription) {
@@ -325,8 +329,8 @@ export class StripeProvider extends BaseProvider {
   async resumeSubscription(
     ctx: ProviderContext,
     id: string,
-    reason?: string
-  ): Promise<AsyncActionResult<Subscription>> {
+    reason?: string,
+  ): Promise<AsyncActionResult<string>> {
     const client = getClient(ctx.config);
 
     if (!client.resumeSubscription) {
@@ -349,7 +353,7 @@ export class StripeProvider extends BaseProvider {
 
   async createCheckoutSession(
     ctx: ProviderContext,
-    input: CheckoutSessionInput
+    input: CheckoutSessionInput,
   ): Promise<AsyncActionResult<CheckoutSessionResult>> {
     const client = getClient(ctx.config);
 
@@ -373,7 +377,7 @@ export class StripeProvider extends BaseProvider {
 
   async createCustomer(
     ctx: ProviderContext,
-    input: CreateCustomerInput
+    input: CreateCustomerInput,
   ): Promise<AsyncActionResult<Customer>> {
     const client = getClient(ctx.config);
 
@@ -394,7 +398,7 @@ export class StripeProvider extends BaseProvider {
   async updateCustomer(
     ctx: ProviderContext,
     id: string,
-    input: UpdateCustomerInput
+    input: UpdateCustomerInput,
   ): Promise<AsyncActionResult<Customer>> {
     const client = getClient(ctx.config);
 
@@ -414,7 +418,7 @@ export class StripeProvider extends BaseProvider {
 
   async deleteCustomer(
     ctx: ProviderContext,
-    id: string
+    id: string,
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(ctx.config);
 
@@ -434,7 +438,7 @@ export class StripeProvider extends BaseProvider {
 
   async getCustomer(
     ctx: ProviderContext,
-    id: string
+    id: string,
   ): Promise<AsyncActionResult<Customer>> {
     const client = getClient(ctx.config);
 
@@ -458,7 +462,7 @@ export class StripeProvider extends BaseProvider {
 
   async listPaymentMethods(
     ctx: ProviderContext,
-    customerId: string
+    customerId: string,
   ): Promise<AsyncActionResult<PaymentMethod[]>> {
     const client = getClient(ctx.config);
 
@@ -478,7 +482,7 @@ export class StripeProvider extends BaseProvider {
 
   async deletePaymentMethod(
     ctx: ProviderContext,
-    id: string
+    id: string,
   ): Promise<AsyncActionResult<boolean>> {
     const client = getClient(ctx.config);
 
@@ -494,5 +498,131 @@ export class StripeProvider extends BaseProvider {
     }
 
     return client.deletePaymentMethod(ctx, id);
+  }
+
+  // ===========================================================================
+  // ADDITIONAL METHODS
+  // ===========================================================================
+
+  async capturePayment(
+    ctx: ProviderContext,
+    id: string,
+    amount?: number,
+  ): Promise<AsyncActionResult<string>> {
+    const client = getClient(ctx.config);
+
+    if (!client.capturePayment) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Capture not supported",
+        },
+      };
+    }
+
+    return client.capturePayment(ctx, id, amount);
+  }
+
+  async listSubscriptions(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Subscription>>> {
+    const client = getClient(ctx.config);
+
+    if (!client.listSubscriptions) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "List subscriptions not supported",
+        },
+      };
+    }
+
+    return client.listSubscriptions(ctx, pagination);
+  }
+
+  async updateSubscription(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateSubscriptionInput,
+  ): Promise<AsyncActionResult<string>> {
+    const client = getClient(ctx.config);
+
+    if (!client.updateSubscription) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Update subscription not supported",
+        },
+      };
+    }
+
+    return client.updateSubscription(ctx, id, input);
+  }
+
+  async listCustomers(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Customer>>> {
+    const client = getClient(ctx.config);
+
+    if (!client.listCustomers) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "List customers not supported",
+        },
+      };
+    }
+
+    return client.listCustomers(ctx, pagination);
+  }
+
+  async setupPaymentMethod(
+    ctx: ProviderContext,
+    input: SetupPaymentMethodInput,
+  ): Promise<AsyncActionResult<CheckoutSessionResult>> {
+    const client = getClient(ctx.config);
+
+    if (!client.setupPaymentMethod) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Setup payment method not supported",
+        },
+      };
+    }
+
+    return client.setupPaymentMethod(ctx, input);
+  }
+
+  async createBillingPortalSession(
+    ctx: ProviderContext,
+    input: BillingPortalInput,
+  ): Promise<AsyncActionResult<BillingPortalResult>> {
+    const client = getClient(ctx.config);
+
+    if (!client.createBillingPortalSession) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.NotImplemented,
+          message: "Billing portal not supported",
+        },
+      };
+    }
+
+    return client.createBillingPortalSession(ctx, input);
   }
 }

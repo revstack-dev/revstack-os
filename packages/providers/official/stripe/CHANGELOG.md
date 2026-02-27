@@ -1,5 +1,18 @@
 # @revstackhq/provider-stripe
 
+## 0.0.0-dev-20260227040553
+
+### Minor Changes
+
+- feat: implement capturePayment, listSubscriptions, updateSubscription, listCustomers, setupPaymentMethod, and createBillingPortalSession; split v1 client into feature modules
+
+## 0.0.0-dev-20260227040420
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260227040420
+
 ## 0.0.0-dev-20260215075706
 
 ### Minor Changes

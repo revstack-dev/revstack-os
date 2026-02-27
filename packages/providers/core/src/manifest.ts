@@ -1,5 +1,6 @@
 import { ProviderCapabilities } from "@/types/capabilities";
 import { ProviderCategory } from "@/types/categories";
+import { CurrencyCode, RegionCode } from "@/types/regions";
 
 export interface ProviderEngine {
   /**
@@ -165,8 +166,8 @@ export interface ProviderManifest {
   /** Display name (e.g., 'Stripe') */
   name: string;
 
-  /** Provider category */
-  category: ProviderCategory;
+  /** Provider categories (providers can span multiple) */
+  categories: ProviderCategory[];
 
   /**
    * semver provider version
@@ -190,15 +191,19 @@ export interface ProviderManifest {
   dashboardUrl?: string;
 
   /**
-   * supported country ISOs or ['global']
-   * filters UI by merchant location
+   * Link to the provider's setup guide for easy access to settings and metrics.
    */
-  regions?: string[];
+  setupGuideUrl?: string;
 
   /**
-   * supported currencies or ['*']
+   * supported regions (ISO 3166-1 alpha-2) or ["*"] for global
    */
-  currencies?: string[];
+  regions?: RegionCode[];
+
+  /**
+   * supported currencies (ISO 4217)
+   */
+  currencies?: CurrencyCode[];
 
   /**
    * flags if there's a dedicated sandbox mode
@@ -229,9 +234,6 @@ export interface ProviderManifest {
 
   /** Compatibility requirements */
   engine: ProviderEngine;
-
-  /** List of other plugin slugs required by this one */
-  dependencies?: string[];
 
   /** Visual assets for the marketplace UI */
   media: ProviderMedia;

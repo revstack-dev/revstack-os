@@ -1,3 +1,4 @@
+import { ERROR_CODE_MAP, ERROR_TYPE_MAP } from "@/maps/error-map";
 import {
   Address,
   Customer,
@@ -5,6 +6,7 @@ import {
   PaymentMethod,
   PaymentMethodDetails,
   PaymentStatus,
+  RevstackErrorCode,
   Subscription,
   SubscriptionStatus,
 } from "@revstackhq/providers-core";
@@ -31,7 +33,7 @@ export function mapStripeStatusToPaymentStatus(status: string): PaymentStatus {
 }
 
 export function mapStripeSubStatusToSubscriptionStatus(
-  status: string
+  status: string,
 ): SubscriptionStatus {
   const map: Record<string, SubscriptionStatus> = {
     incomplete: SubscriptionStatus.Incomplete,
@@ -47,47 +49,6 @@ export function mapStripeSubStatusToSubscriptionStatus(
 }
 
 // --- SESSION → DOMAIN MAPPERS (for redirect-based checkout flows) ---
-
-export function mapSessionToPaymentResult(
-  session: Stripe.Checkout.Session,
-  amount: number,
-  currency: string,
-  customerId?: string
-): Payment {
-  return {
-    id: session.id,
-    providerId: "stripe",
-    externalId: session.id,
-    status: PaymentStatus.Pending,
-    amount: amount,
-    amountRefunded: 0,
-    currency: currency.toUpperCase(),
-    customerId: customerId,
-    createdAt: new Date().toISOString(),
-    raw: session,
-  };
-}
-
-export function mapSessionToSubscriptionResult(
-  session: Stripe.Checkout.Session,
-  customerId: string
-): Subscription {
-  return {
-    id: "sess_" + session.id,
-    providerId: "stripe",
-    externalId: session.id,
-    status: SubscriptionStatus.Incomplete,
-    amount: session.amount_total || 0,
-    currency: session.currency?.toUpperCase() || "USD",
-    interval: "month",
-    customerId: customerId,
-    currentPeriodStart: new Date().toISOString(),
-    currentPeriodEnd: new Date().toISOString(),
-    cancelAtPeriodEnd: false,
-    startedAt: new Date().toISOString(),
-    raw: session,
-  };
-}
 
 export function mapSessionToCheckoutResult(session: Stripe.Checkout.Session) {
   return {
@@ -122,7 +83,7 @@ export function mapStripePaymentToPayment(pi: Stripe.PaymentIntent): Payment {
 }
 
 export function mapStripeSubscriptionToSubscription(
-  rawSub: Stripe.Subscription
+  rawSub: Stripe.Subscription,
 ): Subscription {
   const sub = rawSub as StripeSubscriptionWithPeriods;
   const price = sub.items.data[0]?.price;
@@ -160,7 +121,7 @@ export function mapStripeSubscriptionToSubscription(
 }
 
 export function mapStripeCustomerToCustomer(
-  cust: Stripe.Customer | Stripe.DeletedCustomer
+  cust: Stripe.Customer | Stripe.DeletedCustomer,
 ): Customer {
   if (cust.deleted) {
     return {
@@ -191,7 +152,7 @@ export function mapStripeCustomerToCustomer(
 
 export function mapStripePaymentMethodToPaymentMethod(
   pm: Stripe.PaymentMethod,
-  defaultPaymentMethodId?: string | null
+  defaultPaymentMethodId?: string | null,
 ): PaymentMethod {
   let details: PaymentMethodDetails = { type: "card" };
 
@@ -221,7 +182,7 @@ export function mapStripePaymentMethodToPaymentMethod(
 }
 
 export function mapAddressToStripe(
-  addr?: Address
+  addr?: Address,
 ): Stripe.AddressParam | undefined {
   if (!addr) return undefined;
   return {
@@ -231,5 +192,50 @@ export function mapAddressToStripe(
     state: addr.state,
     postal_code: addr.postalCode,
     country: addr.country,
+  };
+}
+
+/**
+ * maps stripe sdk errors to revstack error codes
+ */
+export function mapStripeError(error: unknown): {
+  code: RevstackErrorCode;
+  message: string;
+  providerError?: string;
+} {
+  if (error instanceof Stripe.errors.StripeError) {
+    const msg = error.message;
+    const stripeCode = error.code;
+
+    // 1. try by specific error code
+    const mappedCode = stripeCode ? ERROR_CODE_MAP[stripeCode] : undefined;
+    if (mappedCode) {
+      return {
+        code: mappedCode,
+        message: msg,
+        providerError: stripeCode,
+      };
+    }
+
+    // 2. try by error type
+    const mappedType = ERROR_TYPE_MAP[error.type];
+    if (mappedType) {
+      return {
+        code: mappedType,
+        message: msg,
+        providerError: stripeCode,
+      };
+    }
+
+    return {
+      code: RevstackErrorCode.UnknownError,
+      message: msg,
+      providerError: stripeCode,
+    };
+  }
+
+  return {
+    code: RevstackErrorCode.UnknownError,
+    message: (error as Error).message || "Unknown error",
   };
 }

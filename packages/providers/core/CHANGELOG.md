@@ -1,5 +1,11 @@
 # @revstackhq/providers-core
 
+## 0.0.0-dev-20260227040420
+
+### Minor Changes
+
+- feat: add capturePayment, listSubscriptions, updateSubscription, listCustomers, setupPaymentMethod, and createBillingPortalSession to provider interfaces; simplify mutation return types to string IDs
+
 ## 0.0.0-dev-20260215075706
 
 ### Minor Changes

@@ -6,8 +6,12 @@ import { IProvider } from "@/interfaces/features";
 import {
   CreatePaymentInput,
   CreateSubscriptionInput,
+  UpdateSubscriptionInput,
   CheckoutSessionInput,
   CheckoutSessionResult,
+  BillingPortalInput,
+  BillingPortalResult,
+  SetupPaymentMethodInput,
   CreateCustomerInput,
   Customer,
   PaginatedResult,
@@ -45,7 +49,7 @@ export abstract class BaseProvider implements IProvider {
   async refundPayment(
     ctx: ProviderContext,
     input: RefundPaymentInput,
-  ): Promise<AsyncActionResult<Payment>> {
+  ): Promise<AsyncActionResult<string>> {
     return this.notImplemented("refundPayment");
   }
 
@@ -54,6 +58,14 @@ export abstract class BaseProvider implements IProvider {
     pagination: PaginationOptions,
   ): Promise<AsyncActionResult<PaginatedResult<Payment>>> {
     return this.notImplemented("listPayments");
+  }
+
+  async capturePayment(
+    ctx: ProviderContext,
+    id: string,
+    amount?: number,
+  ): Promise<AsyncActionResult<string>> {
+    return this.notImplemented("capturePayment");
   }
 
   async getSubscription(
@@ -151,14 +163,14 @@ export abstract class BaseProvider implements IProvider {
   async createPayment(
     ctx: ProviderContext,
     input: CreatePaymentInput,
-  ): Promise<AsyncActionResult<Payment>> {
+  ): Promise<AsyncActionResult<string>> {
     return this.notImplemented("createPayment");
   }
 
   async createSubscription(
     ctx: ProviderContext,
     input: CreateSubscriptionInput,
-  ): Promise<AsyncActionResult<Subscription>> {
+  ): Promise<AsyncActionResult<string>> {
     return this.notImplemented("createSubscription");
   }
 
@@ -166,7 +178,7 @@ export abstract class BaseProvider implements IProvider {
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<AsyncActionResult<Subscription>> {
+  ): Promise<AsyncActionResult<string>> {
     return this.notImplemented("cancelSubscription");
   }
 
@@ -174,7 +186,7 @@ export abstract class BaseProvider implements IProvider {
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<AsyncActionResult<Subscription>> {
+  ): Promise<AsyncActionResult<string>> {
     return this.notImplemented("pauseSubscription");
   }
 
@@ -182,7 +194,7 @@ export abstract class BaseProvider implements IProvider {
     ctx: ProviderContext,
     id: string,
     reason?: string,
-  ): Promise<AsyncActionResult<Subscription>> {
+  ): Promise<AsyncActionResult<string>> {
     return this.notImplemented("resumeSubscription");
   }
 
@@ -191,5 +203,41 @@ export abstract class BaseProvider implements IProvider {
     input: CheckoutSessionInput,
   ): Promise<AsyncActionResult<CheckoutSessionResult>> {
     return this.notImplemented("createCheckoutSession");
+  }
+
+  async setupPaymentMethod(
+    ctx: ProviderContext,
+    input: SetupPaymentMethodInput,
+  ): Promise<AsyncActionResult<CheckoutSessionResult>> {
+    return this.notImplemented("setupPaymentMethod");
+  }
+
+  async createBillingPortalSession(
+    ctx: ProviderContext,
+    input: BillingPortalInput,
+  ): Promise<AsyncActionResult<BillingPortalResult>> {
+    return this.notImplemented("createBillingPortalSession");
+  }
+
+  async listSubscriptions(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Subscription>>> {
+    return this.notImplemented("listSubscriptions");
+  }
+
+  async updateSubscription(
+    ctx: ProviderContext,
+    id: string,
+    input: UpdateSubscriptionInput,
+  ): Promise<AsyncActionResult<string>> {
+    return this.notImplemented("updateSubscription");
+  }
+
+  async listCustomers(
+    ctx: ProviderContext,
+    pagination: PaginationOptions,
+  ): Promise<AsyncActionResult<PaginatedResult<Customer>>> {
+    return this.notImplemented("listCustomers");
   }
 }
