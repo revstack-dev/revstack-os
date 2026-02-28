@@ -1,5 +1,12 @@
 # @revstackhq/cli
 
+## 0.0.0-dev-20260228064655
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/core@0.0.0-dev-20260228064655
+
 ## 0.0.0-dev-20260228064045
 
 ### Patch Changes
