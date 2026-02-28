@@ -47,6 +47,7 @@ import type {
   PlanFeatureValue,
   AddonFeatureValue,
   AddonDefInput,
+  PriceDef,
   DiscountDef,
   RevstackConfig,
 } from "@/types.js";
@@ -83,10 +84,19 @@ export function defineFeature<T extends FeatureDefInput>(config: T): T {
 export function definePlan<
   F extends Record<string, FeatureDefInput> = Record<string, FeatureDefInput>,
 >(
-  config: Omit<PlanDefInput, "features"> & {
+  config: Omit<PlanDefInput, "features" | "prices"> & {
     features: F extends Record<string, FeatureDefInput>
       ? Partial<Record<keyof F, PlanFeatureValue>>
       : Record<string, PlanFeatureValue>;
+    prices?: Array<
+      Omit<PriceDef, "overage_configuration"> & {
+        overage_configuration?: F extends Record<string, FeatureDefInput>
+          ? Partial<
+              Record<keyof F, { overage_amount: number; overage_unit: number }>
+            >
+          : Record<string, { overage_amount: number; overage_unit: number }>;
+      }
+    >;
   },
 ): PlanDefInput {
   return config as PlanDefInput;
@@ -103,10 +113,19 @@ export function definePlan<
 export function defineAddon<
   F extends Record<string, FeatureDefInput> = Record<string, FeatureDefInput>,
 >(
-  config: Omit<AddonDefInput, "features"> & {
+  config: Omit<AddonDefInput, "features" | "prices"> & {
     features: F extends Record<string, FeatureDefInput>
       ? Partial<Record<keyof F, AddonFeatureValue>>
       : Record<string, AddonFeatureValue>;
+    prices?: Array<
+      Omit<PriceDef, "overage_configuration"> & {
+        overage_configuration?: F extends Record<string, FeatureDefInput>
+          ? Partial<
+              Record<keyof F, { overage_amount: number; overage_unit: number }>
+            >
+          : Record<string, { overage_amount: number; overage_unit: number }>;
+      }
+    >;
   },
 ): AddonDefInput {
   return config as AddonDefInput;

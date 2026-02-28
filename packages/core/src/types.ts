@@ -157,6 +157,22 @@ export interface PriceDef {
   trial_period_days?: number;
   /** Whether this price is currently active. */
   is_active?: boolean;
+  /**
+   * Overage configuration for metered features.
+   * Maps feature slugs to their overage pricing terms.
+   * Note: The Entitlement Engine handles the "if" (reason: overage_allowed)
+   * when a plan allows overage (is_hard_limit: false). This overage_configuration
+   * is what the Cloud API and payment providers use to calculate the "how much".
+   */
+  overage_configuration?: Record<
+    string,
+    {
+      /** Cost in smallest currency unit (cents) for the overage. */
+      overage_amount: number;
+      /** The quantity of units the overage_amount applies to. */
+      overage_unit: number;
+    }
+  >;
 }
 
 // ==========================================

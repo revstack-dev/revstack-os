@@ -23,6 +23,7 @@ export type PaymentOption = {
 };
 
 export type CheckoutLineItem = {
+  id: string;
   /** item name */
   name: string;
   /** item description */
@@ -71,6 +72,38 @@ export type MerchantBranding = {
   showPoweredBy: boolean;
 };
 
+export type CheckoutBasePlan = {
+  id: string;
+  /** plan name */
+  name: string;
+  /** plan description */
+  description?: string;
+  /** unit amount in smallest currency unit (e.g. cents) */
+  unitAmount: number;
+  /** ISO currency code */
+  currency: string;
+  /** recurring interval */
+  interval?: "day" | "week" | "month" | "year";
+};
+
+export type CheckoutAvailableAddon = {
+  id: string;
+  /** addon slug */
+  slug: string;
+  /** addon name */
+  name: string;
+  /** addon description */
+  description?: string;
+  /** unit amount in smallest currency unit (e.g. cents) */
+  unitAmount: number;
+  /** ISO currency code */
+  currency: string;
+  /** recurring interval */
+  interval?: "day" | "week" | "month" | "year";
+  /** billing type */
+  billingType: "one-time" | "recurring";
+};
+
 export type CheckoutSession = {
   /** session ID */
   id: string;
@@ -82,8 +115,13 @@ export type CheckoutSession = {
   /** merchant branding */
   merchant: MerchantBranding;
 
-  /** items to display */
-  lineItems: CheckoutLineItem[];
+  /** base plan details */
+  basePlan: CheckoutBasePlan;
+  /** addons that can be added to the cart */
+  availableAddons: CheckoutAvailableAddon[];
+
+  /** items to display (base plan + currently selected addons) */
+  items: CheckoutLineItem[];
   /** computed totals */
   totals: CheckoutTotals;
 

@@ -1,5 +1,11 @@
 # @revstackhq/core
 
+## 0.0.0-dev-20260227103607
+
+### Minor Changes
+
+- feat(cli, core): implement overage pricing configuration in PriceDef and business templates
+
 ## 0.0.0-dev-20260227093823
 
 ### Patch Changes

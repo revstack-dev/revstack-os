@@ -23,10 +23,43 @@ const MOCK_SESSION: CheckoutSession = {
     showPoweredBy: true,
   },
 
-  lineItems: [
+  basePlan: {
+    id: "plan_pro",
+    name: "Pro",
+    description: "Perfect for professionals who need advanced features.",
+    unitAmount: 2900,
+    currency: "USD",
+    interval: "year",
+  },
+
+  availableAddons: [
     {
+      id: "addon_priority_support",
+      slug: "priority_support",
+      name: "Priority Support",
+      description: "24/7 dedicated support",
+      unitAmount: 900,
+      currency: "USD",
+      billingType: "recurring",
+      interval: "month",
+    },
+    {
+      id: "addon_extra_seats",
+      slug: "extra_seats",
+      name: "5 Extra Seats",
+      description: "Add 5 more team members to your workspace",
+      unitAmount: 1500,
+      currency: "USD",
+      billingType: "recurring",
+      interval: "month",
+    },
+  ],
+
+  items: [
+    {
+      id: "plan_pro",
       name: "Pro",
-      description: "Perfect for professionals who need advanced features",
+      description: "Perfect for professionals who need advanced features.",
       quantity: 1,
       unitAmount: 2900,
       currency: "USD",
@@ -34,32 +67,12 @@ const MOCK_SESSION: CheckoutSession = {
       billingType: "recurring",
       interval: "month",
     },
-    {
-      name: "Priority Support",
-      description: "24/7 dedicated support",
-      quantity: 1,
-      unitAmount: 999,
-      currency: "USD",
-      type: "addon",
-      billingType: "recurring",
-      interval: "month",
-    },
-    {
-      name: "White-label Output",
-      description: "Remove all Revstack branding",
-      quantity: 1,
-      unitAmount: 4900,
-      currency: "USD",
-      type: "addon",
-      billingType: "recurring",
-      interval: "year",
-    },
   ],
 
   totals: {
-    subtotal: 3899,
-    tax: 390,
-    total: 4289,
+    subtotal: 3800,
+    tax: 380, // 10% tax
+    total: 4180,
     currency: "USD",
   },
 
@@ -108,6 +121,9 @@ export async function getCheckoutSession(
   token: string,
 ): Promise<{ data: CheckoutSession | null; error?: string }> {
   // --- DEV: return mock data ---
+  // Note: In production, the Revstack Cloud API will dynamically populate
+  // 'availableAddons' by cross-referencing the requested Plan's 'available_addons'
+  // array with the 'addons' table in the database.
   if (process.env.NODE_ENV === "development" || token.startsWith("test_")) {
     return { data: MOCK_SESSION };
   }

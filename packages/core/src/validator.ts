@@ -16,7 +16,12 @@
  * ```
  */
 
-import type { RevstackConfig, PlanFeatureValue } from "@/types.js";
+import type {
+  RevstackConfig,
+  PlanFeatureValue,
+  PriceDef,
+  FeatureDefInput,
+} from "@/types.js";
 
 // ─── Error Class ─────────────────────────────────────────────
 
@@ -69,28 +74,66 @@ function validateFeatureReferences(
 // ─── Pricing Validation ──────────────────────────────────────
 
 /**
- * Validates that prices within a plan are non-negative.
+ * Validates that prices are non-negative and overage_configuration is valid.
  */
-function validatePlanPricing(
-  planSlug: string,
-  prices: Array<{ amount: number }> | undefined,
-  features: Record<string, PlanFeatureValue>,
+function validatePricing(
+  productType: "Plan" | "Addon",
+  slug: string,
+  prices: PriceDef[] | undefined,
+  configFeatures: Record<string, FeatureDefInput>,
   errors: string[],
 ): void {
   if (prices) {
     for (const price of prices) {
       if (price.amount < 0) {
         errors.push(
-          `Plan "${planSlug}" has a negative price amount (${price.amount}).`,
+          `${productType} "${slug}" has a negative price amount (${price.amount}).`,
         );
+      }
+
+      if (price.overage_configuration) {
+        for (const [featureSlug, overage] of Object.entries(
+          price.overage_configuration,
+        )) {
+          const feature = configFeatures[featureSlug];
+          if (!feature) {
+            errors.push(
+              `${productType} "${slug}" overage_configuration references undefined feature "${featureSlug}".`,
+            );
+          } else if (feature.type !== "metered") {
+            errors.push(
+              `${productType} "${slug}" configures overage for feature "${featureSlug}", which is not of type 'metered'.`,
+            );
+          }
+          if (overage.overage_amount < 0) {
+            errors.push(
+              `${productType} "${slug}" overage_amount for feature "${featureSlug}" must be >= 0.`,
+            );
+          }
+          if (overage.overage_unit <= 0) {
+            errors.push(
+              `${productType} "${slug}" overage_unit for feature "${featureSlug}" must be > 0.`,
+            );
+          }
+        }
       }
     }
   }
+}
 
+/**
+ * Validates that feature limits are non-negative.
+ */
+function validateFeatureLimits(
+  productType: "Plan" | "Addon",
+  slug: string,
+  features: Record<string, { value_limit?: number }>,
+  errors: string[],
+): void {
   for (const [featureSlug, value] of Object.entries(features)) {
     if (value.value_limit !== undefined && value.value_limit < 0) {
       errors.push(
-        `Plan "${planSlug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`,
+        `${productType} "${slug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`,
       );
     }
   }
@@ -171,7 +214,8 @@ export function validateConfig(config: RevstackConfig): void {
       knownFeatureSlugs,
       errors,
     );
-    validatePlanPricing(slug, plan.prices, plan.features, errors);
+    validatePricing("Plan", slug, plan.prices, config.features, errors);
+    validateFeatureLimits("Plan", slug, plan.features, errors);
   }
 
   // ── Add-ons ────────────────────────────────────────────────
@@ -185,23 +229,8 @@ export function validateConfig(config: RevstackConfig): void {
         errors,
       );
 
-      if (addon.prices) {
-        for (const price of addon.prices) {
-          if (price.amount < 0) {
-            errors.push(
-              `Addon "${slug}" has a negative price amount (${price.amount}).`,
-            );
-          }
-        }
-      }
-
-      for (const [featureSlug, value] of Object.entries(addon.features)) {
-        if (value.value_limit !== undefined && value.value_limit < 0) {
-          errors.push(
-            `Addon "${slug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`,
-          );
-        }
-      }
+      validatePricing("Addon", slug, addon.prices, config.features, errors);
+      validateFeatureLimits("Addon", slug, addon.features, errors);
     }
   }
 

@@ -9,6 +9,11 @@ describe("validateConfig", () => {
       type: "static" as const,
       unit_type: "count" as const,
     },
+    api_requests: {
+      name: "API Requests",
+      type: "metered" as const,
+      unit_type: "requests" as const,
+    },
   };
 
   const validPlan = {
@@ -257,6 +262,99 @@ describe("validateConfig", () => {
     } catch (e: any) {
       expect(e.errors).toContain(
         'Addon "extra" → feature "seats" has a negative value_limit (-5).',
+      );
+    }
+  });
+
+  it("throws if overage_configuration references non-metered feature", () => {
+    const config: RevstackConfig = {
+      features: validFeatures,
+      plans: {
+        default: {
+          ...validPlan,
+          prices: [
+            {
+              amount: 1000,
+              currency: "USD",
+              billing_interval: "monthly",
+              overage_configuration: {
+                seats: { overage_amount: 10, overage_unit: 1 },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
+    try {
+      validateConfig(config);
+    } catch (e: any) {
+      expect(e.errors).toContain(
+        'Plan "default" configures overage for feature "seats", which is not of type \'metered\'.',
+      );
+    }
+  });
+
+  it("throws if overage_configuration references undefined feature", () => {
+    const config: RevstackConfig = {
+      features: validFeatures,
+      plans: {
+        default: {
+          ...validPlan,
+          prices: [
+            {
+              amount: 1000,
+              currency: "USD",
+              billing_interval: "monthly",
+              overage_configuration: {
+                unknown: { overage_amount: 10, overage_unit: 1 },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
+    try {
+      validateConfig(config);
+    } catch (e: any) {
+      expect(e.errors).toContain(
+        'Plan "default" overage_configuration references undefined feature "unknown".',
+      );
+    }
+  });
+
+  it("throws if overage_amount is negative or overage_unit is zero", () => {
+    const config: RevstackConfig = {
+      features: validFeatures,
+      plans: {
+        default: {
+          ...validPlan,
+          prices: [
+            {
+              amount: 1000,
+              currency: "USD",
+              billing_interval: "monthly",
+              overage_configuration: {
+                api_requests: { overage_amount: -10, overage_unit: 0 },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
+    try {
+      validateConfig(config);
+    } catch (e: any) {
+      expect(e.errors).toContain(
+        'Plan "default" overage_amount for feature "api_requests" must be >= 0.',
+      );
+      expect(e.errors).toContain(
+        'Plan "default" overage_unit for feature "api_requests" must be > 0.',
       );
     }
   });

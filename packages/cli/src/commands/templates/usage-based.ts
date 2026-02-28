@@ -43,7 +43,15 @@ export const plans = {
     type: "paid",
     available_addons: ["premium_support"],
     prices: [
-      { amount: 0, currency: "USD", billing_interval: "monthly" } // Base platform fee
+      {
+        amount: 0,
+        currency: "USD",
+        billing_interval: "monthly",
+        overage_configuration: {
+          api_requests: { overage_amount: 15, overage_unit: 1000 }, // $0.15 per 1k extra requests
+          storage_gb: { overage_amount: 50, overage_unit: 1 }, // $0.50 per extra GB
+        }
+      } // Base platform fee
     ],
     features: {
       api_requests: { value_limit: 10000, is_hard_limit: false, reset_period: "monthly" }, // 10k free requests per month

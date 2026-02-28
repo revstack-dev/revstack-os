@@ -187,6 +187,9 @@ export class EntitlementEngine {
     }
 
     // Limit reached — check if overage is allowed
+    // Note: The Engine only determines "if" overage is permitted.
+    // The "how much it costs" is configured in `PriceDef.overage_configuration`
+    // and handled by the Cloud API / billing providers.
     if (!hardLimit) {
       return {
         allowed: true,
