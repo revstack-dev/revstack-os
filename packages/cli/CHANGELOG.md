@@ -1,5 +1,11 @@
 # @revstackhq/cli
 
+## 0.0.0-dev-20260228064045
+
+### Patch Changes
+
+- fix pull command
+
 ## 0.0.0-dev-20260228063247
 
 ### Patch Changes

@@ -154,7 +154,7 @@ function generateCouponsSource(config: RevstackConfig): string {
     if (coupon.expires_at) props.expires_at = coupon.expires_at;
 
     return props;
-  });
+  }) as unknown as import("@revstackhq/core").DiscountDef[];
 
   return `import type { DiscountDef } from "@revstackhq/core";
 
@@ -256,7 +256,9 @@ export const pullCommand = new Command("pull")
       const rawData = await res.json();
 
       try {
-        remoteConfig = RevstackConfigSchema.parse(rawData);
+        remoteConfig = RevstackConfigSchema.parse(
+          rawData,
+        ) as unknown as RevstackConfig;
       } catch (validationError: any) {
         spinner.fail("Remote config failed schema validation");
         console.error(chalk.red(`\n  ${validationError.message}\n`));
