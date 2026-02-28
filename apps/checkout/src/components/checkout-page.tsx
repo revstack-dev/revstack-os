@@ -4,107 +4,37 @@ import type { CheckoutSession } from "@/types";
 import { LineItem } from "@/components/line-item";
 import { OrderSummary } from "@/components/order-summary";
 import { PoweredBy } from "@/components/powered-by";
-import { useEffect, useState } from "react";
-import {
-  ShieldCheck,
-  ArrowRight,
-  Clock,
-  CreditCard,
-  Wallet,
-  Bitcoin,
-  Package,
-  Landmark,
-} from "lucide-react";
-
+import { ShieldCheck, Clock } from "lucide-react";
 import { CardDescription, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-function getIconForCategory(category: string) {
-  switch (category) {
-    case "card":
-      return <CreditCard className="w-5 h-5 text-current" />;
-    case "wallet":
-    case "paypal":
-      return <Wallet className="w-5 h-5 text-current" />;
-    case "bank_transfer":
-      return <Landmark className="w-5 h-5 text-current" />;
-    case "crypto":
-      return <Bitcoin className="w-5 h-5 text-current" />;
-    default:
-      return <CreditCard className="w-5 h-5 text-current" />;
-  }
-}
+import { useCheckoutTimer } from "@/hooks/use-checkout-timer";
+import { useCheckoutAddons } from "@/hooks/use-checkout-addons";
+import { CheckoutAddons } from "@/components/checkout-addons";
+import { CheckoutPaymentMethods } from "@/components/checkout-payment-methods";
+import { useCheckoutCoupon } from "@/hooks/use-checkout-coupon";
+import { Loader2, Ticket } from "lucide-react";
+import React from "react";
 
 export function CheckoutPage({ session }: { session: CheckoutSession }) {
-  const [timeLeft, setTimeLeft] = useState("");
-  const [isExpired, setIsExpired] = useState(false);
-
-  useEffect(() => {
-    const update = () => {
-      const now = Date.now();
-      const expires = new Date(session.expiresAt).getTime();
-      const diff = expires - now;
-
-      if (diff <= 0) {
-        setIsExpired(true);
-        setTimeLeft("Expired");
-        return;
-      }
-
-      const mins = Math.floor(diff / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(`${mins}:${secs.toString().padStart(2, "0")}`);
-    };
-
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [session.expiresAt]);
-
-  // State for user-selected addons (pre-populate with what was in session lineItems by name)
-  const [selectedAddonSlugs, setSelectedAddonSlugs] = useState<Set<string>>(
-    () => {
-      const initial = new Set<string>();
-      const initialNames = session.items.map((li) => li.name);
-      session.availableAddons?.forEach((addon) => {
-        if (initialNames.includes(addon.name)) {
-          initial.add(addon.slug);
-        }
-      });
-      return initial;
-    },
-  );
-
-  const toggleAddon = (slug: string) => {
-    setSelectedAddonSlugs((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
-    });
-  };
+  const { timeLeft, isExpired } = useCheckoutTimer(session.expiresAt);
+  const { selectedAddonSlugs, toggleAddon, selectedAddonsArray } =
+    useCheckoutAddons(session);
+  const {
+    couponCode,
+    setCouponCode,
+    appliedCoupon,
+    isApplying,
+    error,
+    applyCoupon,
+    removeCoupon,
+  } = useCheckoutCoupon(session);
 
   // Compute dynamic line items
-  const mainProducts = [
-    {
-      id: session.basePlan.id,
-      name: session.basePlan.name,
-      description: session.basePlan.description,
-      quantity: 1,
-      unitAmount: session.basePlan.unitAmount,
-      currency: session.basePlan.currency,
-      type: "product" as const,
-      billingType: "recurring" as const,
-      interval: session.basePlan.interval as any,
-    },
-  ];
-
-  const selectedAddonsArray = (session.availableAddons || []).filter((a) =>
-    selectedAddonSlugs.has(a.slug),
-  );
+  const mainProducts = session.items.filter((item) => item.type === "product");
 
   const activeAddonLineItems = selectedAddonsArray.map((a) => ({
+    id: a.id,
+    slug: a.slug,
     name: a.name,
     description: a.description,
     quantity: 1,
@@ -112,23 +42,30 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
     currency: a.currency,
     type: "addon" as const,
     billingType: a.billingType,
-    interval: a.interval as any,
+    billing_interval: a.billing_interval,
   }));
 
-  // Compute dynamic totals (assuming 10% tax for the demo)
+  // Compute dynamic totals
   const subtotal = [...mainProducts, ...activeAddonLineItems].reduce(
     (sum, item) => sum + item.unitAmount * item.quantity,
     0,
   );
 
-  const taxRate = 0.1;
-  const tax = Math.round(subtotal * taxRate);
-  const total = subtotal + tax;
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "percent") {
+      discountAmount = Math.round((subtotal * appliedCoupon.value) / 100);
+    } else if (appliedCoupon.type === "amount") {
+      discountAmount = Math.min(appliedCoupon.value, subtotal);
+    }
+  }
+
+  const finalTotal = subtotal - discountAmount;
 
   const currentTotals = {
     subtotal,
-    tax,
-    total,
+    discount: discountAmount,
+    total: finalTotal,
     currency: session.totals.currency,
   };
 
@@ -140,16 +77,14 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
     "--brand": session.merchant.primaryColor,
   } as React.CSSProperties;
 
+  const currentItemsForSubmit = [...mainProducts, ...activeAddonLineItems];
+
   return (
     <div className={isDark ? "dark" : ""}>
       <div
         className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-zinc-50 dark:bg-[#050505] transition-colors font-sans antialiased selection:bg-black/10 dark:selection:bg-white/20"
         style={brandStyle}
       >
-        {/*
-          If there were any absolute background decorative divs they would go here
-          with className="pointer-events-none -z-10" to prevent blocking text selection.
-        */}
         <div className="relative z-10 w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 animate-in fade-in zoom-in-95 duration-700 ease-out border border-zinc-200 dark:border-white/8 rounded-3xl bg-white dark:bg-[#0A0A0A] shadow-xl dark:shadow-none overflow-hidden mx-auto">
           {/* Left Column: Product Information */}
           <div className="flex flex-col pt-8 lg:pt-10 px-6 lg:px-10 bg-white dark:bg-transparent">
@@ -196,87 +131,70 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
               )}
 
               {/* Addons Section */}
-              {session.availableAddons &&
-                session.availableAddons.length > 0 && (
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-(--brand)" />
-                      <h3 className="text-xs font-semibold text-(--brand) uppercase tracking-widest">
-                        Customize Your Plan
-                      </h3>
-                    </div>
-                    <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-800 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full">
-                      {session.availableAddons.map((addon) => {
-                        const isSelected = selectedAddonSlugs.has(addon.slug);
-                        return (
-                          <div
-                            key={addon.slug}
-                            onClick={() => toggleAddon(addon.slug)}
-                            className={`cursor-pointer transition-all duration-200 border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                              isSelected
-                                ? "bg-(--brand)/5 border-(--brand)"
-                                : "bg-zinc-50 dark:bg-white/2 border-zinc-200 dark:border-white/5 hover:border-zinc-300 dark:hover:border-white/10"
-                            }`}
-                          >
-                            <div className="flex flex-col gap-0.5 max-w-[70%]">
-                              <span className="text-sm font-medium text-zinc-900 dark:text-white">
-                                {addon.name}
-                              </span>
-                              {addon.description && (
-                                <span className="text-xs text-zinc-500 dark:text-zinc-400 leading-snug">
-                                  {addon.description}
-                                </span>
-                              )}
-                            </div>
+              <CheckoutAddons
+                availableAddons={session.availableAddons}
+                selectedAddonSlugs={selectedAddonSlugs}
+                onToggleAddon={toggleAddon}
+              />
 
-                            <div className="flex items-center gap-3 self-start sm:self-auto min-w-max">
-                              <div className="flex flex-col items-end">
-                                <span className="text-sm font-medium text-zinc-900 dark:text-white">
-                                  +
-                                  {(addon.unitAmount / 100).toLocaleString(
-                                    "en-US",
-                                    {
-                                      style: "currency",
-                                      currency: addon.currency,
-                                    },
-                                  )}
-                                  {addon.interval && (
-                                    <span className="text-xs text-zinc-500 font-normal ml-0.5">
-                                      /{addon.interval.substring(0, 2)}
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                              <div
-                                className={`w-5 h-5 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
-                                  isSelected
-                                    ? "bg-(--brand) border-(--brand)"
-                                    : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600"
-                                }`}
-                              >
-                                {isSelected && (
-                                  <svg
-                                    className="w-3 h-3 text-white"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={3}
-                                      d="M5 13l4 4L19 7"
-                                    />
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
+              {/* Coupon Section */}
+              <div className="pt-4 border-t border-zinc-200 dark:border-white/5">
+                {!appliedCoupon ? (
+                  <form onSubmit={applyCoupon} className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-zinc-900 dark:text-zinc-300 ml-1">
+                      Coupon Code
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) =>
+                            setCouponCode(e.target.value.toUpperCase())
+                          }
+                          placeholder="e.g. WELCOME20"
+                          className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-(--brand)/20 focus:border-(--brand) transition-all text-zinc-900 dark:text-white placeholder:text-zinc-400"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isApplying || !couponCode.trim()}
+                        className="px-4 py-2 text-sm font-medium bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50 transition-colors flex items-center justify-center min-w-20"
+                      >
+                        {isApplying ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          "Apply"
+                        )}
+                      </button>
+                    </div>
+                    {error && (
+                      <p className="text-xs text-red-500 ml-1 mt-1">{error}</p>
+                    )}
+                  </form>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-zinc-900 dark:text-zinc-300 ml-1">
+                      Applied Coupon
+                    </label>
+                    <div className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <Ticket className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                          {appliedCoupon.code}
+                        </span>
+                      </div>
+                      <button
+                        onClick={removeCoupon}
+                        className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 )}
+              </div>
 
               <div className="pt-2">
                 <OrderSummary totals={currentTotals} />
@@ -323,39 +241,17 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
                       {session.customerEmail}
                     </span>
                   </div>
-                  {/* No copy button, sleek and clean */}
                 </div>
               )}
 
               {/* Payment Options List */}
-              <div className="flex flex-col gap-3">
-                {isExpired ? (
-                  <Button
-                    disabled
-                    className="w-full bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 rounded-xl py-3 px-4 flex items-center justify-center text-zinc-500"
-                  >
-                    Session Expired
-                  </Button>
-                ) : (
-                  session.paymentOptions.map((opt) => (
-                    <Link
-                      key={opt.id}
-                      href={opt.action.url}
-                      className="group w-full bg-white dark:bg-white/5 hover:bg-zinc-50 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/10 transition-all duration-200 rounded-xl py-4 px-5 flex items-center justify-between shadow-sm dark:shadow-none hover:border-(--brand) dark:hover:border-(--brand) hover:shadow-md"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center text-zinc-400 dark:text-zinc-500 group-hover:text-(--brand) transition-colors">
-                          {getIconForCategory(opt.category)}
-                        </div>
-                        <span className="font-medium text-zinc-900 dark:text-white text-sm">
-                          {opt.label}
-                        </span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-zinc-400 dark:text-zinc-600 group-hover:text-(--brand) transition-colors" />
-                    </Link>
-                  ))
-                )}
-              </div>
+              <CheckoutPaymentMethods
+                session={session}
+                options={session.paymentOptions}
+                isExpired={isExpired}
+                selectedItems={currentItemsForSubmit}
+                appliedCoupon={appliedCoupon}
+              />
             </div>
 
             <div className="mt-auto flex flex-col gap-4 p-6 lg:px-10 border-t border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-transparent">
@@ -364,7 +260,7 @@ export function CheckoutPage({ session }: { session: CheckoutSession }) {
                 <span>Payments are encrypted and safely processed</span>
               </div>
 
-              {session.cancelUrl && !isExpired && (
+              {session.cancelUrl && (
                 <Link
                   href={session.cancelUrl}
                   className="text-center text-xs inline mx-auto font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors"

@@ -1,12 +1,5 @@
 import type { CheckoutTotals } from "@/types";
-
-function formatPrice(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency.toUpperCase(),
-    minimumFractionDigits: 2,
-  }).format(amount / 100);
-}
+import { formatPrice } from "@/utils";
 
 export function OrderSummary({ totals }: { totals: CheckoutTotals }) {
   return (
@@ -17,15 +10,6 @@ export function OrderSummary({ totals }: { totals: CheckoutTotals }) {
           {formatPrice(totals.subtotal, totals.currency)}
         </span>
       </div>
-
-      {totals.tax !== undefined && totals.tax > 0 && (
-        <div className="flex justify-between text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Tax</span>
-          <span className="text-zinc-900 dark:text-white font-medium">
-            {formatPrice(totals.tax, totals.currency)}
-          </span>
-        </div>
-      )}
 
       {totals.discount !== undefined && totals.discount > 0 && (
         <div className="flex justify-between text-sm">
@@ -40,9 +24,16 @@ export function OrderSummary({ totals }: { totals: CheckoutTotals }) {
         <span className="text-sm font-semibold text-zinc-900 dark:text-white">
           Total
         </span>
-        <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-          {formatPrice(totals.total, totals.currency)}
-        </span>
+        <div className="flex flex-col items-end gap-0.5">
+          {totals.discount !== undefined && totals.discount > 0 && (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 line-through">
+              {formatPrice(totals.subtotal, totals.currency)}
+            </span>
+          )}
+          <span className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
+            {formatPrice(totals.total ?? totals.subtotal, totals.currency)}
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -1,24 +1,15 @@
 import type { CheckoutLineItem } from "@/types";
-
-function formatPrice(amount: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency.toUpperCase(),
-    minimumFractionDigits: 2,
-  }).format(amount / 100);
-}
+import { formatPrice } from "@/utils";
 
 function getBillingFrequencyText(item: CheckoutLineItem) {
-  if (item.billingType === "one-time") return "One-time purchase";
-  switch (item.interval) {
-    case "day":
-      return "Daily Subscription";
-    case "week":
-      return "Weekly Subscription";
-    case "month":
+  if (item.billingType === "one_time") return null;
+  switch (item.billing_interval) {
+    case "monthly":
       return "Monthly Subscription";
-    case "year":
+    case "yearly":
       return "Yearly Subscription";
+    case "quarterly":
+      return "Quarterly Subscription";
     default:
       return "Subscription";
   }
@@ -65,10 +56,16 @@ export function LineItem({
             className={`font-medium text-zinc-900 dark:text-white shrink-0 ${compact ? "text-xs" : "text-sm"}`}
           >
             {formatPrice(item.unitAmount * item.quantity, item.currency)}
-            {item.billingType === "recurring" && item.interval && (
+            {item.billingType === "recurring" && item.billing_interval && (
               <span className="font-normal text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                 {" / "}
-                {item.interval}
+                {item.billing_interval === "monthly"
+                  ? "mo"
+                  : item.billing_interval === "yearly"
+                    ? "yr"
+                    : item.billing_interval === "quarterly"
+                      ? "qt"
+                      : item.billing_interval}
               </span>
             )}
           </p>

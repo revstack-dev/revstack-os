@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
   --background: oklch(16.376% 0.00002 271.152);
   --foreground: oklch(0.98 0 0);
 
@@ -56,6 +57,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(16.376% 0.00002 271.152);
   --foreground: oklch(0.98 0 0);
   --card: oklch(0.14 0 0);
@@ -163,9 +165,9 @@ button {
 }
 
 *::-webkit-scrollbar-thumb {
-  opacity: 0.2;
   border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-  background-color: var(--primary);
+  background-color: var(--border);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
 }

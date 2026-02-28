@@ -1,6 +1,4 @@
-// =============================================================================
-// CHECKOUT SESSION TYPES
-// =============================================================================
+import { type BillingInterval } from "@revstackhq/core";
 
 export type CheckoutSessionStatus = "open" | "complete" | "expired";
 
@@ -24,6 +22,7 @@ export type PaymentOption = {
 
 export type CheckoutLineItem = {
   id: string;
+  slug: string;
   /** item name */
   name: string;
   /** item description */
@@ -39,20 +38,18 @@ export type CheckoutLineItem = {
   /** item categorization */
   type: "product" | "addon";
   /** billing type */
-  billingType: "one-time" | "recurring";
+  billingType: "one_time" | "recurring";
   /** recurring interval */
-  interval?: "day" | "week" | "month" | "year";
+  billing_interval?: BillingInterval;
 };
 
 export type CheckoutTotals = {
-  /** subtotal before tax/discount */
+  /** subtotal before discount */
   subtotal: number;
-  /** tax amount */
-  tax?: number;
   /** discount amount */
   discount?: number;
   /** final total */
-  total: number;
+  total?: number;
   /** ISO currency code */
   currency: string;
 };
@@ -72,20 +69,6 @@ export type MerchantBranding = {
   showPoweredBy: boolean;
 };
 
-export type CheckoutBasePlan = {
-  id: string;
-  /** plan name */
-  name: string;
-  /** plan description */
-  description?: string;
-  /** unit amount in smallest currency unit (e.g. cents) */
-  unitAmount: number;
-  /** ISO currency code */
-  currency: string;
-  /** recurring interval */
-  interval?: "day" | "week" | "month" | "year";
-};
-
 export type CheckoutAvailableAddon = {
   id: string;
   /** addon slug */
@@ -99,9 +82,9 @@ export type CheckoutAvailableAddon = {
   /** ISO currency code */
   currency: string;
   /** recurring interval */
-  interval?: "day" | "week" | "month" | "year";
+  billing_interval?: Exclude<BillingInterval, "one_time">;
   /** billing type */
-  billingType: "one-time" | "recurring";
+  billingType: "one_time" | "recurring";
 };
 
 export type CheckoutSession = {
@@ -115,8 +98,6 @@ export type CheckoutSession = {
   /** merchant branding */
   merchant: MerchantBranding;
 
-  /** base plan details */
-  basePlan: CheckoutBasePlan;
   /** addons that can be added to the cart */
   availableAddons: CheckoutAvailableAddon[];
 
@@ -124,6 +105,13 @@ export type CheckoutSession = {
   items: CheckoutLineItem[];
   /** computed totals */
   totals: CheckoutTotals;
+
+  /** applied coupon details */
+  appliedCoupon?: {
+    code: string;
+    type: "percent" | "amount";
+    value: number;
+  };
 
   /** pre-filled customer email */
   customerEmail?: string;
@@ -138,4 +126,12 @@ export type CheckoutSession = {
 
   /** custom metadata */
   metadata?: Record<string, unknown>;
+};
+
+export type CheckoutSubmitPayload = {
+  sessionId: string;
+  providerSlug: string;
+  customerEmail?: string;
+  items: CheckoutLineItem[];
+  couponCode?: string;
 };

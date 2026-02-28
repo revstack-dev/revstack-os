@@ -1,19 +1,9 @@
-"use server";
-
 import type { CheckoutSession } from "@/types";
 
-const REVSTACK_API_URL =
-  process.env.REVSTACK_API_URL || "https://app.revstack.dev";
-
-const MOCK_SESSION: CheckoutSession = {
+export const MOCK_SESSION: CheckoutSession = {
   id: "cs_test_abc123",
   status: "open",
   expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-  appliedCoupon: {
-    code: "SAVE10",
-    type: "percent",
-    value: 10,
-  },
 
   merchant: {
     name: "Revstack",
@@ -21,7 +11,7 @@ const MOCK_SESSION: CheckoutSession = {
     primaryColor: "oklch(0.7 0.22 35)",
     accentColor: "#ffffff",
     theme: "dark",
-    showPoweredBy: true,
+    showPoweredBy: false,
   },
 
   availableAddons: [
@@ -31,24 +21,6 @@ const MOCK_SESSION: CheckoutSession = {
       name: "Priority Support",
       description: "24/7 dedicated support",
       unitAmount: 900,
-      currency: "USD",
-      billingType: "one_time",
-    },
-    {
-      id: "addon_extra_seats",
-      slug: "extra_seats",
-      name: "5 Extra Seats",
-      description: "Add 5 more team members to your workspace",
-      unitAmount: 1500,
-      currency: "USD",
-      billingType: "one_time",
-    },
-    {
-      id: "addon_extra_seats",
-      slug: "extra_seats",
-      name: "5 Extra Seats",
-      description: "Add 5 more team members to your workspace",
-      unitAmount: 1500,
       currency: "USD",
       billingType: "one_time",
     },
@@ -73,14 +45,14 @@ const MOCK_SESSION: CheckoutSession = {
       unitAmount: 2900,
       currency: "USD",
       type: "product",
-      billingType: "one_time",
+      billingType: "recurring",
+      billing_interval: "monthly",
     },
   ],
 
   totals: {
     subtotal: 3800,
     currency: "USD",
-    discount: 500,
   },
 
   customerEmail: "john@example.com",
@@ -119,39 +91,3 @@ const MOCK_SESSION: CheckoutSession = {
   successUrl: "https://acme.com/success",
   cancelUrl: "https://acme.com/cancel",
 };
-
-export async function getCheckoutSession(
-  token: string,
-): Promise<{ data: CheckoutSession | null; error?: string }> {
-  if (process.env.NODE_ENV === "development" || token.startsWith("test_")) {
-    return { data: MOCK_SESSION };
-  }
-
-  try {
-    const res = await fetch(
-      `${REVSTACK_API_URL}/v1/checkout/sessions/${token}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      },
-    );
-
-    if (!res.ok) {
-      if (res.status === 404) {
-        return { data: null, error: "Session not found" };
-      }
-      if (res.status === 410) {
-        return { data: null, error: "Session has expired" };
-      }
-      return { data: null, error: "Failed to load checkout session" };
-    }
-
-    const session: CheckoutSession = await res.json();
-    return { data: session };
-  } catch {
-    return { data: null, error: "Unable to connect to Revstack" };
-  }
-}
