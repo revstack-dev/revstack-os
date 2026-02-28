@@ -1,5 +1,16 @@
 # @revstackhq/cli
 
+## 0.0.0-dev-20260228060138
+
+### Minor Changes
+
+- Refactored core data models with robust Zod validation, introduced two-tier CLI pushing, and added 3 new advanced CLI starting templates.
+
+### Patch Changes
+
+- Updated dependencies
+  - @revstackhq/core@0.0.0-dev-20260228060138
+
 ## 0.0.0-dev-20260227103607
 
 ### Minor Changes
