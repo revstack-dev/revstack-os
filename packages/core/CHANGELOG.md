@@ -1,5 +1,11 @@
 # @revstackhq/core
 
+## 0.0.0-dev-20260228062053
+
+### Patch Changes
+
+- Refined Discount schema to strictly require `duration_in_months` for repeating coupons and prohibit it for once/forever durations natively.
+
 ## 0.0.0-dev-20260228060138
 
 ### Minor Changes

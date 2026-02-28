@@ -3,6 +3,7 @@ import {
   AddonDefInputSchema,
   PriceDefSchema,
   PlanDefInputSchema,
+  DiscountDefSchema,
 } from "../../src/schema";
 
 describe("Zod Schemas", () => {
@@ -126,6 +127,54 @@ describe("Zod Schemas", () => {
 
       const result = PlanDefInputSchema.safeParse(plan);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe("DiscountDefSchema", () => {
+    it("validates a percent repeating discount correctly", () => {
+      const discount = {
+        code: "SUMMER",
+        type: "percent" as const,
+        value: 20,
+        duration: "repeating" as const,
+        duration_in_months: 3,
+      };
+      const result = DiscountDefSchema.safeParse(discount);
+      expect(result.success).toBe(true);
+    });
+
+    it("requires duration_in_months for repeating discounts", () => {
+      const discount = {
+        code: "SUMMER",
+        type: "percent" as const,
+        value: 20,
+        duration: "repeating" as const,
+      };
+      const result = DiscountDefSchema.safeParse(discount);
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects duration_in_months for once or forever discounts", () => {
+      const discount = {
+        code: "WELCOME",
+        type: "amount" as const,
+        value: 1000,
+        duration: "once" as const,
+        duration_in_months: 1, // Invalid!
+      };
+      const result = DiscountDefSchema.safeParse(discount);
+      expect(result.success).toBe(false);
+    });
+
+    it("requires value between 0 and 100 for percent discounts", () => {
+      const discount = {
+        code: "HUGE",
+        type: "percent" as const,
+        value: 150, // Invalid!
+        duration: "forever" as const,
+      };
+      const result = DiscountDefSchema.safeParse(discount);
+      expect(result.success).toBe(false);
     });
   });
 });

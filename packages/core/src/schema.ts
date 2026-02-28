@@ -141,27 +141,34 @@ export const DiscountDurationSchema = z.enum(["once", "forever", "repeating"]);
 const BaseDiscountDef = z.object({
   code: z.string(),
   name: z.string().optional(),
-  duration: DiscountDurationSchema,
-  duration_in_months: z.number().min(1).optional(),
   applies_to_plans: z.array(z.string()).optional(),
   max_redemptions: z.number().min(1).optional(),
   expires_at: z.string().datetime().optional(),
 });
 
-const PercentDiscountSchema = BaseDiscountDef.extend({
-  type: z.literal("percent"),
-  value: z.number().min(0).max(100),
-});
-
-const AmountDiscountSchema = BaseDiscountDef.extend({
-  type: z.literal("amount"),
-  value: z.number().min(0),
-});
-
-export const DiscountDefSchema = z.discriminatedUnion("type", [
-  PercentDiscountSchema,
-  AmountDiscountSchema,
+const DiscountValueSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("percent"), value: z.number().min(0).max(100) }),
+  z.object({ type: z.literal("amount"), value: z.number().min(0) }),
 ]);
+
+const DiscountDurationLogic = z.discriminatedUnion("duration", [
+  z.object({
+    duration: z.literal("once"),
+    duration_in_months: z.undefined().optional(),
+  }),
+  z.object({
+    duration: z.literal("forever"),
+    duration_in_months: z.undefined().optional(),
+  }),
+  z.object({
+    duration: z.literal("repeating"),
+    duration_in_months: z.number().min(1),
+  }),
+]);
+
+export const DiscountDefSchema = BaseDiscountDef.and(DiscountValueSchema).and(
+  DiscountDurationLogic,
+);
 
 // ==========================================
 // 8. Config Root

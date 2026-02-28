@@ -251,19 +251,11 @@ export type AddonDefInput = Omit<AddonDef, "slug">;
 export type DiscountType = "percent" | "amount";
 export type DiscountDuration = "once" | "forever" | "repeating";
 
-export interface DiscountDef {
+export interface DiscountBase {
   /** The code the user enters at checkout (e.g., 'BLACKFRIDAY_24'). */
   code: string;
   /** Friendly name for invoices. */
   name?: string;
-  /** 'percent' (0–100) or 'amount' (smallest currency unit). */
-  type: DiscountType;
-  /** The discount value. */
-  value: number;
-  /** How long the discount lasts. */
-  duration: DiscountDuration;
-  /** If duration is 'repeating', how many months. */
-  duration_in_months?: number;
   /** Restrict to specific plan slugs. Empty = all. */
   applies_to_plans?: string[];
   /** Maximum number of redemptions globally. */
@@ -271,6 +263,22 @@ export interface DiscountDef {
   /** Expiration date (ISO 8601). */
   expires_at?: string;
 }
+
+export type DiscountValueDef =
+  | { /** 'percent' (0–100). */ type: "percent"; value: number }
+  | { /** 'amount' (smallest currency unit). */ type: "amount"; value: number };
+
+export type DiscountDurationDef =
+  | {
+      /** How long the discount lasts. */ duration: "once" | "forever";
+      duration_in_months?: never;
+    }
+  | {
+      /** How long the discount lasts. */ duration: "repeating";
+      /** How many months. */ duration_in_months: number;
+    };
+
+export type DiscountDef = DiscountBase & DiscountValueDef & DiscountDurationDef;
 
 // ==========================================
 // 8. Engine Output
