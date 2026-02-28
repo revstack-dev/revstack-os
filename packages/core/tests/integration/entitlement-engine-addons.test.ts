@@ -19,7 +19,9 @@ describe("EntitlementEngine — Add-ons", () => {
       slug: "extra_seats",
       name: "Extra Seats",
       type: "recurring",
-      prices: [{ amount: 500, currency: "USD", billing_interval: "monthly" }],
+      amount: 500,
+      currency: "USD",
+      billing_interval: "monthly",
       features: { seats: { value_limit: 3, type: "increment" } },
     };
 
@@ -37,7 +39,9 @@ describe("EntitlementEngine — Add-ons", () => {
       slug: "enterprise_seats",
       name: "Enterprise Seats",
       type: "recurring",
-      prices: [{ amount: 50000, currency: "USD", billing_interval: "monthly" }],
+      amount: 50000,
+      currency: "USD",
+      billing_interval: "monthly",
       features: { seats: { value_limit: 100, type: "set" } },
     };
 
@@ -55,7 +59,9 @@ describe("EntitlementEngine — Add-ons", () => {
       slug: "sso_module",
       name: "SSO Module",
       type: "recurring",
-      prices: [{ amount: 1000, currency: "USD", billing_interval: "monthly" }],
+      amount: 1000,
+      currency: "USD",
+      billing_interval: "monthly",
       features: { sso: { has_access: true } },
     };
 
@@ -72,14 +78,18 @@ describe("EntitlementEngine — Add-ons", () => {
       slug: "addon_inc",
       name: "Inc",
       type: "recurring",
-      prices: [],
+      amount: 0,
+      currency: "USD",
+      billing_interval: "monthly",
       features: { seats: { value_limit: 2, type: "increment" } },
     };
     const addonSet: AddonDef = {
       slug: "addon_set",
       name: "Set",
       type: "recurring",
-      prices: [],
+      amount: 0,
+      currency: "USD",
+      billing_interval: "monthly",
       features: { seats: { value_limit: 20, type: "set" } },
     };
 
@@ -98,7 +108,9 @@ describe("EntitlementEngine — Add-ons", () => {
       slug: "soft_seats",
       name: "Soft Seats",
       type: "recurring",
-      prices: [],
+      amount: 0,
+      currency: "USD",
+      billing_interval: "monthly",
       features: {
         seats: { value_limit: 0, type: "increment", is_hard_limit: false },
       },
@@ -118,7 +130,9 @@ describe("EntitlementEngine — Add-ons", () => {
       slug: "extra_seats",
       name: "Extra Seats",
       type: "recurring",
-      prices: [],
+      amount: 0,
+      currency: "USD",
+      billing_interval: "monthly",
       features: { seats: { value_limit: 100, type: "increment" } },
     };
 

@@ -1,10 +1,3 @@
-/**
- * @file utils/config-loader.ts
- * @description Loads and evaluates the user's `revstack.config.ts` at runtime
- * using jiti (just-in-time TypeScript compilation). Returns a sanitized,
- * JSON-safe representation of the config for network transmission.
- */
-
 import { createJiti } from "jiti";
 import path from "node:path";
 import chalk from "chalk";
@@ -43,6 +36,12 @@ export async function loadLocalConfig(
           chalk.dim("    Run ") +
           chalk.bold("revstack init") +
           chalk.dim(" to create one.\n"),
+      );
+    } else if (err.name === "SyntaxError" || error instanceof SyntaxError) {
+      console.error(
+        chalk.red("\n  ✖ Syntax Error in revstack.config.ts\n") +
+          chalk.dim("    " + (err.message ?? String(error))) +
+          "\n",
       );
     } else {
       console.error(

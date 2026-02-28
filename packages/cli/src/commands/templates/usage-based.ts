@@ -16,12 +16,24 @@ export const addons = {
     name: "Premium Support",
     description: "24/7 dedicated support.",
     type: "recurring",
-    prices: [
-      { amount: 20000, currency: "USD", billing_interval: "monthly" }
-    ],
+    amount: 20000,
+    currency: "USD",
+    billing_interval: "monthly",
     features: {}
   })
 };
+`,
+  coupons: `import type { DiscountDef } from "@revstackhq/core";
+
+export const coupons: DiscountDef[] = [
+  {
+    code: "STARTUP_ACCELERATOR",
+    name: "Startup Program Credits",
+    type: "amount",
+    value: 500000, // $5,000 credit
+    duration: "forever",
+  }
+];
 `,
   plans: `import { definePlan } from "@revstackhq/core";
 import { features } from "./features";
@@ -41,12 +53,12 @@ export const plans = {
     is_default: false,
     is_public: true,
     type: "paid",
-    available_addons: ["premium_support"],
     prices: [
       {
         amount: 0,
         currency: "USD",
         billing_interval: "monthly",
+        available_addons: ["premium_support"],
         overage_configuration: {
           api_requests: { overage_amount: 15, overage_unit: 1000 }, // $0.15 per 1k extra requests
           storage_gb: { overage_amount: 50, overage_unit: 1 }, // $0.50 per extra GB
@@ -64,11 +76,13 @@ export const plans = {
 import { features } from "./features";
 import { addons } from "./addons";
 import { plans } from "./plans";
+import { coupons } from "./coupons";
 
 export default defineConfig({
   features,
   addons,
   plans,
+  coupons,
 });
 `,
   root: `import config from "./revstack";

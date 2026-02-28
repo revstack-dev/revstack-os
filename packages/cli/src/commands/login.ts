@@ -1,9 +1,3 @@
-/**
- * @file commands/login.ts
- * @description Interactive authentication flow. Prompts the user for their
- * Revstack Secret Key and stores it globally for subsequent CLI commands.
- */
-
 import { Command } from "commander";
 import chalk from "chalk";
 import prompts from "prompts";

@@ -1,27 +1,4 @@
-/**
- * @file validator.ts
- * @description Runtime validation for Revstack billing configurations.
- *
- * Validates the business logic invariants of a `RevstackConfig` object
- * before it is synced to the backend. Catches misconfigurations early
- * that TypeScript's type system cannot enforce (e.g., referencing
- * undefined features, negative prices, duplicate slugs).
- *
- * @example
- * ```typescript
- * import { validateConfig, defineConfig } from "@revstackhq/core";
- *
- * const config = defineConfig({ features: {}, plans: {} });
- * validateConfig(config); // throws RevstackValidationError if invalid
- * ```
- */
-
-import type {
-  RevstackConfig,
-  PlanFeatureValue,
-  PriceDef,
-  FeatureDefInput,
-} from "@/types.js";
+import type { RevstackConfig, PlanFeatureValue, PriceDef } from "@/types";
 
 // ─── Error Class ─────────────────────────────────────────────
 
@@ -74,70 +51,70 @@ function validateFeatureReferences(
 // ─── Pricing Validation ──────────────────────────────────────
 
 /**
- * Validates that prices are non-negative and overage_configuration is valid.
+ * Ensures addons referenced by a price match the correct billing interval and actually exist.
  */
-function validatePricing(
-  productType: "Plan" | "Addon",
-  slug: string,
-  prices: PriceDef[] | undefined,
-  configFeatures: Record<string, FeatureDefInput>,
+function validatePriceAddonIntervals(
+  planSlug: string,
+  priceIndex: number,
+  price: PriceDef,
+  configAddons: Record<string, import("@/types.js").AddonDefInput> | undefined,
   errors: string[],
 ): void {
-  if (prices) {
-    for (const price of prices) {
-      if (price.amount < 0) {
-        errors.push(
-          `${productType} "${slug}" has a negative price amount (${price.amount}).`,
-        );
-      }
+  if (!price.available_addons) return;
 
-      if (price.overage_configuration) {
-        for (const [featureSlug, overage] of Object.entries(
-          price.overage_configuration,
-        )) {
-          const feature = configFeatures[featureSlug];
-          if (!feature) {
-            errors.push(
-              `${productType} "${slug}" overage_configuration references undefined feature "${featureSlug}".`,
-            );
-          } else if (feature.type !== "metered") {
-            errors.push(
-              `${productType} "${slug}" configures overage for feature "${featureSlug}", which is not of type 'metered'.`,
-            );
-          }
-          if (overage.overage_amount < 0) {
-            errors.push(
-              `${productType} "${slug}" overage_amount for feature "${featureSlug}" must be >= 0.`,
-            );
-          }
-          if (overage.overage_unit <= 0) {
-            errors.push(
-              `${productType} "${slug}" overage_unit for feature "${featureSlug}" must be > 0.`,
-            );
-          }
-        }
-      }
+  for (const addonSlug of price.available_addons) {
+    const addon = configAddons?.[addonSlug];
+    if (!addon) {
+      errors.push(
+        `Plan "${planSlug}" price references undefined addon "${addonSlug}".`,
+      );
+      continue;
+    }
+
+    if (
+      addon.type === "recurring" &&
+      addon.billing_interval !== price.billing_interval
+    ) {
+      errors.push(
+        `Interval Mismatch: Plan '${planSlug}' price is '${price.billing_interval}', but Addon '${addonSlug}' is '${addon.billing_interval}'. Recurring addons must match the price's billing interval.`,
+      );
     }
   }
 }
 
 /**
- * Validates that feature limits are non-negative.
+ * Validates overage logic and intervals for plan pricing.
  */
-function validateFeatureLimits(
-  productType: "Plan" | "Addon",
+function validatePlanPricing(
   slug: string,
-  features: Record<string, { value_limit?: number }>,
+  prices: PriceDef[] | undefined,
+  config: RevstackConfig,
   errors: string[],
 ): void {
-  for (const [featureSlug, value] of Object.entries(features)) {
-    if (value.value_limit !== undefined && value.value_limit < 0) {
-      errors.push(
-        `${productType} "${slug}" → feature "${featureSlug}" has a negative value_limit (${value.value_limit}).`,
-      );
-    }
+  const configFeatures = config.features;
+  if (prices) {
+    prices.forEach((price, index) => {
+      if (price.overage_configuration) {
+        for (const featureSlug of Object.keys(price.overage_configuration)) {
+          const feature = configFeatures[featureSlug];
+          if (!feature) {
+            errors.push(
+              `Plan "${slug}" overage_configuration references undefined feature "${featureSlug}".`,
+            );
+          } else if (feature.type !== "metered") {
+            errors.push(
+              `Plan "${slug}" configures overage for feature "${featureSlug}", which is not of type 'metered'.`,
+            );
+          }
+        }
+      }
+
+      validatePriceAddonIntervals(slug, index, price, config.addons, errors);
+    });
   }
 }
+
+// ─── Default Plan Validation ─────────────────────────────────
 
 // ─── Default Plan Validation ─────────────────────────────────
 
@@ -161,29 +138,6 @@ function validateDefaultPlan(config: RevstackConfig, errors: string[]): void {
   }
 }
 
-// ─── Discount Validation ─────────────────────────────────────
-
-/**
- * Validates discount-specific business rules.
- */
-function validateDiscounts(config: RevstackConfig, errors: string[]): void {
-  if (!config.coupons) return;
-
-  for (const coupon of config.coupons) {
-    if (coupon.type === "percent" && (coupon.value < 0 || coupon.value > 100)) {
-      errors.push(
-        `Discount "${coupon.code}" has an invalid percentage value (${coupon.value}). Must be 0–100.`,
-      );
-    }
-
-    if (coupon.type === "amount" && coupon.value < 0) {
-      errors.push(
-        `Discount "${coupon.code}" has a negative amount value (${coupon.value}).`,
-      );
-    }
-  }
-}
-
 // ─── Main Validator ──────────────────────────────────────────
 
 /**
@@ -192,8 +146,6 @@ function validateDiscounts(config: RevstackConfig, errors: string[]): void {
  * Checks the following invariants:
  * 1. **Default plan** — Exactly one plan has `is_default: true`.
  * 2. **Feature references** — Plans/addons only reference features defined in `config.features`.
- * 3. **Non-negative pricing** — All price amounts and limits are ≥ 0.
- * 4. **Discount bounds** — Percentage discounts have values in [0, 100].
  *
  * @param config - The billing configuration to validate.
  * @throws {RevstackValidationError} If any violations are found.
@@ -214,8 +166,7 @@ export function validateConfig(config: RevstackConfig): void {
       knownFeatureSlugs,
       errors,
     );
-    validatePricing("Plan", slug, plan.prices, config.features, errors);
-    validateFeatureLimits("Plan", slug, plan.features, errors);
+    validatePlanPricing(slug, plan.prices, config, errors);
   }
 
   // ── Add-ons ────────────────────────────────────────────────
@@ -228,14 +179,8 @@ export function validateConfig(config: RevstackConfig): void {
         knownFeatureSlugs,
         errors,
       );
-
-      validatePricing("Addon", slug, addon.prices, config.features, errors);
-      validateFeatureLimits("Addon", slug, addon.features, errors);
     }
   }
-
-  // ── Discounts ──────────────────────────────────────────────
-  validateDiscounts(config, errors);
 
   // ── Throw if any violations were collected ─────────────────
   if (errors.length > 0) {

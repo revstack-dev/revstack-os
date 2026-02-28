@@ -1,10 +1,3 @@
-/**
- * @file types.ts
- * @description Core type definitions for Revstack's Billing Engine.
- * These types map directly to the PostgreSQL database schema and
- * serve as the contract for "Billing as Code".
- */
-
 // ==========================================
 // 1. Enums & Primitives
 // ==========================================
@@ -32,7 +25,7 @@ export type UnitType =
 /**
  * How often a feature's usage counter resets.
  */
-export type ResetPeriod = "monthly" | "yearly" | "never";
+export type ResetPeriod = "daily" | "weekly" | "monthly" | "yearly" | "never";
 
 /**
  * Billing interval for a plan's price.
@@ -43,7 +36,7 @@ export type BillingInterval = "monthly" | "quarterly" | "yearly" | "one_time";
  * The commercial classification of a plan.
  * - 'free': No payment required (e.g., Default Guest Plan, Starter).
  * - 'paid': Requires active payment method.
- * - 'custom': Enterprise / negotiated pricing.
+ * - 'custom': Enterprise / B2B negotiated contracts where there is no strict price array and the checkout should redirect to a "Contact Sales" flow.
  */
 export type PlanType = "paid" | "free" | "custom";
 
@@ -173,6 +166,8 @@ export interface PriceDef {
       overage_unit: number;
     }
   >;
+  /** Slugs of addons that can be attached to this specific price/interval. */
+  available_addons?: string[];
 }
 
 // ==========================================
@@ -204,8 +199,6 @@ export interface PlanDef {
   prices?: PriceDef[];
   /** Feature entitlements included in this plan. */
   features: Record<string, PlanFeatureValue>;
-  /** Slugs of addons that can be attached to this plan. */
-  available_addons?: string[];
 }
 
 /**
@@ -216,7 +209,6 @@ export interface PlanDef {
 export type PlanDefInput = Omit<PlanDef, "slug" | "status" | "features"> & {
   status?: PlanStatus;
   features: Record<string, PlanFeatureValue>;
-  available_addons?: string[];
 };
 
 // ==========================================
@@ -236,8 +228,12 @@ export interface AddonDef {
   description?: string;
   /** Billing type. */
   type: "recurring" | "one_time";
-  /** Add-on pricing configurations (1:N). */
-  prices?: PriceDef[];
+  /** Price amount in the smallest currency unit (e.g., cents). */
+  amount: number;
+  /** ISO 4217 currency code. */
+  currency: string;
+  /** Billing interval (Required if type === 'recurring'). */
+  billing_interval?: Exclude<BillingInterval, "one_time">;
   /** Feature entitlements this add-on modifies or grants. */
   features: Record<string, AddonFeatureValue>;
 }

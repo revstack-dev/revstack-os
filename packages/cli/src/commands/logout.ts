@@ -1,8 +1,3 @@
-/**
- * @file commands/logout.ts
- * @description Clears stored Revstack credentials.
- */
-
 import { Command } from "commander";
 import chalk from "chalk";
 import { clearApiKey, getApiKey } from "@/utils/auth.js";

@@ -17,9 +17,9 @@ export const addons = {
     name: "10 Extra Users",
     description: "Add 10 more active users to your workspace.",
     type: "recurring",
-    prices: [
-      { amount: 5000, currency: "USD", billing_interval: "monthly" }
-    ],
+    amount: 5000,
+    currency: "USD",
+    billing_interval: "monthly",
     features: {
       active_users: { value_limit: 10, type: "increment", is_hard_limit: true },
     }
@@ -28,12 +28,25 @@ export const addons = {
     name: "Dedicated Support",
     description: "Enterprise SLA with 1-hour response time.",
     type: "recurring",
-    prices: [
-      { amount: 49900, currency: "USD", billing_interval: "monthly" }
-    ],
+    amount: 49900,
+    currency: "USD",
+    billing_interval: "monthly",
     features: {}
   })
 };
+`,
+  coupons: `import type { DiscountDef } from "@revstackhq/core";
+
+export const coupons: DiscountDef[] = [
+  {
+    code: "ENTERPRISE_B2B",
+    name: "Annual Contract Rebate",
+    type: "amount",
+    value: 50000,
+    duration: "once",
+    applies_to_plans: ["enterprise"]
+  }
+];
 `,
   plans: `import { definePlan } from "@revstackhq/core";
 import { features } from "./features";
@@ -53,9 +66,8 @@ export const plans = {
     is_default: false,
     is_public: true,
     type: "paid",
-    available_addons: ["extra_users"],
     prices: [
-      { amount: 9900, currency: "USD", billing_interval: "monthly" }
+      { amount: 9900, currency: "USD", billing_interval: "monthly", available_addons: ["extra_users"] }
     ],
     features: {
       active_users: { value_limit: 10, is_hard_limit: true },
@@ -69,9 +81,8 @@ export const plans = {
     is_default: false,
     is_public: true,
     type: "paid",
-    available_addons: ["extra_users", "dedicated_support"],
     prices: [
-      { amount: 49900, currency: "USD", billing_interval: "monthly" }
+      { amount: 49900, currency: "USD", billing_interval: "monthly", available_addons: ["extra_users", "dedicated_support"] }
     ],
     features: {
       active_users: { value_limit: 100, is_hard_limit: false },
@@ -85,11 +96,13 @@ export const plans = {
 import { features } from "./features";
 import { addons } from "./addons";
 import { plans } from "./plans";
+import { coupons } from "./coupons";
 
 export default defineConfig({
   features,
   addons,
   plans,
+  coupons,
 });
 `,
   root: `import config from "./revstack";

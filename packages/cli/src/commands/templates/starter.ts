@@ -2,6 +2,7 @@ export interface TemplateConfig {
   features: string;
   addons: string;
   plans: string;
+  coupons: string;
   index: string;
   root: string;
 }
@@ -22,9 +23,9 @@ export const addons = {
     name: "5 Extra Seats",
     description: "Add 5 more team members to your workspace.",
     type: "recurring",
-    prices: [
-      { amount: 1500, currency: "USD", billing_interval: "monthly" }
-    ],
+    amount: 1500,
+    currency: "USD",
+    billing_interval: "monthly",
     features: {
       seats: { value_limit: 5, type: "increment", is_hard_limit: false },
     }
@@ -33,9 +34,9 @@ export const addons = {
     name: "Priority Support",
     description: "24/7 Slack channel support.",
     type: "recurring",
-    prices: [
-      { amount: 9900, currency: "USD", billing_interval: "monthly" }
-    ],
+    amount: 9900,
+    currency: "USD",
+    billing_interval: "monthly",
     features: {
       priority_support: { has_access: true },
     }
@@ -61,9 +62,8 @@ export const plans = {
     is_default: false,
     is_public: true,
     type: "paid",
-    available_addons: ["extra_seats", "vip_support"],
     prices: [
-      { amount: 2900, currency: "USD", billing_interval: "monthly", trial_period_days: 14 }
+      { amount: 2900, currency: "USD", billing_interval: "monthly", trial_period_days: 14, available_addons: ["extra_seats", "vip_support"] }
     ],
     features: {
       seats: { value_limit: 5, is_hard_limit: true },
@@ -71,15 +71,21 @@ export const plans = {
   }),
 };
 `,
+  coupons: `import type { DiscountDef } from "@revstackhq/core";
+
+export const coupons: DiscountDef[] = [];
+`,
   index: `import { defineConfig } from "@revstackhq/core";
 import { features } from "./features";
 import { addons } from "./addons";
 import { plans } from "./plans";
+import { coupons } from "./coupons";
 
 export default defineConfig({
   features,
   addons,
   plans,
+  coupons,
 });
 `,
   root: `import config from "./revstack";

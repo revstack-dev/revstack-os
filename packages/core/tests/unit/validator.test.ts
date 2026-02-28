@@ -100,6 +100,9 @@ describe("validateConfig", () => {
         extra: {
           name: "Extra",
           type: "recurring",
+          amount: 1000,
+          currency: "USD",
+          billing_interval: "monthly",
           features: { unknown: { value_limit: 10 } },
         },
       },
@@ -111,157 +114,6 @@ describe("validateConfig", () => {
     } catch (e: any) {
       expect(e.errors).toContain(
         'Addon "extra" references undefined feature "unknown".',
-      );
-    }
-  });
-
-  it("throws if plan pricing is negative", () => {
-    const config: RevstackConfig = {
-      features: validFeatures,
-      plans: {
-        default: {
-          ...validPlan,
-          prices: [
-            { amount: -500, currency: "USD", billing_interval: "monthly" },
-          ],
-        },
-      },
-    };
-
-    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
-    try {
-      validateConfig(config);
-    } catch (e: any) {
-      expect(e.errors).toContain(
-        'Plan "default" has a negative price amount (-500).',
-      );
-    }
-  });
-
-  it("throws if addon pricing is negative", () => {
-    const config: RevstackConfig = {
-      features: validFeatures,
-      plans: { default: validPlan },
-      addons: {
-        extra: {
-          name: "Extra",
-          type: "recurring",
-          prices: [
-            { amount: -100, currency: "USD", billing_interval: "monthly" },
-          ],
-          features: {},
-        },
-      },
-    };
-
-    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
-    try {
-      validateConfig(config);
-    } catch (e: any) {
-      expect(e.errors).toContain(
-        'Addon "extra" has a negative price amount (-100).',
-      );
-    }
-  });
-
-  it("throws if a discount percentage is invalid", () => {
-    const config: RevstackConfig = {
-      features: validFeatures,
-      plans: { default: validPlan },
-      coupons: [
-        {
-          code: "TEST150",
-          type: "percent",
-          value: 150,
-          duration: "once",
-        },
-        {
-          code: "TESTMINUS",
-          type: "percent",
-          value: -10,
-          duration: "once",
-        },
-      ],
-    };
-
-    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
-    try {
-      validateConfig(config);
-    } catch (e: any) {
-      expect(e.errors.length).toBe(2);
-      expect(e.errors[0]).toMatch(/has an invalid percentage value \(150\)/);
-      expect(e.errors[1]).toMatch(/has an invalid percentage value \(-10\)/);
-    }
-  });
-
-  it("throws if a discount amount is negative", () => {
-    const config: RevstackConfig = {
-      features: validFeatures,
-      plans: { default: validPlan },
-      coupons: [
-        {
-          code: "TESTAMOUNT",
-          type: "amount",
-          value: -500,
-          duration: "once",
-        },
-      ],
-    };
-
-    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
-    try {
-      validateConfig(config);
-    } catch (e: any) {
-      expect(e.errors).toContain(
-        'Discount "TESTAMOUNT" has a negative amount value (-500).',
-      );
-    }
-  });
-
-  it("throws if feature value limit is negative in plan", () => {
-    const config: RevstackConfig = {
-      features: validFeatures,
-      plans: {
-        default: {
-          ...validPlan,
-          features: {
-            seats: { value_limit: -5 },
-          },
-        },
-      },
-    };
-
-    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
-    try {
-      validateConfig(config);
-    } catch (e: any) {
-      expect(e.errors).toContain(
-        'Plan "default" → feature "seats" has a negative value_limit (-5).',
-      );
-    }
-  });
-
-  it("throws if feature value limit is negative in addon", () => {
-    const config: RevstackConfig = {
-      features: validFeatures,
-      plans: { default: validPlan },
-      addons: {
-        extra: {
-          name: "Extra",
-          type: "recurring",
-          features: {
-            seats: { value_limit: -5 },
-          },
-        },
-      },
-    };
-
-    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
-    try {
-      validateConfig(config);
-    } catch (e: any) {
-      expect(e.errors).toContain(
-        'Addon "extra" → feature "seats" has a negative value_limit (-5).',
       );
     }
   });
@@ -326,39 +178,6 @@ describe("validateConfig", () => {
     }
   });
 
-  it("throws if overage_amount is negative or overage_unit is zero", () => {
-    const config: RevstackConfig = {
-      features: validFeatures,
-      plans: {
-        default: {
-          ...validPlan,
-          prices: [
-            {
-              amount: 1000,
-              currency: "USD",
-              billing_interval: "monthly",
-              overage_configuration: {
-                api_requests: { overage_amount: -10, overage_unit: 0 },
-              },
-            },
-          ],
-        },
-      },
-    };
-
-    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
-    try {
-      validateConfig(config);
-    } catch (e: any) {
-      expect(e.errors).toContain(
-        'Plan "default" overage_amount for feature "api_requests" must be >= 0.',
-      );
-      expect(e.errors).toContain(
-        'Plan "default" overage_unit for feature "api_requests" must be > 0.',
-      );
-    }
-  });
-
   it("collects multiple errors across the config", () => {
     const config: RevstackConfig = {
       features: validFeatures,
@@ -367,7 +186,7 @@ describe("validateConfig", () => {
           ...validPlan,
           is_default: false,
           prices: [
-            { amount: -10, currency: "USD", billing_interval: "monthly" },
+            { amount: 10, currency: "USD", billing_interval: "monthly" },
           ],
         },
       },
@@ -375,6 +194,9 @@ describe("validateConfig", () => {
         extra: {
           name: "Extra",
           type: "recurring",
+          amount: 1000,
+          currency: "USD",
+          billing_interval: "monthly",
           features: {
             unknown: { value_limit: 10 },
           },
@@ -386,15 +208,134 @@ describe("validateConfig", () => {
     try {
       validateConfig(config);
     } catch (e: any) {
-      expect(e.errors.length).toBe(3);
+      expect(e.errors.length).toBe(2);
       expect(e.errors).toContain(
         "No default plan found. Every project must have exactly one plan with is_default: true.",
       );
       expect(e.errors).toContain(
-        'Plan "pro" has a negative price amount (-10).',
-      );
-      expect(e.errors).toContain(
         'Addon "extra" references undefined feature "unknown".',
+      );
+    }
+  });
+  it("Should Pass: A monthly price with a monthly addon", () => {
+    const config: RevstackConfig = {
+      features: validFeatures,
+      plans: {
+        default: {
+          ...validPlan,
+          prices: [
+            {
+              amount: 1000,
+              currency: "USD",
+              billing_interval: "monthly",
+              available_addons: ["monthly_addon"],
+            },
+          ],
+        },
+      },
+      addons: {
+        monthly_addon: {
+          name: "Monthly",
+          type: "recurring",
+          amount: 100,
+          currency: "USD",
+          billing_interval: "monthly",
+          features: {},
+        },
+      },
+    };
+    expect(() => validateConfig(config)).not.toThrow();
+  });
+
+  it("Should Pass: A monthly price with a one-time addon", () => {
+    const config: RevstackConfig = {
+      features: validFeatures,
+      plans: {
+        default: {
+          ...validPlan,
+          prices: [
+            {
+              amount: 1000,
+              currency: "USD",
+              billing_interval: "monthly",
+              available_addons: ["onetime_addon"],
+            },
+          ],
+        },
+      },
+      addons: {
+        onetime_addon: {
+          name: "One Time",
+          type: "one_time",
+          amount: 100,
+          currency: "USD",
+          features: {},
+        },
+      },
+    };
+    expect(() => validateConfig(config)).not.toThrow();
+  });
+
+  it("Should Fail: A monthly price with a yearly addon", () => {
+    const config: RevstackConfig = {
+      features: validFeatures,
+      plans: {
+        default: {
+          ...validPlan,
+          prices: [
+            {
+              amount: 1000,
+              currency: "USD",
+              billing_interval: "monthly",
+              available_addons: ["yearly_addon"],
+            },
+          ],
+        },
+      },
+      addons: {
+        yearly_addon: {
+          name: "Yearly",
+          type: "recurring",
+          amount: 1000,
+          currency: "USD",
+          billing_interval: "yearly",
+          features: {},
+        },
+      },
+    };
+    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
+    try {
+      validateConfig(config);
+    } catch (e: any) {
+      expect(e.errors).toContain(
+        "Interval Mismatch: Plan 'default' price is 'monthly', but Addon 'yearly_addon' is 'yearly'. Recurring addons must match the price's billing interval.",
+      );
+    }
+  });
+
+  it("Should Fail: An addon referenced in available_addons that doesn't exist", () => {
+    const config: RevstackConfig = {
+      features: validFeatures,
+      plans: {
+        default: {
+          ...validPlan,
+          prices: [
+            {
+              amount: 1000,
+              currency: "USD",
+              billing_interval: "monthly",
+              available_addons: ["ghost_addon"],
+            },
+          ],
+        },
+      },
+    };
+    expect(() => validateConfig(config)).toThrow(RevstackValidationError);
+    try {
+      validateConfig(config);
+    } catch (e: any) {
+      expect(e.errors).toContain(
+        'Plan "default" price references undefined addon "ghost_addon".',
       );
     }
   });

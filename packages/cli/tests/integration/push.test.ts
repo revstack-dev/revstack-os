@@ -28,6 +28,9 @@ vi.mock("@revstackhq/core", () => {
   }
   return {
     validateConfig: vi.fn(),
+    RevstackConfigSchema: {
+      parse: vi.fn().mockImplementation((config) => config),
+    },
     RevstackValidationError,
   };
 });

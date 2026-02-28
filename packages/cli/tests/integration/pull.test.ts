@@ -16,6 +16,7 @@ const mockSpinner = {
   start: vi.fn().mockReturnThis(),
   succeed: vi.fn().mockReturnThis(),
   fail: vi.fn().mockReturnThis(),
+  info: vi.fn().mockReturnThis(),
 };
 
 vi.mock("ora", () => ({
@@ -42,6 +43,11 @@ vi.mock("node:fs", () => ({
   existsSync: vi.fn(),
   writeFileSync: vi.fn(),
   mkdirSync: vi.fn(),
+}));
+
+// ── Mock execa ───────────────────────────────────────────────
+vi.mock("execa", () => ({
+  execa: vi.fn().mockResolvedValue({}),
 }));
 
 // ── Imports (after mocks) ────────────────────────────────────

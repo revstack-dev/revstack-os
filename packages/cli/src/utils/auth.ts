@@ -1,9 +1,3 @@
-/**
- * @file utils/auth.ts
- * @description Manages global Revstack credentials stored at ~/.revstack/credentials.json.
- * Provides simple get/set helpers for the API key used by all authenticated commands.
- */
-
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";

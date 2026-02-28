@@ -11,7 +11,11 @@ import prompts from "prompts";
 import ora from "ora";
 import { getApiKey } from "@/utils/auth";
 import { loadLocalConfig } from "@/utils/config-loader";
-import { validateConfig, RevstackValidationError } from "@revstackhq/core";
+import {
+  validateConfig,
+  RevstackValidationError,
+  RevstackConfigSchema,
+} from "@revstackhq/core";
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -44,7 +48,7 @@ const DIFF_COLORS: Record<DiffEntry["action"], (text: string) => string> = {
   updated: chalk.yellow,
 };
 
-function printDiff(diff: DiffEntry[]): void {
+function printDiff(diff: DiffEntry[], env: string): void {
   if (diff.length === 0) {
     console.log(
       chalk.dim("\n  No changes detected. Your config is up to date.\n"),
@@ -52,18 +56,43 @@ function printDiff(diff: DiffEntry[]): void {
     return;
   }
 
-  console.log(chalk.bold("\n  Changes:\n"));
-
-  for (const entry of diff) {
-    const icon = DIFF_ICONS[entry.action];
-    const color = DIFF_COLORS[entry.action];
-    const label = chalk.dim(`[${entry.entity}]`);
+  if (env === "production") {
     console.log(
-      `${icon}${color(entry.id)} ${label} ${chalk.white(entry.message)}`,
+      chalk.bgRed.white.bold("\n  ⚠️  YOU ARE PUSHING TO PRODUCTION ⚠️  \n"),
     );
+  } else {
+    console.log(chalk.bold("\n  Changes:\n"));
   }
 
-  console.log();
+  const groups: Record<string, DiffEntry[]> = {};
+  for (const entry of diff) {
+    if (!groups[entry.entity]) groups[entry.entity] = [];
+    groups[entry.entity].push(entry);
+  }
+
+  let added = 0;
+  let updated = 0;
+  let removed = 0;
+
+  for (const [entityName, entries] of Object.entries(groups)) {
+    console.log(chalk.dim(`  ${entityName}s`));
+    for (const entry of entries) {
+      if (entry.action === "added") added++;
+      if (entry.action === "updated") updated++;
+      if (entry.action === "removed") removed++;
+
+      const icon = DIFF_ICONS[entry.action];
+      const color = DIFF_COLORS[entry.action];
+      console.log(`${icon}${color(entry.id)} ${chalk.white(entry.message)}`);
+    }
+    console.log();
+  }
+
+  console.log(
+    chalk.bold(
+      `  Summary: ${added} added, ${updated} updated, ${removed} removed\n`,
+    ),
+  );
 }
 
 function requireAuth(): string {
@@ -100,14 +129,34 @@ export const pushCommand = new Command("push")
     }).start();
 
     try {
-      validateConfig(config as any); // cast to match RevstackConfig expected by validateConfig
+      // Tier 1: Structural Validation
+      const parsedConfig = RevstackConfigSchema.parse(config);
+
+      // Tier 2: Business Logic Validation
+      validateConfig(parsedConfig as any);
+
       validationSpinner.succeed("Configuration validated");
     } catch (error: any) {
+      validationSpinner.fail("Configuration invalid");
+
+      if (error?.name === "ZodError") {
+        console.error(
+          chalk.red(
+            "\n  ✖ The billing configuration contains schema/formatting errors:\n",
+          ),
+        );
+        for (const err of error.errors || []) {
+          const path = err.path.join(".");
+          console.error(chalk.red(`    • [${path}] ${err.message}`));
+        }
+        console.log();
+        process.exit(1);
+      }
+
       if (
         error instanceof RevstackValidationError ||
         error?.name === "RevstackValidationError"
       ) {
-        validationSpinner.fail("Configuration invalid");
         console.error(
           chalk.red(
             "\n  ✖ The billing configuration contains business logic errors:\n",
@@ -166,7 +215,7 @@ export const pushCommand = new Command("push")
 
     // ── Step 2: Present diff ──────────────────────────────────
 
-    printDiff(diffResponse.diff);
+    printDiff(diffResponse.diff, options.env);
 
     if (diffResponse.diff.length === 0) {
       return;
@@ -176,9 +225,11 @@ export const pushCommand = new Command("push")
 
     if (!diffResponse.canPush) {
       console.log(
-        chalk.red("  ✖ Push is blocked.\n") +
-          chalk.dim(
-            `    ${diffResponse.blockedReason ?? "The server rejected this configuration."}\n`,
+        "\n" +
+          chalk.bgRed.white.bold("  BLOCKED: PUSH IMPOSSIBLE  ") +
+          "\n\n" +
+          chalk.red(
+            `  ✖ ${diffResponse.blockedReason ?? "The server rejected this configuration due to destructive changes."}\n`,
           ),
       );
       process.exit(1);

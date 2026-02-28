@@ -1,31 +1,9 @@
-/**
- * @file engine.ts
- * @description The Entitlement Engine — the logic core of Revstack.
- *
- * Determines if a user can access a feature based on their active Plan,
- * purchased Add-ons, and subscription payment status. All decisions are
- * pure, stateless computations with no side effects.
- *
- * @example
- * ```typescript
- * import { EntitlementEngine } from "@revstackhq/core";
- *
- * const engine = new EntitlementEngine(plan, addons, "active");
- *
- * // Single check
- * const result = engine.check("seats", 4);
- *
- * // Batch check
- * const results = engine.checkBatch({ seats: 4, ai_tokens: 12000 });
- * ```
- */
-
 import type {
   CheckResult,
   PlanDef,
   AddonDef,
   SubscriptionStatus,
-} from "@/types.js";
+} from "@/types";
 
 // ─── Constants ───────────────────────────────────────────────
 

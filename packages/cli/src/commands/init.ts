@@ -1,10 +1,3 @@
-/**
- * @file commands/init.ts
- * @description Scaffolds a new `revstack.config.ts` in the current directory.
- * Generates a starter config with the immutable Default Guest Plan and
- * a sample Pro plan using type-safe helpers from @revstackhq/core.
- */
-
 import { Command } from "commander";
 import chalk from "chalk";
 import fs from "node:fs";
@@ -19,7 +12,7 @@ export const initCommand = new Command("init")
   .description("Scaffold a new revstack.config.ts in the current directory")
   .option(
     "-t, --template <name>",
-    "Choose a starting template (starter, b2b-saas, usage-based)",
+    `Choose a starting template (${Object.keys(TEMPLATES).join(", ")})`,
     "starter",
   )
   .action(async (options) => {
@@ -60,6 +53,11 @@ export const initCommand = new Command("init")
     fs.writeFileSync(
       path.resolve(revstackDir, "addons.ts"),
       template.addons,
+      "utf-8",
+    );
+    fs.writeFileSync(
+      path.resolve(revstackDir, "coupons.ts"),
+      template.coupons,
       "utf-8",
     );
     fs.writeFileSync(

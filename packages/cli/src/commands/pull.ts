@@ -1,56 +1,12 @@
-/**
- * @file commands/pull.ts
- * @description Fetches the current billing configuration from Revstack Cloud
- * and writes it back to the local `revstack.config.ts` file, overwriting
- * the existing config after user confirmation.
- */
-
 import { Command } from "commander";
 import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
 import fs from "node:fs";
 import path from "node:path";
+import { execa } from "execa";
 import { getApiKey } from "@/utils/auth";
-
-// ─── Types ───────────────────────────────────────────────────
-
-interface RemoteFeature {
-  name: string;
-  type: string;
-  unit_type: string;
-  description?: string;
-}
-
-interface RemotePrice {
-  amount: number;
-  currency: string;
-  billing_interval: string;
-  trial_period_days?: number;
-}
-
-interface RemotePlanFeature {
-  value_limit?: number;
-  value_bool?: boolean;
-  value_text?: string;
-  is_hard_limit?: boolean;
-  reset_period?: string;
-}
-
-interface RemotePlan {
-  name: string;
-  description?: string;
-  is_default: boolean;
-  is_public: boolean;
-  type: string;
-  prices?: RemotePrice[];
-  features: Record<string, RemotePlanFeature>;
-}
-
-interface RemoteConfig {
-  features: Record<string, RemoteFeature>;
-  plans: Record<string, RemotePlan>;
-}
+import { type RevstackConfig, RevstackConfigSchema } from "@revstackhq/core";
 
 function serializeObject(
   obj: Record<string, unknown>,
@@ -100,7 +56,7 @@ function serializeArray(arr: unknown[], depth: number): string {
   return `[\n${items.join("\n")}\n${closePad}]`;
 }
 
-function generateFeaturesSource(config: RemoteConfig): string {
+function generateFeaturesSource(config: RevstackConfig): string {
   const featureEntries = Object.entries(config.features).map(([slug, f]) => {
     const props: Record<string, unknown> = {
       name: f.name,
@@ -120,7 +76,7 @@ ${featureEntries.join("\n")}
 `;
 }
 
-function generatePlansSource(config: RemoteConfig): string {
+function generatePlansSource(config: RevstackConfig): string {
   const planEntries = Object.entries(config.plans).map(([slug, plan]) => {
     const props: Record<string, unknown> = {
       name: plan.name,
@@ -152,15 +108,99 @@ ${planEntries.join("\n")}
 `;
 }
 
-function generateRootConfigSource(): string {
-  return `import { defineConfig } from "@revstackhq/core";
-import { features } from "./revstack/features";
-import { plans } from "./revstack/plans";
+function generateAddonsSource(config: RevstackConfig): string {
+  if (!config.addons) return "";
 
-export default defineConfig({
-  features,
-  plans,
-});
+  const addonEntries = Object.entries(config.addons).map(([slug, addon]) => {
+    const props: Record<string, unknown> = {
+      name: addon.name,
+      type: addon.type,
+      amount: addon.amount,
+      currency: addon.currency,
+    };
+    if (addon.description) props.description = addon.description;
+    if (addon.billing_interval) props.billing_interval = addon.billing_interval;
+    props.features = addon.features;
+
+    return `  ${slug}: defineAddon<typeof features>(${serializeObject(props, 2)}),`;
+  });
+
+  return `import { defineAddon } from "@revstackhq/core";
+import { features } from "./features";
+
+export const addons = {
+${addonEntries.join("\n")}
+};
+`;
+}
+
+function generateCouponsSource(config: RevstackConfig): string {
+  if (!config.coupons || config.coupons.length === 0) return "";
+
+  // Make sure we format date strings and numbers properly but let serializeArray sort deep nesting
+  const couponsArray = config.coupons.map((coupon) => {
+    const props: Record<string, unknown> = {
+      code: coupon.code,
+      type: coupon.type,
+      value: coupon.value,
+      duration: coupon.duration,
+    };
+    if (coupon.name) props.name = coupon.name;
+    if (coupon.duration_in_months)
+      props.duration_in_months = coupon.duration_in_months;
+    if (coupon.applies_to_plans)
+      props.applies_to_plans = coupon.applies_to_plans;
+    if (coupon.max_redemptions) props.max_redemptions = coupon.max_redemptions;
+    if (coupon.expires_at) props.expires_at = coupon.expires_at;
+
+    return props;
+  });
+
+  return `import type { DiscountDef } from "@revstackhq/core";
+
+export const coupons: DiscountDef[] = ${serializeArray(couponsArray, 0)};
+`;
+}
+
+function generateRootConfigSource(config: RevstackConfig): string {
+  const hasAddons = !!config.addons && Object.keys(config.addons).length > 0;
+  const hasCoupons = !!config.coupons && config.coupons.length > 0;
+
+  const imports = [
+    `import { defineConfig } from "@revstackhq/core";`,
+    `import { features } from "./revstack/features";`,
+    `import { plans } from "./revstack/plans";`,
+  ];
+  if (hasAddons) {
+    imports.push(`import { addons } from "./revstack/addons";`);
+  }
+  if (hasCoupons) {
+    imports.push(`import { coupons } from "./revstack/coupons";`);
+  }
+
+  const configProps: Record<string, unknown> = {
+    features: "__RAW_features",
+    plans: "__RAW_plans",
+  };
+
+  if (hasAddons) {
+    configProps.addons = "__RAW_addons";
+  }
+
+  if (hasCoupons) {
+    configProps.coupons = "__RAW_coupons";
+  }
+
+  // Serialize the config object, but then remove the quotes around our RAW variables
+  let configStr = serializeObject(configProps, 0);
+  configStr = configStr.replace(/"__RAW_features"/g, "features");
+  configStr = configStr.replace(/"__RAW_plans"/g, "plans");
+  configStr = configStr.replace(/"__RAW_addons"/g, "addons");
+  configStr = configStr.replace(/"__RAW_coupons"/g, "coupons");
+
+  return `${imports.join("\n")}
+
+export default defineConfig(${configStr});
 `;
 }
 
@@ -195,7 +235,7 @@ export const pullCommand = new Command("pull")
       prefixText: " ",
     }).start();
 
-    let remoteConfig: RemoteConfig;
+    let remoteConfig: RevstackConfig;
 
     try {
       const res = await fetch(
@@ -213,7 +253,16 @@ export const pullCommand = new Command("pull")
         process.exit(1);
       }
 
-      remoteConfig = (await res.json()) as RemoteConfig;
+      const rawData = await res.json();
+
+      try {
+        remoteConfig = RevstackConfigSchema.parse(rawData);
+      } catch (validationError: any) {
+        spinner.fail("Remote config failed schema validation");
+        console.error(chalk.red(`\n  ${validationError.message}\n`));
+        process.exit(1);
+      }
+
       spinner.succeed("Remote config fetched");
     } catch (error: unknown) {
       spinner.fail("Failed to reach Revstack Cloud");
@@ -224,11 +273,17 @@ export const pullCommand = new Command("pull")
     // ── 2. Show summary ────────────────────────────────────
     const featureCount = Object.keys(remoteConfig.features).length;
     const planCount = Object.keys(remoteConfig.plans).length;
+    const addonCount = remoteConfig.addons
+      ? Object.keys(remoteConfig.addons).length
+      : 0;
+    const couponCount = remoteConfig.coupons ? remoteConfig.coupons.length : 0;
 
     console.log(
       "\n" +
         chalk.dim("  Remote state: ") +
-        chalk.white(`${featureCount} features, ${planCount} plans`) +
+        chalk.white(
+          `${featureCount} features, ${planCount} plans, ${addonCount} addons, ${couponCount} coupons`,
+        ) +
         chalk.dim(` (${options.env})\n`),
     );
 
@@ -264,11 +319,44 @@ export const pullCommand = new Command("pull")
 
     const featuresSource = generateFeaturesSource(remoteConfig);
     const plansSource = generatePlansSource(remoteConfig);
-    const rootSource = generateRootConfigSource();
+    const rootSource = generateRootConfigSource(remoteConfig);
 
     fs.writeFileSync(featuresPath, featuresSource, "utf-8");
     fs.writeFileSync(plansPath, plansSource, "utf-8");
     fs.writeFileSync(configPath, rootSource, "utf-8");
+
+    if (remoteConfig.addons && Object.keys(remoteConfig.addons).length > 0) {
+      const addonsSource = generateAddonsSource(remoteConfig);
+      const addonsPath = path.resolve(revstackDir, "addons.ts");
+      fs.writeFileSync(addonsPath, addonsSource, "utf-8");
+    }
+
+    if (remoteConfig.coupons && remoteConfig.coupons.length > 0) {
+      const couponsSource = generateCouponsSource(remoteConfig);
+      const couponsPath = path.resolve(revstackDir, "coupons.ts");
+      fs.writeFileSync(couponsPath, couponsSource, "utf-8");
+    }
+
+    // ── 5. Format Files ────────────────────────────────────
+    const formatSpinner = ora("Formatting generated files...").start();
+    try {
+      // Run prettier on the generated files. We use npx to ensure it runs
+      // using the locally hoisted version of prettier.
+      await execa(
+        "npx",
+        ["prettier", "--write", "revstack.config.ts", "revstack/**/*.ts"],
+        {
+          cwd,
+          stdio: "ignore",
+        },
+      );
+      formatSpinner.succeed("Files formatted successfully");
+    } catch (err) {
+      // It's not the end of the world if prettier fails, just notify
+      formatSpinner.info(
+        "Files written properly, but automatic formatting (prettier) skipped or failed.",
+      );
+    }
 
     console.log(
       "\n" +

@@ -1,46 +1,3 @@
-/**
- * @file define.ts
- * @description Identity helpers for "Billing as Code" config authoring.
- *
- * These functions return their input unchanged — their sole purpose is to
- * provide autocompletion, type narrowing, and compile-time validation
- * when developers write their `revstack.config.ts`.
- *
- * @example
- * ```typescript
- * import { defineConfig, defineFeature, definePlan } from "@revstackhq/core";
- *
- * const features = {
- *   seats: defineFeature({ name: "Seats", type: "static", unit_type: "count" }),
- *   sso:   defineFeature({ name: "SSO",   type: "boolean", unit_type: "count" }),
- * };
- *
- * export default defineConfig({
- *   features,
- *   plans: {
- *     default: definePlan<typeof features>({
- *       name: "Default",
- *       is_default: true,
- *       is_public: false,
- *       type: "free",
- *       features: {},
- *     }),
- *     pro: definePlan<typeof features>({
- *       name: "Pro",
- *       is_default: false,
- *       is_public: true,
- *       type: "paid",
- *       prices: [{ amount: 2900, currency: "USD", billing_interval: "monthly" }],
- *       features: {
- *         seats: { value_limit: 5, is_hard_limit: true },
- *         sso:   { value_bool: true },
- *       },
- *     }),
- *   },
- * });
- * ```
- */
-
 import type {
   FeatureDefInput,
   PlanDefInput,
@@ -113,19 +70,10 @@ export function definePlan<
 export function defineAddon<
   F extends Record<string, FeatureDefInput> = Record<string, FeatureDefInput>,
 >(
-  config: Omit<AddonDefInput, "features" | "prices"> & {
+  config: Omit<AddonDefInput, "features"> & {
     features: F extends Record<string, FeatureDefInput>
       ? Partial<Record<keyof F, AddonFeatureValue>>
       : Record<string, AddonFeatureValue>;
-    prices?: Array<
-      Omit<PriceDef, "overage_configuration"> & {
-        overage_configuration?: F extends Record<string, FeatureDefInput>
-          ? Partial<
-              Record<keyof F, { overage_amount: number; overage_unit: number }>
-            >
-          : Record<string, { overage_amount: number; overage_unit: number }>;
-      }
-    >;
   },
 ): AddonDefInput {
   return config as AddonDefInput;
