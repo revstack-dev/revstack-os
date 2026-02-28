@@ -139,14 +139,15 @@ export const pushCommand = new Command("push")
     } catch (error: any) {
       validationSpinner.fail("Configuration invalid");
 
-      if (error?.name === "ZodError") {
+      if (error?.name === "ZodError" || error?.issues) {
         console.error(
           chalk.red(
             "\n  ✖ The billing configuration contains schema/formatting errors:\n",
           ),
         );
-        for (const err of error.errors || []) {
-          const path = err.path.join(".");
+        const issues = error.issues || error.errors || [];
+        for (const err of issues) {
+          const path = err.path ? err.path.join(".") : "Root";
           console.error(chalk.red(`    • [${path}] ${err.message}`));
         }
         console.log();

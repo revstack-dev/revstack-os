@@ -141,33 +141,54 @@ export const DiscountDurationSchema = z.enum(["once", "forever", "repeating"]);
 const BaseDiscountDef = z.object({
   code: z.string(),
   name: z.string().optional(),
+  duration: DiscountDurationSchema,
+  duration_in_months: z.number().optional(),
   applies_to_plans: z.array(z.string()).optional(),
   max_redemptions: z.number().min(1).optional(),
   expires_at: z.string().datetime().optional(),
 });
 
+const PercentDiscountSchema = BaseDiscountDef.extend({
+  type: z.literal("percent"),
+  value: z.number().min(0).max(100),
+});
+
+const AmountDiscountSchema = BaseDiscountDef.extend({
+  type: z.literal("amount"),
+  value: z.number().min(0),
+});
+
 const DiscountValueSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("percent"), value: z.number().min(0).max(100) }),
-  z.object({ type: z.literal("amount"), value: z.number().min(0) }),
+  PercentDiscountSchema,
+  AmountDiscountSchema,
 ]);
 
-const DiscountDurationLogic = z.discriminatedUnion("duration", [
-  z.object({
-    duration: z.literal("once"),
-    duration_in_months: z.undefined().optional(),
-  }),
-  z.object({
-    duration: z.literal("forever"),
-    duration_in_months: z.undefined().optional(),
-  }),
-  z.object({
-    duration: z.literal("repeating"),
-    duration_in_months: z.number().min(1),
-  }),
-]);
-
-export const DiscountDefSchema = BaseDiscountDef.and(DiscountValueSchema).and(
-  DiscountDurationLogic,
+export const DiscountDefSchema = DiscountValueSchema.superRefine(
+  (data, ctx) => {
+    if (data.duration === "repeating") {
+      if (
+        data.duration_in_months === undefined ||
+        data.duration_in_months < 1
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "duration_in_months is required and must be >= 1 for repeating discounts",
+          path: ["duration_in_months"],
+        });
+      }
+    } else {
+      // once or forever
+      if (data.duration_in_months !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "duration_in_months cannot be used with once or forever discounts",
+          path: ["duration_in_months"],
+        });
+      }
+    }
+  },
 );
 
 // ==========================================

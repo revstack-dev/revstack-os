@@ -1,5 +1,13 @@
 # @revstackhq/cli
 
+## 0.0.0-dev-20260228063247
+
+### Patch Changes
+
+- Refactored `DiscountDefSchema` to use `superRefine`, restoring native TypeScript IntelliSense for coupon limits (like percent <= 100), and patched the CLI `push` command to correctly surface nested Zod validation traces.
+- Updated dependencies
+  - @revstackhq/core@0.0.0-dev-20260228063247
+
 ## 0.0.0-dev-20260228062053
 
 ### Patch Changes
