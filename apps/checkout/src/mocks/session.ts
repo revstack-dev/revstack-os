@@ -7,7 +7,8 @@ export const MOCK_SESSION: CheckoutSession = {
 
   merchant: {
     name: "Revstack",
-    logo: "https://app.revstack.dev/logo-single.png",
+    // logo: "https://app.revstack.dev/logo-single.png",
+    logo: "https://avatars.githubusercontent.com/u/255006479?s=200&v=4",
     primaryColor: "oklch(0.7 0.22 35)",
     accentColor: "#ffffff",
     theme: "dark",
@@ -88,6 +89,6 @@ export const MOCK_SESSION: CheckoutSession = {
       },
     },
   ],
-  successUrl: "https://acme.com/success",
-  cancelUrl: "https://acme.com/cancel",
+  successUrl: "https://app.revstack.dev/dashboard",
+  cancelUrl: "https://app.revstack.dev/dashboard",
 };

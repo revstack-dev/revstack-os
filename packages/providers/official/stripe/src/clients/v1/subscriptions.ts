@@ -13,7 +13,7 @@ import {
   AsyncActionResult,
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
-import { getOrCreateStripe } from "./shared";
+import { getOrCreateStripe } from "@/clients/v1/shared";
 
 export async function createSubscription(
   ctx: ProviderContext,

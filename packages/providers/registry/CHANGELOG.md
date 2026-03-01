@@ -1,5 +1,13 @@
 # @revstackhq/providers-registry
 
+## 0.0.0-dev-20260301195257
+
+### Patch Changes
+
+- update providers SDK to latest version
+- Updated dependencies
+  - @revstackhq/providers-core@0.0.0-dev-20260301195257
+
 ## 0.0.0-dev-20260227040420
 
 ### Patch Changes

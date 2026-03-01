@@ -13,7 +13,7 @@ import {
   PaginationOptions,
   AsyncActionResult,
 } from "@revstackhq/providers-core";
-import { getOrCreateStripe } from "./shared";
+import { getOrCreateStripe } from "@/clients/v1/shared";
 
 export async function createCustomer(
   ctx: ProviderContext,

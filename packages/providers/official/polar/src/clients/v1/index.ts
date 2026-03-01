@@ -24,7 +24,7 @@ import * as webhooks from "@/clients/v1/webhooks";
 import * as addons from "@/clients/v1/addons";
 import * as paymentMethods from "@/clients/v1/payment-methods";
 
-export class StripeClientV1 implements ProviderClient {
+export class PolarClientV1 implements ProviderClient {
   // ===========================================================================
   // LIFECYCLE & WEBHOOKS
   // ===========================================================================

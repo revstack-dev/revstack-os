@@ -9,7 +9,7 @@ import {
   AsyncActionResult,
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
-import { getOrCreateStripe, appendQueryParam } from "./shared";
+import { getOrCreateStripe, appendQueryParam } from "@/clients/v1/shared";
 
 /**
  * formats checkout line items for stripe depending on checkout mode.

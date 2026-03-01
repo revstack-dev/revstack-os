@@ -8,7 +8,7 @@ import {
   PaginationOptions,
   AsyncActionResult,
 } from "@revstackhq/providers-core";
-import { getOrCreateStripe } from "./shared";
+import { getOrCreateStripe } from "@/clients/v1/shared";
 import {
   mapStripeSubscriptionItemToAddon,
   mapStripeError,

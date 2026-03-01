@@ -1,6 +1,6 @@
 {
-  "name": "@revstackhq/provider-stripe",
-  "version": "0.0.0-dev-20260301201313",
+  "name": "@revstackhq/provider-polar",
+  "version": "0.2.0",
   "private": false,
   "license": "FSL-1.1-MIT",
   "type": "module",
@@ -26,9 +26,9 @@
     "dev:smoke": "tsx src/smoke.ts"
   },
   "dependencies": {
+    "@polar-sh/sdk": "^0.45.1",
     "@revstackhq/providers-core": "workspace:*",
-    "dotenv": "^17.2.4",
-    "stripe": "^20.3.1"
+    "dotenv": "^17.2.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
