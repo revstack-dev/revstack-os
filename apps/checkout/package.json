@@ -1,7 +1,7 @@
 {
   "name": "@revstackhq/checkout",
-  "version": "0.0.0",
-  "private": false,
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
     "dev": "next dev --port 3100",
     "build": "next build",

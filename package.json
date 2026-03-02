@@ -12,7 +12,7 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "publish-packages": "turbo run build && changeset publish",
-    "release:dev": "changeset add --empty && changeset version --snapshot dev && pnpm -r exec npm version 0.0.0 --no-git-tag-version && turbo build && changeset publish --no-git-tag --tag dev"
+    "release:dev": "changeset add --empty && changeset version --snapshot dev && turbo build && changeset publish --no-git-tag --tag dev && git restore ./**/package.json"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
