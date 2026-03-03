@@ -5,6 +5,7 @@ import {
   RevstackEvent,
   RevstackError,
   AsyncActionResult,
+  RevstackErrorCode,
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
 import { getOrCreateClient } from "@/api/v1/client";
@@ -194,21 +195,47 @@ export async function parseWebhookEvent(
   payload: unknown,
 ): Promise<AsyncActionResult<RevstackEvent | null>> {
   const event = payload as Stripe.Event;
-  if (!event || !event.type) return { data: null, status: "failed" };
-
-  const mappedType = EVENT_MAP[event.type as keyof typeof EVENT_MAP];
-  if (!mappedType) return { data: null, status: "failed" };
+  const obj = event.data.object as any;
+  const mappedType = EVENT_MAP[event.type];
 
   const resourceId = extractResourceId(event);
+
+  if (!event?.data?.object) {
+    return {
+      data: null,
+      status: "failed",
+      error: {
+        code: RevstackErrorCode.InvalidWebhookPayload,
+        message: "Payload missing data.object structure",
+      },
+    };
+  }
+
+  if (!mappedType || !resourceId)
+    return {
+      data: null,
+      status: "failed",
+      error: {
+        code: RevstackErrorCode.InvalidWebhookPayload,
+        message: "Invalid webhook payload",
+      },
+    };
 
   return {
     data: {
       type: mappedType,
       providerEventId: event.id,
       createdAt: new Date(event.created * 1000),
-      resourceId: resourceId || event.id,
+
+      resourceId,
+      customerId: obj.customer || undefined,
+      clientReferenceId: obj.client_reference_id || undefined,
+
+      metadata: {
+        stripeType: event.type,
+        ...(obj.metadata || {}),
+      },
       originalPayload: payload,
-      metadata: { stripeType: event.type },
     },
     status: "success",
   };

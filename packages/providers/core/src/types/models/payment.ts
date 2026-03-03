@@ -1,4 +1,4 @@
-import { Address } from "@/types/models/shared";
+import { Address, LineItem } from "@/types/models/shared";
 import { RevstackCurrency } from "@/types/models/currency";
 
 // =============================================================================
@@ -100,6 +100,8 @@ export type Payment = {
   updatedAt?: string;
   /** custom metadata */
   metadata?: Record<string, any>;
+  /** purchased line items if available */
+  lineItems?: LineItem[];
   /** raw provider payload */
   raw?: any;
 };
@@ -109,20 +111,18 @@ export type Payment = {
 // =============================================================================
 
 export type CreatePaymentInput = {
-  /** amount in cents */
-  amount: number;
-  /** iso currency (e.g. USD) */
-  currency: RevstackCurrency;
+  /** external reference id for webhooks (e.g. internal user or order id) */
+  clientReferenceId?: string;
   /** revstack customer id */
   customerId?: string;
+  /** fallback customer email for guest checkouts */
+  customerEmail?: string;
   /** external payment method id */
   paymentMethodId?: string;
   /** optional description */
   description?: string;
-
   /** bank statement descriptor */
   statementDescriptor?: string;
-
   /** capture immediately or authorize only */
   capture?: boolean;
   /** redirect return url */
@@ -138,13 +138,18 @@ export type CreatePaymentInput = {
   /** provider specific options */
   providerOptions?: any;
 
-  /** Just-In-Time creation payload matching ad-hoc products gracefully */
-  jit?: {
-    name?: string;
-    description?: string;
-    amount: number;
-    currency: RevstackCurrency;
-  };
+  /** inline checkout line items */
+  lineItems: [LineItem, ...LineItem[]];
+
+  /** enable automatic tax calculation (e.g., Stripe Tax, Polar automatic tax) */
+  automaticTax?: boolean;
+  /** allow promo codes input box on the hosted checkout */
+  allowPromotionCodes?: boolean;
+  /** automatically apply a specific provider promotion code ID */
+  promotionCodeId?: string;
+
+  /** setup future usage for the payment method */
+  setupFutureUsage?: boolean;
 };
 
 export type RefundPaymentInput = {

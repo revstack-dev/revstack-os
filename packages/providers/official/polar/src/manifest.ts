@@ -106,4 +106,6 @@ export const manifest: ProviderManifest = {
       description: "Polar Organization ID",
     },
   },
+
+  paginationType: "page",
 };

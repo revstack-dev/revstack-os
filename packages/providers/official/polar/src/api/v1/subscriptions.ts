@@ -34,12 +34,23 @@ export async function createSubscription(
 ): Promise<AsyncActionResult<string>> {
   try {
     const polar = getOrCreatePolar(ctx.config.accessToken);
-    const resolvedProductId = input.jit
-      ? await resolveJitProductId(polar, ctx, {
-          priceId: input.priceId,
-          jit: input.jit,
-        })
-      : input.priceId;
+
+    const resolvedLineItems = await Promise.all(
+      input.lineItems.map(async (item) => {
+        if ("amount" in item) {
+          const priceId = await resolveJitProductId(polar, ctx, {
+            jit: {
+              name: item.name,
+              amount: item.amount,
+              currency: item.currency,
+              interval: item.interval,
+            },
+          });
+          return { priceId, quantity: item.quantity };
+        }
+        return { priceId: item.priceId, quantity: item.quantity };
+      }),
+    );
 
     const result = await createCheckoutSession(ctx, {
       mode: "subscription",
@@ -47,13 +58,8 @@ export async function createSubscription(
       successUrl: input.returnUrl || "",
       cancelUrl: input.cancelUrl || "",
       metadata: input.metadata,
-      allowPromotionCodes: input.promotionCode ? true : undefined,
-      lineItems: [
-        {
-          priceId: resolvedProductId,
-          quantity: input.quantity || 1,
-        },
-      ],
+      allowPromotionCodes: input.allowPromotionCodes,
+      lineItems: resolvedLineItems,
     });
 
     return {
@@ -63,9 +69,8 @@ export async function createSubscription(
       error: result.error,
     };
   } catch (error: any) {
-    if (error.isRevstackError) {
+    if (error.isRevstackError)
       return { data: null, status: "failed", error: error.errorPayload };
-    }
     return { data: null, status: "failed", error: mapError(error) };
   }
 }
@@ -239,11 +244,26 @@ export async function updateSubscription(
 ): Promise<AsyncActionResult<string>> {
   try {
     const polar = getOrCreatePolar(ctx.config.accessToken);
+
+    const mainItem = input.lineItems?.find((item) => "priceId" in item);
+
+    if (!mainItem || !("priceId" in mainItem) || !mainItem.priceId) {
+      return {
+        data: null,
+        status: "failed",
+        error: {
+          code: RevstackErrorCode.InvalidInput,
+          message:
+            "Polar requires a valid Price ID in line items for subscription updates.",
+        },
+      };
+    }
+
     const sub = await polar.subscriptions.update({
       id,
       subscriptionUpdate: {
-        prorationBehavior: "prorate",
-        productId: input.priceId || "",
+        prorationBehavior: input.proration === "none" ? "invoice" : "prorate",
+        productId: mainItem.priceId,
       },
     });
 
@@ -252,9 +272,8 @@ export async function updateSubscription(
       status: "success",
     };
   } catch (error: any) {
-    if (error.isRevstackError) {
+    if (error.isRevstackError)
       return { data: null, status: "failed", error: error.errorPayload };
-    }
     return { data: null, status: "failed", error: mapError(error) };
   }
 }

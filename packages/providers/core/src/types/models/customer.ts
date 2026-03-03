@@ -69,6 +69,8 @@ export type SetupPaymentMethodInput = {
   customerId: string;
   /** redirect return url */
   returnUrl: string;
+  /** redirect cancel url */
+  cancelUrl: string;
   /** custom metadata */
   metadata?: Record<string, any>;
 };

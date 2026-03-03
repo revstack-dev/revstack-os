@@ -10,9 +10,14 @@ import {
   PaginationOptions,
   AsyncActionResult,
   buildCursorPagination,
+  PaymentStatus,
+  RevstackCurrency,
+  CheckoutSessionInput,
+  CheckoutSessionResult,
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
 import { getOrCreateClient } from "@/api/v1/client";
+import { currencyMap } from "@/shared/currency-map";
 
 /**
  * Executes a deferred payment creation through a Stripe Checkout Session flow.
@@ -27,30 +32,24 @@ import { getOrCreateClient } from "@/api/v1/client";
 export async function createPayment(
   ctx: ProviderContext,
   input: CreatePaymentInput,
-  createCheckoutSession: (ctx: ProviderContext, input: any) => Promise<any>,
-): Promise<AsyncActionResult<string>> {
-  const result = await createCheckoutSession(ctx, {
+  createCheckoutSession: (
+    ctx: ProviderContext,
+    input: CheckoutSessionInput,
+  ) => Promise<AsyncActionResult<CheckoutSessionResult>>,
+): Promise<AsyncActionResult<CheckoutSessionResult>> {
+  return await createCheckoutSession(ctx, {
     mode: "payment",
     customerId: input.customerId,
-    successUrl: input.returnUrl || "",
-    cancelUrl: input.cancelUrl || "",
+    successUrl: input.returnUrl,
+    cancelUrl: input.cancelUrl,
     metadata: input.metadata,
-    lineItems: [
-      {
-        name: input.description || "Payment",
-        amount: input.amount,
-        currency: input.currency,
-        quantity: 1,
-      },
-    ],
+    allowPromotionCodes: input.allowPromotionCodes,
+    lineItems: input.lineItems,
+    automaticTax: input.automaticTax,
+    statementDescriptor: input.statementDescriptor,
+    setupFutureUsage: input.setupFutureUsage,
+    clientReferenceId: input.clientReferenceId,
   });
-
-  return {
-    data: result.data?.id || null,
-    status: result.status,
-    nextAction: result.nextAction,
-    error: result.error,
-  };
 }
 
 /**
@@ -70,9 +69,9 @@ export async function getPayment(
   const stripe = getOrCreateClient(ctx.config.apiKey);
 
   try {
-    // if this is a checkout session id, resolve to payment intent
     if (id.startsWith("cs_")) {
       const session = await stripe.checkout.sessions.retrieve(id);
+
       const piId = session.payment_intent
         ? typeof session.payment_intent === "string"
           ? session.payment_intent
@@ -80,21 +79,48 @@ export async function getPayment(
         : null;
 
       if (!piId) {
+        const synthesizedPayment: Payment = {
+          id: session.id,
+          providerId: "stripe",
+          externalId: session.id,
+          amount: session.amount_total || 0,
+          currency: currencyMap[session.currency as string] as RevstackCurrency,
+          status:
+            session.status === "expired"
+              ? PaymentStatus.Canceled
+              : session.payment_status === "paid"
+                ? PaymentStatus.Succeeded
+                : PaymentStatus.Pending,
+          amountRefunded: 0,
+          customerId:
+            typeof session.customer === "string"
+              ? session.customer
+              : session.customer?.id,
+          createdAt: new Date(session.created * 1000).toISOString(),
+          metadata: session.metadata || undefined,
+          raw: session,
+        };
+
         return {
-          data: null,
-          status: "failed",
-          error: {
-            code: RevstackErrorCode.ResourceNotFound,
-            message: "Checkout session has no associated payment intent yet",
-          },
+          data: synthesizedPayment,
+          status: session.status === "open" ? "requires_action" : "success",
+          nextAction:
+            session.status === "open" && session.url
+              ? {
+                  type: "redirect",
+                  url: session.url,
+                }
+              : undefined,
         };
       }
+
       id = piId;
     }
 
     const pi = await stripe.paymentIntents.retrieve(id, {
       expand: ["latest_charge"],
     });
+
     return {
       data: mapStripePaymentToPayment(pi),
       status: "success",

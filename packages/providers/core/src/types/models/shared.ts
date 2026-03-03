@@ -2,6 +2,8 @@
 // SHARED TYPES
 // =============================================================================
 
+import { RevstackCurrency } from "@/types/models/currency";
+
 export type Address = {
   /** address line 1 */
   line1: string;
@@ -71,3 +73,30 @@ export type PaginatedResult<T> = {
   /** previous page cursor */
   previousCursor?: string;
 };
+
+export type CatalogLineItem = {
+  /** external price id (e.g., price_1Nxxx) */
+  priceId: string;
+  /** quantity to purchase */
+  quantity: number;
+};
+
+export type CustomLineItem = {
+  /** item name */
+  name: string;
+  /** unit amount in cents */
+  amount: number;
+  /** iso currency (e.g. USD) */
+  currency: RevstackCurrency;
+  /** quantity to purchase */
+  quantity: number;
+
+  /** optional item description */
+  description?: string;
+  /** optional item image urls */
+  images?: string[];
+  /** recurring interval for subscription line items */
+  interval?: "day" | "week" | "month" | "year";
+};
+
+export type LineItem = CatalogLineItem | CustomLineItem;

@@ -35,14 +35,21 @@ export const createPayment = async (
   try {
     const polar = getOrCreatePolar(ctx.config.accessToken);
 
-    const resolvedProductId = await resolveJitProductId(polar, ctx, {
-      jit: {
-        name: input.jit?.name || input.description || "One-time Payment",
-        description: input.jit?.description,
-        amount: input.amount,
-        currency: input.currency,
-      },
-    });
+    const resolvedLineItems = await Promise.all(
+      input.lineItems.map(async (item) => {
+        if ("amount" in item) {
+          const priceId = await resolveJitProductId(polar, ctx, {
+            jit: {
+              name: item.name,
+              amount: item.amount,
+              currency: item.currency,
+            },
+          });
+          return { priceId, quantity: item.quantity };
+        }
+        return { priceId: item.priceId, quantity: item.quantity };
+      }),
+    );
 
     const result = await createCheckoutSession(ctx, {
       mode: "payment",
@@ -50,12 +57,9 @@ export const createPayment = async (
       successUrl: input.returnUrl || "",
       cancelUrl: input.cancelUrl || "",
       metadata: input.metadata,
-      lineItems: [
-        {
-          priceId: resolvedProductId,
-          quantity: 1,
-        },
-      ],
+      allowPromotionCodes:
+        input.allowPromotionCodes ?? input.providerOptions?.allowPromotionCodes,
+      lineItems: resolvedLineItems,
     });
 
     return {
@@ -65,9 +69,8 @@ export const createPayment = async (
       error: result.error,
     };
   } catch (error: any) {
-    if (error.isRevstackError) {
+    if (error.isRevstackError)
       return { data: null, status: "failed", error: error.errorPayload };
-    }
     return { data: null, status: "failed", error: mapError(error) };
   }
 };

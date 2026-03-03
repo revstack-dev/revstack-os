@@ -1,4 +1,5 @@
 import { RevstackCurrency } from "@/types/models/currency";
+import { LineItem } from "@/types/models/shared";
 
 // =============================================================================
 // SUBSCRIPTION MODELS
@@ -81,48 +82,52 @@ export type Subscription = {
 // =============================================================================
 
 export type CreateSubscriptionInput = {
+  /** external reference id for webhooks (e.g. internal user or order id) */
+  clientReferenceId?: string;
   /** revstack customer id. */
   customerId: string;
-  /** revstack plan id */
-  planId?: string;
-  /** external price id */
-  priceId?: string;
-  /** metered quantity */
-  quantity?: number;
+  /** fallback customer email */
+  customerEmail?: string;
   /** return url */
   returnUrl?: string;
   /** cancel url */
   cancelUrl?: string;
   /** trial days */
   trialDays?: number;
-
   /** revstack discount id */
   discountId?: string;
-  /** external promo code */
-  promotionCode?: string;
-
+  /** external promo code ID to apply automatically */
+  promotionCodeId?: string;
+  /** allow promo codes input box on the hosted checkout */
+  allowPromotionCodes?: boolean;
+  /** enable automatic tax calculation */
+  automaticTax?: boolean;
   /** custom metadata */
   metadata?: Record<string, any>;
+  /** * The items to subscribe to.
+   * JIT creation is handled natively here if a LineItem provides amount/interval instead of a priceId.
+   */
+  lineItems: [LineItem, ...LineItem[]];
+};
 
-  /** Just-In-Time creation payload if the provider cannot find the priceId */
-  jit?: {
-    name: string;
-    description?: string;
-    amount: number;
-    currency: RevstackCurrency;
-    interval: "day" | "week" | "month" | "year";
-  };
+export type UpdateSubscriptionItem = {
+  /** The ID of the existing subscription item you want to modify or remove. */
+  id?: string;
+  /** The ID of the new price to apply to this item */
+  priceId?: string;
+  /** The new quantity for this item */
+  quantity?: number;
+  /** Whether to delete this item from the subscription */
+  deleted?: boolean;
+  /** Metadata to apply to this item */
+  metadata?: Record<string, any>;
 };
 
 export type UpdateSubscriptionInput = {
-  /** new external price id for upgrade/downgrade */
-  priceId?: string;
-  /** new quantity */
-  quantity?: number;
-  /** proration behavior */
+  /** The items to update, add, or remove */
+  lineItems?: UpdateSubscriptionItem[];
+
   proration?: "create_prorations" | "none" | "always_invoice";
-  /** trial end override (ISO or "now" to end trial) */
   trialEnd?: string;
-  /** custom metadata */
   metadata?: Record<string, any>;
 };

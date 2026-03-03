@@ -242,4 +242,6 @@ export interface ProviderManifest {
   pricing?: ProviderPricing;
 
   releases?: ProviderRelease[];
+
+  paginationType: "cursor" | "page";
 }

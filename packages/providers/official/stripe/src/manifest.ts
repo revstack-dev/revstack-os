@@ -140,4 +140,6 @@ export const manifest: ProviderManifest = {
       description: "Stripe Secret API Key",
     },
   },
+
+  paginationType: "cursor",
 };

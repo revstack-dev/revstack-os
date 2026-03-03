@@ -61,7 +61,11 @@ export enum RevstackErrorCode {
   // --- 8. PROVIDER SPECIFIC ---
   ProviderUnavailable = "provider_unavailable", // Downstream API (Stripe) is down
   ProviderRejected = "provider_rejected", // Provider refused connection (e.g. High Risk)
+
+  // --- 9. WEBHOOKS ---
   WebhookSignatureVerificationFailed = "webhook_signature_verification_failed",
+  InvalidWebhookSignature = "invalid_webhook_signature",
+  InvalidWebhookPayload = "invalid_webhook_payload",
 }
 
 /**

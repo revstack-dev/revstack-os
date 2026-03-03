@@ -11,6 +11,15 @@ export type CheckoutSessionInput = {
   /** client reference id */
   clientReferenceId?: string;
 
+  /** enable automatic tax */
+  automaticTax?: boolean;
+
+  /** statement descriptor */
+  statementDescriptor?: string;
+
+  /** trial days */
+  trialDays?: number;
+
   /** save payment method */
   setupFutureUsage?: boolean;
   /** checkout line items */
@@ -35,9 +44,9 @@ export type CheckoutSessionInput = {
     interval?: "day" | "week" | "month" | "year";
   }[];
   /** success url */
-  successUrl: string;
+  successUrl?: string;
   /** cancel url */
-  cancelUrl: string;
+  cancelUrl?: string;
   /** billing address collection mode */
   billingAddressCollection?: "auto" | "required";
   /** checkout mode */

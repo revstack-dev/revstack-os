@@ -56,11 +56,12 @@ export function mapSessionToCheckoutResult(session: Stripe.Checkout.Session) {
 }
 
 export function mapStripePaymentToPayment(pi: Stripe.PaymentIntent): Payment {
-  // extract refund amount from the latest charge when expanded
   let amountRefunded = 0;
   if (pi.latest_charge && typeof pi.latest_charge === "object") {
     amountRefunded = (pi.latest_charge as Stripe.Charge).amount_refunded || 0;
   }
+
+  const hasMetadata = pi.metadata && Object.keys(pi.metadata).length > 0;
 
   return {
     id: pi.id,
@@ -74,6 +75,7 @@ export function mapStripePaymentToPayment(pi: Stripe.PaymentIntent): Payment {
     status: mapStripeStatusToPaymentStatus(pi.status),
     customerId: typeof pi.customer === "string" ? pi.customer : pi.customer?.id,
     createdAt: new Date(pi.created * 1000).toISOString(),
+    metadata: hasMetadata ? pi.metadata : undefined,
     raw: pi,
   };
 }

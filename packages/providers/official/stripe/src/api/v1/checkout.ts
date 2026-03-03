@@ -6,10 +6,12 @@ import {
   BillingPortalInput,
   BillingPortalResult,
   AsyncActionResult,
+  RevstackCurrency,
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
 import { getOrCreateClient, appendQueryParam } from "@/api/v1/client";
 import { mapError } from "@/shared/error-map";
+import { currencyMap } from "@/shared/currency-map";
 
 /**
  * Formats checkout line items for Stripe depending on checkout mode.
@@ -34,10 +36,10 @@ function formatLineItems(
     }
 
     const priceData: Stripe.Checkout.SessionCreateParams.LineItem.PriceData = {
-      currency: item.currency ? item.currency.toUpperCase() : "USD",
+      currency: currencyMap[item.currency as RevstackCurrency] || "USD",
       product_data: {
         name: item.name || "Unknown",
-        description: item.description || "",
+        description: item.description || undefined,
         images: item.images || [],
       },
       unit_amount: item.amount,
@@ -84,22 +86,41 @@ export async function createCheckoutSession(
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: input.mode,
       client_reference_id: input.clientReferenceId,
-      ui_mode: "hosted",
-      success_url: appendQueryParam(
-        input.successUrl,
-        "session_id={CHECKOUT_SESSION_ID}",
-      ),
-      cancel_url: input.cancelUrl,
-      customer: input.customerId,
-      customer_email: !input.customerId ? input.customerEmail : undefined,
-      allow_promotion_codes: input.allowPromotionCodes,
-
-      line_items: formatLineItems(input.lineItems, input.mode),
       metadata: {
         ...input.metadata,
         revstack_trace_id: ctx.traceId ?? null,
       },
+      ui_mode: "hosted",
+      success_url: input.successUrl
+        ? appendQueryParam(input.successUrl, "session_id={CHECKOUT_SESSION_ID}")
+        : undefined,
+      cancel_url: input.cancelUrl,
+      customer: input.customerId,
+      customer_email: !input.customerId ? input.customerEmail : undefined,
+      allow_promotion_codes: input.allowPromotionCodes,
+      line_items: formatLineItems(input.lineItems, input.mode),
+
+      automatic_tax: input.automaticTax ? { enabled: true } : undefined,
+
+      billing_address_collection: input.automaticTax ? "required" : "auto",
+
+      customer_update: input.customerId
+        ? { address: "auto", name: "auto" }
+        : undefined,
     };
+
+    if (input.mode === "payment") {
+      sessionParams.payment_intent_data = {
+        setup_future_usage: input.setupFutureUsage ? "off_session" : undefined,
+        metadata: input.metadata,
+        statement_descriptor: input.statementDescriptor || undefined,
+      };
+    } else if (input.mode === "subscription") {
+      sessionParams.subscription_data = {
+        metadata: input.metadata,
+        trial_period_days: input.trialDays || undefined,
+      };
+    }
 
     const session = await stripe.checkout.sessions.create(sessionParams, {
       idempotencyKey: ctx.idempotencyKey,
@@ -122,7 +143,6 @@ export async function createCheckoutSession(
     };
   }
 }
-
 /**
  * Rapidly creates a secure authenticated session natively into Stripe's hosted Billing Portal natively.
  * Provides completely hosted natively managed subscription configuration explicitly securely

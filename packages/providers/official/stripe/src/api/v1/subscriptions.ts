@@ -9,6 +9,8 @@ import {
   AsyncActionResult,
   RevstackErrorCode,
   buildCursorPagination,
+  CheckoutSessionInput,
+  CheckoutSessionResult,
 } from "@revstackhq/providers-core";
 import Stripe from "stripe";
 import { getOrCreateClient } from "@/api/v1/client";
@@ -30,36 +32,35 @@ async function buildUpdateParams(
   id: string,
   input: UpdateSubscriptionInput,
 ): Promise<Stripe.SubscriptionUpdateParams> {
-  const current = await stripe.subscriptions.retrieve(id);
   const updateParams: Stripe.SubscriptionUpdateParams = {
-    metadata: input.metadata || undefined,
-    proration_behavior:
-      (input.proration as Stripe.SubscriptionUpdateParams.ProrationBehavior) ||
-      "create_prorations",
+    metadata: input.metadata,
+    proration_behavior: input.proration || "create_prorations",
   };
 
-  if (input.priceId && current.items.data.length > 0) {
-    updateParams.items = current.items.data.map((item, index) => {
-      if (index === 0) {
+  if (input.lineItems && input.lineItems.length > 0) {
+    updateParams.items = input.lineItems.map((item) => {
+      if (item.id) {
         return {
           id: item.id,
-          price: input.priceId,
-          quantity: input.quantity || undefined,
-        };
-      } else {
-        return {
-          id: item.id,
-          deleted: true,
+          price: item.priceId,
+          quantity: item.quantity,
+          deleted: item.deleted,
+          metadata: item.metadata,
         };
       }
+
+      if (item.priceId) {
+        return {
+          price: item.priceId,
+          quantity: item.quantity,
+          metadata: item.metadata,
+        };
+      }
+
+      throw new Error(
+        "Stripe update requires either an item 'id' or a 'priceId'.",
+      );
     });
-  } else if (input.quantity && current.items.data[0]) {
-    updateParams.items = [
-      {
-        id: current.items.data[0].id,
-        quantity: input.quantity,
-      },
-    ];
   }
 
   if (input.trialEnd) {
@@ -85,34 +86,28 @@ async function buildUpdateParams(
 export async function createSubscription(
   ctx: ProviderContext,
   input: CreateSubscriptionInput,
-  createCheckoutSession: (ctx: ProviderContext, input: any) => Promise<any>,
-): Promise<AsyncActionResult<string>> {
+  createCheckoutSession: (
+    ctx: ProviderContext,
+    input: CheckoutSessionInput,
+  ) => Promise<AsyncActionResult<CheckoutSessionResult>>,
+): Promise<AsyncActionResult<CheckoutSessionResult>> {
   try {
-    const result = await createCheckoutSession(ctx, {
+    return await createCheckoutSession(ctx, {
       mode: "subscription",
       customerId: input.customerId,
-      successUrl: input.returnUrl || "",
-      cancelUrl: input.cancelUrl || "",
+      successUrl: input.returnUrl,
+      cancelUrl: input.cancelUrl,
       metadata: input.metadata,
-      allowPromotionCodes: input.promotionCode ? true : undefined,
-      lineItems: [
-        {
-          priceId: input.priceId,
-          quantity: input.quantity || 1,
-        },
-      ],
+      allowPromotionCodes: input.allowPromotionCodes,
+      automaticTax: input.automaticTax,
+      customerEmail: input.customerEmail,
+      trialDays: input.trialDays,
+      lineItems: input.lineItems,
+      clientReferenceId: input.clientReferenceId,
     });
-
-    return {
-      data: result.data?.id || null,
-      status: result.status,
-      nextAction: result.nextAction,
-      error: result.error,
-    };
   } catch (error: any) {
-    if (error.isRevstackError) {
+    if (error.isRevstackError)
       return { data: null, status: "failed", error: error.errorPayload };
-    }
     return { data: null, status: "failed", error: mapError(error) };
   }
 }

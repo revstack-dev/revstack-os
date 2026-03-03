@@ -19,7 +19,7 @@ export async function setupPaymentMethod(
     mode: "setup",
     customerId: input.customerId,
     successUrl: input.returnUrl,
-    cancelUrl: input.returnUrl,
+    cancelUrl: input.cancelUrl,
     metadata: input.metadata,
     lineItems: [],
   });

@@ -25,8 +25,8 @@ export function buildPagePagination<T, U>(
   return {
     data: items.map(mapperFn),
     hasMore: targetPage < maxPage,
-    nextCursor: targetPage.toString(),
+    nextCursor: targetPage < maxPage ? (targetPage + 1).toString() : undefined,
     hasPrevious: targetPage > 1,
-    previousCursor: targetPage.toString(),
+    previousCursor: targetPage > 1 ? (targetPage - 1).toString() : undefined,
   };
 }
