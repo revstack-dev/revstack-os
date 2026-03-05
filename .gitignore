@@ -14,7 +14,10 @@ node_modules
 .env.test
 
 # Testing
-coverage
+coverage/*
+!coverage/badge.svg
+packages/**/coverage/
+apps/**/coverage/
 
 # Turbo
 .turbo
