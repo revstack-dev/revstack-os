@@ -114,12 +114,13 @@ runSmoke({
       return res;
     },
     getCustomer: async (ctx) => {
-      const res = await provider.getCustomer(ctx, FIXTURES.customerId);
+      const res = await provider.getCustomer(ctx, { id: FIXTURES.customerId });
       console.log("[getCustomer]", res);
       return res;
     },
     updateCustomer: async (ctx) => {
-      const res = await provider.updateCustomer(ctx, FIXTURES.customerId, {
+      const res = await provider.updateCustomer(ctx, {
+        id: FIXTURES.customerId,
         name: "Smoke Test User Updated",
       });
       console.log("[updateCustomer]", res);
@@ -131,7 +132,9 @@ runSmoke({
       return res;
     },
     deleteCustomer: async (ctx) => {
-      const res = await provider.deleteCustomer(ctx, FIXTURES.customerId);
+      const res = await provider.deleteCustomer(ctx, {
+        id: FIXTURES.customerId,
+      });
       console.log("[deleteCustomer]", res);
       return res;
     },
@@ -188,12 +191,14 @@ runSmoke({
       return res;
     },
     getPayment: async (ctx) => {
-      const res = await provider.getPayment(ctx, FIXTURES.paymentId);
+      const res = await provider.getPayment(ctx, { id: FIXTURES.paymentId });
       console.log("[getPayment]", res);
       return res;
     },
     capturePayment: async (ctx) => {
-      const res = await provider.capturePayment(ctx, FIXTURES.paymentId);
+      const res = await provider.capturePayment(ctx, {
+        id: FIXTURES.paymentId,
+      });
       console.log("[capturePayment]", res);
       return res;
     },
@@ -214,15 +219,16 @@ runSmoke({
 
     // PAYMENT METHODS
     listPaymentMethods: async (ctx) => {
-      const res = await provider.listPaymentMethods(ctx, FIXTURES.customerId);
+      const res = await provider.listPaymentMethods(ctx, {
+        customerId: FIXTURES.customerId,
+      });
       console.log("[listPaymentMethods]", res);
       return res;
     },
     deletePaymentMethod: async (ctx) => {
-      const res = await provider.deletePaymentMethod(
-        ctx,
-        FIXTURES.paymentMethodId,
-      );
+      const res = await provider.deletePaymentMethod(ctx, {
+        id: FIXTURES.paymentMethodId,
+      });
       console.log("[deletePaymentMethod]", res);
       return res;
     },
@@ -291,34 +297,31 @@ runSmoke({
       return res;
     },
     getSubscription: async (ctx) => {
-      const res = await provider.getSubscription(ctx, FIXTURES.subscriptionId);
+      const res = await provider.getSubscription(ctx, {
+        id: FIXTURES.subscriptionId,
+      });
       console.log("[getSubscription]", res);
       return res;
     },
     updateSubscription: async (ctx) => {
-      const res = await provider.updateSubscription(
-        ctx,
-        FIXTURES.subscriptionId,
-        {
-          lineItems: [{ priceId: FIXTURES.priceId, quantity: 2 }],
-        },
-      );
+      const res = await provider.updateSubscription(ctx, {
+        id: FIXTURES.subscriptionId,
+        lineItems: [{ priceId: FIXTURES.priceId, quantity: 2 }],
+      });
       console.log("[updateSubscription]", res);
       return res;
     },
     pauseSubscription: async (ctx) => {
-      const res = await provider.pauseSubscription(
-        ctx,
-        FIXTURES.subscriptionId,
-      );
+      const res = await provider.pauseSubscription(ctx, {
+        id: FIXTURES.subscriptionId,
+      });
       console.log("[pauseSubscription]", res);
       return res;
     },
     resumeSubscription: async (ctx) => {
-      const res = await provider.resumeSubscription(
-        ctx,
-        FIXTURES.subscriptionId,
-      );
+      const res = await provider.resumeSubscription(ctx, {
+        id: FIXTURES.subscriptionId,
+      });
       console.log("[resumeSubscription]", res);
       return res;
     },
@@ -328,10 +331,9 @@ runSmoke({
       return res;
     },
     cancelSubscription: async (ctx) => {
-      const res = await provider.cancelSubscription(
-        ctx,
-        FIXTURES.subscriptionId,
-      );
+      const res = await provider.cancelSubscription(ctx, {
+        id: FIXTURES.subscriptionId,
+      });
       console.log("[cancelSubscription]", res);
       return res;
     },

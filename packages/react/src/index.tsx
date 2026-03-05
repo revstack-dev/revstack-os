@@ -52,7 +52,7 @@ export function useRevstack(): RevstackClient {
   if (!client) {
     throw new Error(
       "useRevstack must be used within a <RevstackProvider>. " +
-        "Wrap your app with <RevstackProvider config={...}>."
+        "Wrap your app with <RevstackProvider config={...}>.",
     );
   }
   return client;
@@ -67,18 +67,18 @@ export function useEntitlement(key: string): Entitlement {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => client.subscribe(onStoreChange),
-    [client]
+    [client],
   );
 
   const getSnapshot = useCallback(
     () => client.getEntitlement(key),
-    [client, key]
+    [client, key],
   );
 
   // safe SSR fallback — prevents hydration mismatches in Next.js/Remix
   const getServerSnapshot = useCallback(
     (): Entitlement => ({ key, hasAccess: false }),
-    [key]
+    [key],
   );
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);

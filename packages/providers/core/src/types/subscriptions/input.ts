@@ -1,5 +1,5 @@
-import { LineItem } from "@/types/shared";
-import { PaginationOptions } from "@/types/shared";
+import { LineItem } from "@/types/catalog";
+import { PaginationOptions, Interval } from "@/types/shared";
 
 export type CreateSubscriptionInput = {
   /** external reference id for webhooks (e.g. internal user or order id) */
@@ -23,7 +23,7 @@ export type CreateSubscriptionInput = {
   /** custom metadata */
   metadata?: Record<string, any>;
   /** trial interval for subscription line items */
-  trialInterval?: "day" | "week" | "month" | "year";
+  trialInterval?: Interval;
   /** trial interval count for subscription line items */
   trialIntervalCount?: number;
   /** * The items to subscribe to.

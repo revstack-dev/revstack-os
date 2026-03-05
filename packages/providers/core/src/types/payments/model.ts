@@ -1,4 +1,4 @@
-import { LineItem } from "@/types/shared";
+import { LineItem } from "@/types/catalog";
 
 export enum PaymentStatus {
   /** created but not yet processed */

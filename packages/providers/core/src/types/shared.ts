@@ -1,7 +1,3 @@
-// =============================================================================
-// SHARED TYPES
-// =============================================================================
-
 export type Address = {
   /** address line 1 */
   line1: string;
@@ -20,6 +16,10 @@ export type Address = {
 export type ActionStatus = "success" | "pending" | "requires_action" | "failed";
 
 export type ProrationBehavior = "create_prorations" | "none" | "always_invoice";
+
+export type Interval = "day" | "week" | "month" | "year";
+
+export type PricingType = "one_time" | "recurring";
 
 export type AsyncActionResult<T> = {
   /** result data payload */
@@ -71,35 +71,3 @@ export type PaginatedResult<T> = {
   /** previous page cursor */
   previousCursor?: string;
 };
-
-export type CatalogLineItem = {
-  /** external price id (e.g., price_1Nxxx) */
-  priceId: string;
-  /** quantity to purchase */
-  quantity: number;
-};
-
-export type CustomLineItem = {
-  /** item name */
-  name: string;
-  /** unit amount in cents */
-  amount: number;
-  /** iso currency (e.g. USD) */
-  currency: string;
-  /** quantity to purchase */
-  quantity: number;
-
-  /** optional item description */
-  description?: string;
-  /** optional item image urls */
-  images?: string[];
-  /** recurring interval for subscription line items */
-  interval?: "day" | "week" | "month" | "year";
-
-  /** trial interval for subscription line items */
-  trialInterval?: "day" | "week" | "month" | "year";
-  /** trial interval count for subscription line items */
-  trialIntervalCount?: number;
-};
-
-export type LineItem = CatalogLineItem | CustomLineItem;

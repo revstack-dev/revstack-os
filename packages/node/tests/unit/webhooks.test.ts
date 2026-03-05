@@ -20,7 +20,7 @@ const WEBHOOK_SECRET = "whsec_test_secret_key_for_hmac";
 function signPayload(
   payload: string,
   secret: string,
-  timestampOverride?: number
+  timestampOverride?: number,
 ): string {
   const timestamp = timestampOverride ?? Math.floor(Date.now() / 1000);
   const signature = createHmac("sha256", secret)
@@ -60,11 +60,11 @@ describe("WebhooksClient.constructEvent", () => {
     const header = signPayload(eventPayload, "wrong_secret_key");
 
     expect(() =>
-      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET)
+      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET),
     ).toThrow(SignatureVerificationError);
 
     expect(() =>
-      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET)
+      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET),
     ).toThrow("Webhook signature does not match the expected signature");
   });
 
@@ -74,11 +74,11 @@ describe("WebhooksClient.constructEvent", () => {
     const header = signPayload(eventPayload, WEBHOOK_SECRET, staleTimestamp);
 
     expect(() =>
-      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET)
+      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET),
     ).toThrow(SignatureVerificationError);
 
     expect(() =>
-      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET)
+      webhooks.constructEvent(eventPayload, header, WEBHOOK_SECRET),
     ).toThrow(/Webhook timestamp too old/);
   });
 
@@ -91,7 +91,7 @@ describe("WebhooksClient.constructEvent", () => {
       eventPayload,
       header,
       WEBHOOK_SECRET,
-      0
+      0,
     );
 
     expect(event.id).toBe("evt_test_001");
@@ -99,11 +99,11 @@ describe("WebhooksClient.constructEvent", () => {
 
   it("should throw SignatureVerificationError on malformed header", () => {
     expect(() =>
-      webhooks.constructEvent(eventPayload, "invalid-header", WEBHOOK_SECRET)
+      webhooks.constructEvent(eventPayload, "invalid-header", WEBHOOK_SECRET),
     ).toThrow(SignatureVerificationError);
 
     expect(() =>
-      webhooks.constructEvent(eventPayload, "invalid-header", WEBHOOK_SECRET)
+      webhooks.constructEvent(eventPayload, "invalid-header", WEBHOOK_SECRET),
     ).toThrow(/Invalid signature header format/);
   });
 });

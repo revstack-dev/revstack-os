@@ -46,7 +46,7 @@ export class WebhooksClient {
     payload: string | Buffer,
     signature: string,
     secret: string,
-    tolerance: number = DEFAULT_TOLERANCE_SECONDS
+    tolerance: number = DEFAULT_TOLERANCE_SECONDS,
   ): WebhookEvent {
     const rawBody =
       typeof payload === "string" ? payload : payload.toString("utf8");
@@ -66,7 +66,7 @@ export class WebhooksClient {
       !timingSafeEqual(expectedBuffer, receivedBuffer)
     ) {
       throw new SignatureVerificationError(
-        "Webhook signature does not match the expected signature"
+        "Webhook signature does not match the expected signature",
       );
     }
 
@@ -75,7 +75,7 @@ export class WebhooksClient {
       const timestampAge = Math.floor(Date.now() / 1000) - parts.timestamp;
       if (timestampAge > tolerance) {
         throw new SignatureVerificationError(
-          `Webhook timestamp too old (${timestampAge}s > ${tolerance}s tolerance)`
+          `Webhook timestamp too old (${timestampAge}s > ${tolerance}s tolerance)`,
         );
       }
     }
@@ -108,7 +108,7 @@ export class WebhooksClient {
 
     if (!timestamp || !v1) {
       throw new SignatureVerificationError(
-        "Invalid signature header format. Expected: t=<timestamp>,v1=<signature>"
+        "Invalid signature header format. Expected: t=<timestamp>,v1=<signature>",
       );
     }
 

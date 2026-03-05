@@ -10,7 +10,7 @@ describe("Auth Providers", () => {
 
     const slugs = new Set(providers.map((p) => p.slug));
     expect(slugs).toEqual(
-      new Set(["auth0", "clerk", "supabase", "cognito", "firebase", "custom"])
+      new Set(["auth0", "clerk", "supabase", "cognito", "firebase", "custom"]),
     );
   });
 

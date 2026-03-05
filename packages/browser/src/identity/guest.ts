@@ -5,7 +5,7 @@ import type { RevstackConfig } from "@/types";
  * priority: custom resolver > fingerprintjs > null
  */
 export async function resolveGuestId(
-  config: RevstackConfig
+  config: RevstackConfig,
 ): Promise<string | null> {
   if (config.disableFingerprint) return null;
 
@@ -22,7 +22,7 @@ export async function resolveGuestId(
   // uses Function constructor so tsc doesn't try to resolve the module
   try {
     const mod = await (Function(
-      'return import("@fingerprintjs/fingerprintjs")'
+      'return import("@fingerprintjs/fingerprintjs")',
     )() as Promise<{
       load: () => Promise<{ get: () => Promise<{ visitorId: string }> }>;
     }>);

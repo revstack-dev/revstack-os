@@ -1,3 +1,5 @@
+import { Interval } from "@/types/shared";
+
 /**
  * Standardized lifecycle states for a Revstack Subscription.
  * These states abstract away provider-specific quirks (like Stripe's pause_collection)
@@ -42,7 +44,7 @@ export type Subscription = {
   /** The ISO 4217 currency code normalized to uppercase (e.g., "USD"). */
   currency: string;
   /** The frequency at which this subscription bills. */
-  interval: "day" | "week" | "month" | "year";
+  interval: Interval;
   /** The internal Revstack Customer ID (mapped from the provider's customer ID). */
   customerId: string;
   /** ISO 8601 timestamp indicating when the current billing cycle started. */

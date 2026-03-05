@@ -16,12 +16,12 @@ export class TokenVerifier {
 
   constructor(
     private contract: RevstackAuthContract,
-    private options?: TokenVerifierOptions
+    private options?: TokenVerifierOptions,
   ) {
     if (this.contract.strategy === "RS256") {
       this.JWKS = createRemoteJWKSet(
         new URL(this.contract.jwksUri),
-        this.options?.jwksCache
+        this.options?.jwksCache,
       );
     }
   }
@@ -30,20 +30,20 @@ export class TokenVerifier {
    * Validates a raw JWT string against a stored RevstackAuthContract.
    */
   async verify<T extends Record<string, unknown> = Record<string, any>>(
-    token: string
+    token: string,
   ): Promise<RevstackSession<T>> {
     try {
       if (!token || typeof token !== "string") {
         return this.buildErrorResponse<T>(
           AuthErrorCode.INVALID_FORMAT,
-          "Token string is required"
+          "Token string is required",
         );
       }
 
       if (token.split(".").length !== 3) {
         return this.buildErrorResponse<T>(
           AuthErrorCode.INVALID_FORMAT,
-          "Malformed JWT structure"
+          "Malformed JWT structure",
         );
       }
 
@@ -72,30 +72,30 @@ export class TokenVerifier {
   }
 
   private mapJoseError<T extends Record<string, unknown>>(
-    err: any
+    err: any,
   ): RevstackSession<T> {
     if (err instanceof JoseErrors.JWTExpired) {
       return this.buildErrorResponse<T>(
         AuthErrorCode.TOKEN_EXPIRED,
-        err.message
+        err.message,
       );
     }
     if (err instanceof JoseErrors.JWTClaimValidationFailed) {
       if (err.claim === "iss") {
         return this.buildErrorResponse<T>(
           AuthErrorCode.ISSUER_MISMATCH,
-          err.message
+          err.message,
         );
       }
       return this.buildErrorResponse<T>(
         AuthErrorCode.INVALID_FORMAT,
-        err.message
+        err.message,
       );
     }
     if (err instanceof JoseErrors.JWSSignatureVerificationFailed) {
       return this.buildErrorResponse<T>(
         AuthErrorCode.INVALID_SIGNATURE,
-        err.message
+        err.message,
       );
     }
     if (
@@ -107,19 +107,19 @@ export class TokenVerifier {
     ) {
       return this.buildErrorResponse<T>(
         AuthErrorCode.NETWORK_ERROR,
-        err.message || "Network error fetching JWKS"
+        err.message || "Network error fetching JWKS",
       );
     }
 
     return this.buildErrorResponse<T>(
       AuthErrorCode.UNKNOWN_ERROR,
-      err?.message || "Token validation failed"
+      err?.message || "Token validation failed",
     );
   }
 
   private buildErrorResponse<T extends Record<string, unknown>>(
     code: AuthErrorCode,
-    message: string
+    message: string,
   ): RevstackSession<T> {
     return {
       isValid: false,
@@ -131,7 +131,7 @@ export class TokenVerifier {
   }
 
   private buildSessionFromPayload<T extends Record<string, unknown>>(
-    payload: any
+    payload: any,
   ): RevstackSession<T> {
     const claimKey = this.contract.userIdClaim || "sub";
     const userId = payload?.[claimKey] as string;
@@ -139,7 +139,7 @@ export class TokenVerifier {
     if (!userId) {
       return this.buildErrorResponse<T>(
         AuthErrorCode.MISSING_CLAIM,
-        `Claim '${claimKey}' not found in token.`
+        `Claim '${claimKey}' not found in token.`,
       );
     }
 

@@ -2,6 +2,7 @@ import {
   normalizeCurrency,
   ProviderContext,
   RevstackErrorCode,
+  Interval,
 } from "@revstackhq/providers-core";
 import { PresentmentCurrency } from "@polar-sh/sdk/models/components/presentmentcurrency.js";
 import { Polar } from "@polar-sh/sdk";
@@ -26,7 +27,7 @@ export async function resolveJitProductId(
       interval?: string;
       amount: number;
       currency: string;
-      trialInterval?: "day" | "week" | "month" | "year";
+      trialInterval?: Interval;
       trialIntervalCount?: number;
     };
   },

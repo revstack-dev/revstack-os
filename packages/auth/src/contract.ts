@@ -6,7 +6,7 @@ import {
 
 export function assertNonEmptyString(
   value: unknown,
-  message: string
+  message: string,
 ): asserts value is string {
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new Error(message);
@@ -20,7 +20,7 @@ export function normalizeBaseUrl(maybeUrlOrDomain: string): string {
 }
 
 type ProviderBuilder<S extends AuthProviderSlug> = (
-  input: AuthProviderInputBySlug[S]
+  input: AuthProviderInputBySlug[S],
 ) => RevstackAuthContract;
 
 const BUILDERS: {
@@ -100,7 +100,7 @@ const BUILDERS: {
   custom: (input) => {
     assertNonEmptyString(
       input.signingSecret,
-      "Custom signingSecret is required"
+      "Custom signingSecret is required",
     );
     return {
       provider: "custom",
@@ -118,7 +118,7 @@ const BUILDERS: {
  */
 export function buildAuthContract<S extends AuthProviderSlug>(
   slug: S,
-  input: AuthProviderInputBySlug[S]
+  input: AuthProviderInputBySlug[S],
 ): RevstackAuthContract {
   const builder = BUILDERS[slug] as ProviderBuilder<S>;
   const baseContract = builder(input);

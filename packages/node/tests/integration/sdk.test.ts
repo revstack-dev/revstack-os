@@ -38,7 +38,7 @@ describe("EntitlementsClient", () => {
   it("should parse a successful entitlement check response", async () => {
     const result = await revstack.entitlements.check(
       "usr_test_001",
-      "api-calls"
+      "api-calls",
     );
 
     expect(result).toBeDefined();
@@ -65,7 +65,7 @@ describe("UsageClient — RateLimitError", () => {
         featureId: "api-calls",
         amount: 1,
         idempotencyKey: "idem_test_001",
-      })
+      }),
     ).rejects.toThrow(RateLimitError);
   });
 
@@ -151,7 +151,7 @@ describe("BaseClient — Network Timeout", () => {
         return new Response(JSON.stringify({ id: "usr_timeout" }), {
           headers: { "Content-Type": "application/json" },
         });
-      })
+      }),
     );
 
     // revstackFast has a 50ms timeout — the abort must fire before 10s
@@ -165,7 +165,7 @@ describe("BaseClient — Network Timeout", () => {
         return new Response(JSON.stringify({ id: "usr_timeout" }), {
           headers: { "Content-Type": "application/json" },
         });
-      })
+      }),
     );
 
     try {

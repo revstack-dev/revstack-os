@@ -47,7 +47,7 @@ describe("logout command", () => {
 
     expect(mockClearApiKey).not.toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Not currently logged in")
+      expect.stringContaining("Not currently logged in"),
     );
 
     consoleSpy.mockRestore();
@@ -62,7 +62,7 @@ describe("logout command", () => {
 
     expect(mockClearApiKey).toHaveBeenCalledOnce();
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Successfully logged out")
+      expect.stringContaining("Successfully logged out"),
     );
 
     consoleSpy.mockRestore();

@@ -22,7 +22,7 @@ type GenerateTextParameters = Parameters<typeof generateText>[0];
  * Automatically tracks usage and bills AI tokens upon completion.
  */
 export async function revstackStreamText(
-  options: StreamTextParameters & { revstack: RevstackMeteringOptions }
+  options: StreamTextParameters & { revstack: RevstackMeteringOptions },
 ) {
   const { revstack, onFinish, ...streamOptions } = options;
 
@@ -48,7 +48,7 @@ export async function revstackStreamText(
         // For streaming, the generation is already complete, but we log the error.
         console.error(
           "[@revstackhq/ai] Failed to track usage after stream finish:",
-          error
+          error,
         );
       }
 
@@ -64,7 +64,7 @@ export async function revstackStreamText(
  * Automatically tracks usage and bills AI tokens upon completion.
  */
 export async function revstackGenerateText(
-  options: GenerateTextParameters & { revstack: RevstackMeteringOptions }
+  options: GenerateTextParameters & { revstack: RevstackMeteringOptions },
 ) {
   const { revstack, ...generateOptions } = options;
 
@@ -85,7 +85,7 @@ export async function revstackGenerateText(
   } catch (error) {
     console.error(
       "[@revstackhq/ai] Failed to track usage after generation finish:",
-      error
+      error,
     );
   }
 
@@ -112,8 +112,8 @@ export function createRevstackAI<TConfig>(
   trackFn: (
     key: string,
     usage: AIUsageData,
-    config: TConfig
-  ) => Promise<void> | void
+    config: TConfig,
+  ) => Promise<void> | void,
 ) {
   return {
     /**
@@ -121,7 +121,7 @@ export function createRevstackAI<TConfig>(
      * Inherits all options from Vercel AI SDK and requires an `entitlementKey`.
      */
     streamText: (
-      options: StreamTextParameters & { entitlementKey: string }
+      options: StreamTextParameters & { entitlementKey: string },
     ) => {
       const { entitlementKey, ...streamOptions } = options;
       // We safely cast options because streamText parameter destructuring drops the rest logic
@@ -138,7 +138,7 @@ export function createRevstackAI<TConfig>(
      * Inherits all options from Vercel AI SDK and requires an `entitlementKey`.
      */
     generateText: (
-      options: GenerateTextParameters & { entitlementKey: string }
+      options: GenerateTextParameters & { entitlementKey: string },
     ) => {
       const { entitlementKey, ...generateOptions } = options;
       // We safely cast options because generateText parameter destructuring drops the rest logic

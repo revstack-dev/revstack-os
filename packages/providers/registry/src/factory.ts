@@ -16,7 +16,7 @@ export class ProviderFactory {
     if (!loader) {
       const knownProviders = listRegisteredProviders();
       throw new Error(
-        `Provider '${slug}' is not registered in Revstack. Available providers: [${knownProviders.join(", ")}]`
+        `Provider '${slug}' is not registered in Revstack. Available providers: [${knownProviders.join(", ")}]`,
       );
     }
 
@@ -27,7 +27,7 @@ export class ProviderFactory {
       // validate default export
       if (!module.DefaultProvider) {
         throw new Error(
-          `The package for '${slug}' does not export a 'DefaultProvider' class.`
+          `The package for '${slug}' does not export a 'DefaultProvider' class.`,
         );
       }
 
@@ -35,7 +35,7 @@ export class ProviderFactory {
     } catch (error: any) {
       // throw with context
       throw new Error(
-        `Failed to initialize provider '${slug}'. Details: ${error.message || error}`
+        `Failed to initialize provider '${slug}'. Details: ${error.message || error}`,
       );
     }
   }

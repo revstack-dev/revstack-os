@@ -13,7 +13,7 @@ import {
  */
 export class BaseClient {
   constructor(
-    protected config: { secretKey: string; baseUrl: string; timeout: number }
+    protected config: { secretKey: string; baseUrl: string; timeout: number },
   ) {}
 
   /**
@@ -50,7 +50,7 @@ export class BaseClient {
    */
   protected async request<T>(
     endpoint: string,
-    options: RequestInit & { idempotencyKey?: string } = {}
+    options: RequestInit & { idempotencyKey?: string } = {},
   ): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
@@ -96,7 +96,7 @@ export class BaseClient {
           message,
           response.status,
           errorData.code || "UNKNOWN_ERROR",
-          requestId
+          requestId,
         );
       }
 

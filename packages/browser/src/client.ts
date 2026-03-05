@@ -84,7 +84,7 @@ export class RevstackClient {
     const response = await createCheckoutSession(
       this.config,
       this.guestId,
-      params
+      params,
     );
     window.location.href = `${CHECKOUT_BASE}?sess=${response.sessionToken}`;
   }
@@ -97,7 +97,7 @@ export class RevstackClient {
     const response = await createBillingPortalSession(
       this.config,
       this.guestId,
-      params
+      params,
     );
     window.location.href = response.url;
   }

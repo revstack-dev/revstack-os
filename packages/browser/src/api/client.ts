@@ -14,7 +14,7 @@ const DEFAULT_API_URL = "https://app.revstack.dev";
  */
 async function buildHeaders(
   config: RevstackConfig,
-  guestId: string | null
+  guestId: string | null,
 ): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -42,7 +42,7 @@ async function buildHeaders(
  */
 export async function fetchEntitlements(
   config: RevstackConfig,
-  guestId: string | null
+  guestId: string | null,
 ): Promise<IdentifyResponse> {
   const baseUrl = config.apiUrl ?? DEFAULT_API_URL;
   const headers = await buildHeaders(config, guestId);
@@ -55,7 +55,7 @@ export async function fetchEntitlements(
 
   if (!res.ok) {
     throw new Error(
-      `Revstack identify failed: ${res.status} ${res.statusText}`
+      `Revstack identify failed: ${res.status} ${res.statusText}`,
     );
   }
 
@@ -68,7 +68,7 @@ export async function fetchEntitlements(
 export async function createCheckoutSession(
   config: RevstackConfig,
   guestId: string | null,
-  params: CheckoutParams
+  params: CheckoutParams,
 ): Promise<CheckoutSessionResponse> {
   const baseUrl = config.apiUrl ?? DEFAULT_API_URL;
   const headers = await buildHeaders(config, guestId);
@@ -81,7 +81,7 @@ export async function createCheckoutSession(
 
   if (!res.ok) {
     throw new Error(
-      `Revstack checkout failed: ${res.status} ${res.statusText}`
+      `Revstack checkout failed: ${res.status} ${res.statusText}`,
     );
   }
 
@@ -94,7 +94,7 @@ export async function createCheckoutSession(
 export async function createBillingPortalSession(
   config: RevstackConfig,
   guestId: string | null,
-  params: BillingPortalParams
+  params: BillingPortalParams,
 ): Promise<BillingPortalResponse> {
   const baseUrl = config.apiUrl ?? DEFAULT_API_URL;
   const headers = await buildHeaders(config, guestId);
@@ -107,7 +107,7 @@ export async function createBillingPortalSession(
 
   if (!res.ok) {
     throw new Error(
-      `Revstack billing portal failed: ${res.status} ${res.statusText}`
+      `Revstack billing portal failed: ${res.status} ${res.statusText}`,
     );
   }
 

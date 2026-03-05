@@ -1,8 +1,9 @@
+import { LineItem } from "@/types/catalog";
 import {
   CheckoutSessionBillingAddressCollection,
   CheckoutSessionMode,
 } from "@/types/checkout/model";
-import { LineItem } from "@/types/shared";
+import { Interval } from "@/types/shared";
 
 export type CheckoutSessionInput = {
   /** revstack customer id */
@@ -20,7 +21,7 @@ export type CheckoutSessionInput = {
   statementDescriptor?: string;
 
   /** trial interval for subscription line items */
-  trialInterval?: "day" | "week" | "month" | "year";
+  trialInterval?: Interval;
   /** trial interval count for subscription line items */
   trialIntervalCount?: number;
 

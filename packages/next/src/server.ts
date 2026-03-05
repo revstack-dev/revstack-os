@@ -69,7 +69,7 @@ async function getIdentityHeaders(): Promise<Record<string, string>> {
  */
 export async function getEntitlement(
   key: string,
-  config: RevstackServerConfig
+  config: RevstackServerConfig,
 ): Promise<Entitlement> {
   const baseUrl = config.apiUrl ?? DEFAULT_API_URL;
   const identityHeaders = await getIdentityHeaders();
@@ -87,7 +87,7 @@ export async function getEntitlement(
 
   if (!response.ok) {
     throw new Error(
-      `[@revstackhq/next] Identify request failed: ${response.status} ${response.statusText}`
+      `[@revstackhq/next] Identify request failed: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -112,7 +112,7 @@ export async function getEntitlement(
  */
 export async function requireEntitlement(
   key: string,
-  config: RevstackServerConfig
+  config: RevstackServerConfig,
 ): Promise<Entitlement> {
   const entitlement = await getEntitlement(key, config);
 
@@ -122,7 +122,7 @@ export async function requireEntitlement(
     }
 
     throw new Error(
-      `[@revstackhq/next] Access denied: missing entitlement "${key}".`
+      `[@revstackhq/next] Access denied: missing entitlement "${key}".`,
     );
   }
 
@@ -154,7 +154,7 @@ export interface UsageData {
 export async function trackUsage(
   key: string,
   usage: UsageData,
-  config: RevstackServerConfig
+  config: RevstackServerConfig,
 ): Promise<void> {
   const baseUrl = config.apiUrl ?? DEFAULT_API_URL;
   const identityHeaders = await getIdentityHeaders();
@@ -172,7 +172,7 @@ export async function trackUsage(
 
   if (!response.ok) {
     throw new Error(
-      `[@revstackhq/next] Usage tracking failed for "${key}": ${response.status} ${response.statusText}`
+      `[@revstackhq/next] Usage tracking failed for "${key}": ${response.status} ${response.statusText}`,
     );
   }
 }
@@ -182,7 +182,7 @@ export async function trackUsage(
 /** Standard Next.js App Router route handler signature */
 type RouteHandler = (
   req: Request,
-  context: { params: Promise<Record<string, string>> }
+  context: { params: Promise<Record<string, string>> },
 ) => Promise<Response> | Response;
 
 /**
@@ -211,7 +211,7 @@ export function withMetering(
   key: string,
   amount: number,
   config: RevstackServerConfig,
-  handler: RouteHandler
+  handler: RouteHandler,
 ): RouteHandler {
   return async (req, context) => {
     try {
@@ -222,7 +222,7 @@ export function withMetering(
 
       return Response.json(
         { error: "Payment Required", details: message },
-        { status: 402 }
+        { status: 402 },
       );
     }
 

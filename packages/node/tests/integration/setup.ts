@@ -27,7 +27,7 @@ const handlers = [
     if (authHeader !== `Bearer ${TEST_SECRET_KEY}`) {
       return HttpResponse.json(
         { message: "Unauthorized", code: "INVALID_API_KEY" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -52,7 +52,7 @@ const handlers = [
           message: "Idempotency-Key header is required for usage reports.",
           code: "MISSING_IDEMPOTENCY_KEY",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -67,7 +67,7 @@ const handlers = [
         headers: {
           "Retry-After": "30",
         },
-      }
+      },
     );
   }),
 
@@ -81,7 +81,7 @@ const handlers = [
         message: "Customer not found",
         code: "CUSTOMER_NOT_FOUND",
       },
-      { status: 404 }
+      { status: 404 },
     );
   }),
 

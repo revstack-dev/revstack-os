@@ -34,7 +34,7 @@ describe("auth", () => {
 
       expect(mockFs.mkdirSync).toHaveBeenCalledWith(
         expect.stringContaining(".revstack"),
-        { recursive: true }
+        { recursive: true },
       );
     });
 
@@ -46,7 +46,7 @@ describe("auth", () => {
       expect(mockFs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining("credentials.json"),
         JSON.stringify({ apiKey: "sk_test_abc123" }, null, 2),
-        "utf-8"
+        "utf-8",
       );
     });
 
@@ -63,7 +63,7 @@ describe("auth", () => {
     it("returns the stored API key", () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(
-        JSON.stringify({ apiKey: "sk_test_stored" })
+        JSON.stringify({ apiKey: "sk_test_stored" }),
       );
 
       const key = getApiKey();
@@ -97,7 +97,7 @@ describe("auth", () => {
       clearApiKey();
 
       expect(mockFs.unlinkSync).toHaveBeenCalledWith(
-        expect.stringContaining("credentials.json")
+        expect.stringContaining("credentials.json"),
       );
     });
 

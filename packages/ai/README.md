@@ -33,7 +33,7 @@ export const revstack = createRevstackAI(
   async (key, usage, config) => {
     // This fires every time a stream or generation completes
     await trackUsage(key, usage, config);
-  }
+  },
 );
 ```
 

@@ -1,4 +1,5 @@
-import { Address, LineItem } from "@/types/shared";
+import { LineItem } from "@/types/catalog";
+import { Address } from "@/types/shared";
 import { PaginationOptions } from "@/types/shared";
 
 export type CreatePaymentInput = {

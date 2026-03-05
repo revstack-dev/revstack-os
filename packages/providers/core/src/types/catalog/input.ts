@@ -1,4 +1,4 @@
-import { PaginationOptions } from "@/types/shared";
+import { PaginationOptions, Interval } from "@/types/shared";
 
 export type ProductInput = {
   /** product name */
@@ -21,7 +21,7 @@ export type PriceInput = {
   /** ISO currency code */
   currency: string;
   /** billing interval for recurring prices */
-  interval?: "day" | "week" | "month" | "year";
+  interval?: Interval;
   /** interval count (e.g., 2 for "every 2 months") */
   intervalCount?: number;
   /** whether the price is active */

@@ -23,6 +23,7 @@
 <p align="center">
   <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/badge/license-MIT%20%2F%20FSL-0a0a0a?style=flat-square&labelColor=0a0a0a"></a>
   <a href="https://github.com/revstackhq/revstack-os"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-0a0a0a?style=flat-square&labelColor=0a0a0a"></a>
+  <img alt="Coverage" src="./coverage/badge.svg" style="height: 20px;">
 </p>
 
 ---

@@ -140,7 +140,7 @@ describe("TokenVerifier — RS256 Remote JWKS", () => {
     const session = await verifier.verify(token);
     expect(session.isValid).toBe(false);
     expect(session.error).toMatch(
-      /signature verification failed|multiple matching keys|no applicable key/i
+      /signature verification failed|multiple matching keys|no applicable key/i,
     );
   });
 });

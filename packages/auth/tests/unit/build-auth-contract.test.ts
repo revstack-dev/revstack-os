@@ -12,7 +12,7 @@ describe("buildAuthContract", () => {
     expect(contract.strategy).toBe("RS256");
     if (contract.strategy !== "RS256") throw new Error("Expected RS256");
     expect(contract.jwksUri).toBe(
-      "https://my-tenant.us.auth0.com/.well-known/jwks.json"
+      "https://my-tenant.us.auth0.com/.well-known/jwks.json",
     );
     expect(contract.issuer).toBe("https://my-tenant.us.auth0.com/");
     expect(contract.audience).toBe("https://api.example.com");
@@ -27,7 +27,7 @@ describe("buildAuthContract", () => {
     expect(contract.strategy).toBe("RS256");
     if (contract.strategy !== "RS256") throw new Error("Expected RS256");
     expect(contract.jwksUri).toBe(
-      "https://clerk.example.com/.well-known/jwks.json"
+      "https://clerk.example.com/.well-known/jwks.json",
     );
     expect(contract.issuer).toBe("https://clerk.example.com");
   });
@@ -41,7 +41,7 @@ describe("buildAuthContract", () => {
     expect(contract.strategy).toBe("RS256");
     if (contract.strategy !== "RS256") throw new Error("Expected RS256");
     expect(contract.jwksUri).toBe(
-      "https://xyzcompany.supabase.co/rest/v1/auth/jwks"
+      "https://xyzcompany.supabase.co/rest/v1/auth/jwks",
     );
     expect(contract.issuer).toBe("https://xyzcompany.supabase.co/auth/v1");
   });
@@ -70,10 +70,10 @@ describe("buildAuthContract", () => {
     expect(contract.strategy).toBe("RS256");
     if (contract.strategy !== "RS256") throw new Error("Expected RS256");
     expect(contract.jwksUri).toBe(
-      "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Abc123/.well-known/jwks.json"
+      "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Abc123/.well-known/jwks.json",
     );
     expect(contract.issuer).toBe(
-      "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Abc123"
+      "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Abc123",
     );
     expect(contract.audience).toBe("client_123");
   });
@@ -87,10 +87,10 @@ describe("buildAuthContract", () => {
     expect(contract.strategy).toBe("RS256");
     if (contract.strategy !== "RS256") throw new Error("Expected RS256");
     expect(contract.jwksUri).toBe(
-      "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
+      "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com",
     );
     expect(contract.issuer).toBe(
-      "https://securetoken.google.com/my-firebase-project"
+      "https://securetoken.google.com/my-firebase-project",
     );
     expect(contract.audience).toBe("my-firebase-project");
   });
@@ -113,40 +113,40 @@ describe("buildAuthContract", () => {
   describe("Validation Errors", () => {
     it("throws if auth0 domain is empty", () => {
       expect(() => buildAuthContract("auth0", { domain: "   " })).toThrow(
-        /Auth0 domain is required/
+        /Auth0 domain is required/,
       );
     });
 
     it("throws if clerk issuerUrl is empty", () => {
       expect(() => buildAuthContract("clerk", { issuerUrl: "" })).toThrow(
-        /Clerk issuerUrl is required/
+        /Clerk issuerUrl is required/,
       );
     });
 
     it("throws if supabase projectUrl is empty", () => {
       expect(() => buildAuthContract("supabase", { projectUrl: "" })).toThrow(
-        /Supabase projectUrl is required/
+        /Supabase projectUrl is required/,
       );
     });
 
     it("throws if cognito region or userPoolId is empty", () => {
       expect(() =>
-        buildAuthContract("cognito", { region: "", userPoolId: "pool" })
+        buildAuthContract("cognito", { region: "", userPoolId: "pool" }),
       ).toThrow(/Cognito region is required/);
       expect(() =>
-        buildAuthContract("cognito", { region: "us-east-1", userPoolId: "" })
+        buildAuthContract("cognito", { region: "us-east-1", userPoolId: "" }),
       ).toThrow(/Cognito userPoolId is required/);
     });
 
     it("throws if firebase projectId is empty", () => {
       expect(() => buildAuthContract("firebase", { projectId: "" })).toThrow(
-        /Firebase projectId is required/
+        /Firebase projectId is required/,
       );
     });
 
     it("throws if custom signingSecret is empty", () => {
       expect(() =>
-        buildAuthContract("custom", { signingSecret: "   " })
+        buildAuthContract("custom", { signingSecret: "   " }),
       ).toThrow(/Custom signingSecret is required/);
     });
   });

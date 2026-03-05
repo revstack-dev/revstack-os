@@ -71,7 +71,7 @@ describe("login command", () => {
 
     expect(mockSetApiKey).toHaveBeenCalledWith("sk_test_mykey123");
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Authenticated successfully")
+      expect.stringContaining("Authenticated successfully"),
     );
 
     consoleSpy.mockRestore();
@@ -84,7 +84,7 @@ describe("login command", () => {
     const program = createTestProgram();
 
     await expect(
-      program.parseAsync(["node", "revstack", "login"], { from: "node" })
+      program.parseAsync(["node", "revstack", "login"], { from: "node" }),
     ).rejects.toThrow(ProcessExitError);
 
     expect(exitSpy).toHaveBeenCalledWith(0);
