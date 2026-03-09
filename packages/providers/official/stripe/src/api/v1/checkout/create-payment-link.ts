@@ -3,7 +3,6 @@ import {
   ProviderContext,
   CreatePaymentLinkInput,
   AsyncActionResult,
-  toUnixSeconds,
   normalizeCurrency,
   RevstackErrorCode,
 } from "@revstackhq/providers-core";
